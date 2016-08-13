@@ -33,7 +33,7 @@ build/Release
 .node_repl_history
 
 # Node modules
-# Placeholder adding after deleting node_modules from git
+node_modules
 
 # WebStorm files (Don't really need these shared, do we?)
 .idea
