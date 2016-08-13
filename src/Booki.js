@@ -19,7 +19,7 @@ var Booki = function(){
 	
 	//Init variables
 	this.config			= {
-		httpPort		: 8081
+		httpPort		: 8101
 	};
 	this.sqlConfig		= require('../config.json');
 	this.eventEmitter	= new this.events.EventEmitter();

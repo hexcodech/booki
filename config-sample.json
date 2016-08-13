@@ -1,7 +1,7 @@
 /* has to be renamed to config.json */
 {
 	host			: "localhost",
-	user			: "root",
+	user			: "bookiUser",
 	password		: "toor",
 	database		: "booki"
 }
