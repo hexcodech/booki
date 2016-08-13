@@ -20,16 +20,13 @@ var Routing = function(booki){
 	//User
 	
 		//GET
-	
+
 			booki.rest.get("/user/id/:id", function(request, response){
-				booki.sqlConnection.query("SELECT * FROM users WHERE id=" + request.params.id, function (err, results) {
-					if(err)
-						throw err;
-					
-					response.end(
-						JSON.stringify(results)
-					);
-				});
+				response.end(
+					JSON.stringify(
+						booki.User.selectUserID(request.params.id)
+					)
+				);
 			});
 	
 };

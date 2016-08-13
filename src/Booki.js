@@ -16,7 +16,8 @@ var Booki = function(){
 	this.i18n			= require("i18n");
 	
 	this.Routing		= require("./Routing.js"); 
-	
+	this.User			= require("./User.js");
+
 	//Init variables
 	this.config			= {
 		httpPort		: 8101
