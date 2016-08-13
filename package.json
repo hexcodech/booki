@@ -1,0 +1,23 @@
+{
+  "name": "booki",
+  "version": "0.0.1",
+  "description": "Service to buy and sell used school books",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hexcodech/booki.git"
+  },
+  "keywords": [
+    "booki"
+  ],
+  "author": "hexcode",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hexcodech/booki/issues"
+  },
+  "homepage": "https://github.com/hexcodech/booki#readme"
+}
