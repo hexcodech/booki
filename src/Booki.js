@@ -19,11 +19,12 @@ var Booki = function(){
 	
 	//Init variables
 	this.config			= {
-		httpPort		: 8081
+		httpPort		: 8101
 	};
+	//Placeholder sql password. TODO: Load real password from JSON file located on server.
 	this.sqlConfig		= {
 		host			: "localhost",
-		user			: "root",
+		user			: "bookiUser",
 		password		: "toor",
 		database		: "booki"
 	};
