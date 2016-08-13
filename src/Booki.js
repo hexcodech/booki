@@ -21,12 +21,7 @@ var Booki = function(){
 	this.config			= {
 		httpPort		: 8081
 	};
-	this.sqlConfig		= {
-		host			: "localhost",
-		user			: "root",
-		password		: "toor",
-		database		: "booki"
-	};
+	this.sqlConfig		= require('../config.json');
 	this.eventEmitter	= new this.events.EventEmitter();
 	this.rest			= new this.express();
 	

@@ -1,3 +1,3 @@
-var Booki = require("./Booki");
+var Booki = require("./Booki.js");
 
 var booki = new Booki();

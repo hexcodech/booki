@@ -35,5 +35,8 @@ build/Release
 # Node modules
 node_modules
 
-# WebStorm files (Don't really need these shared, do we?)
+# WebStorm files
 .idea
+
+# Config file
+config.json

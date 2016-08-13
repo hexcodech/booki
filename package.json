@@ -21,6 +21,10 @@
   },
   "homepage": "http://booki.me",
   "dependencies": {
-    "express": "^4.14.0"
+    "crypto": "0.0.3",
+    "events": "^1.1.1",
+    "express": "^4.14.0",
+    "i18n": "^0.8.3",
+    "mysql": "^2.11.1"
   }
 }

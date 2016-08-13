@@ -31,5 +31,4 @@ var Routing = function(booki){
 	
 };
 
-//PasswordManager.prototype.publicMethod = function(){};
 module.exports = Routing;
