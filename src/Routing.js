@@ -21,12 +21,15 @@ var Routing = function(booki){
 	
 		//GET
 	
-			booki.rest.get("/user/:id", function(request, response){
-				response.end(
-						JSON.stringify(
-								{}
-						)
-				);	
+			booki.rest.get("/user/id/:id", function(request, response){
+				booki.sqlConnection.query("SELECT * FROM users WHERE id=" + request.params.id, function (err, results) {
+					if(err)
+						throw err;
+					
+					response.end(
+						JSON.stringify(results)
+					);
+				});
 			});
 	
 };
