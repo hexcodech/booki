@@ -1,7 +1,7 @@
-/* has to be renamed to config.json */
+/* has to be renamed to config.json and this comment has to be removed*/
 {
-	host			: "localhost",
-	user			: "bookiUser",
-	password		: "toor",
-	database		: "booki"
+	"host"			: "localhost",
+	"user"			: "bookiUser",
+	"password"		: "toor",
+	"database"		: "booki"
 }
