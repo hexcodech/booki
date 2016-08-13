@@ -1,5 +1,5 @@
 /**
- * Handles all API calls for on /user
+ * Handles all API calls on /user/
  * @param booki
  * @constructor
  */
@@ -8,12 +8,12 @@ var User = function (booki) {
     //keep reference to 'this'
     var self            = this;
 
-    this.selectUserID = function (id) {
-        booki.sqlConnection.query("SELECT * FROM users WHERE id=" + id, function (err, results) {
+    this.selectUserID = function (id, callback) {
+        booki.sqlConnection.query("SELECT * FROM users WHERE id=1", function (err, results) {
             if(err)
                 throw err;
 
-            return results;
+            callback(JSON.stringify(results));
         });
     };
 };

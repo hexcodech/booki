@@ -34,6 +34,7 @@ var Booki = function(){
 	this.sqlConnection.connect();
 	
 	this.routing		= new this.Routing(this);
+	this.user			= new this.User(this);
 	
 	//Configure the rest server
 	this.rest.use(this.i18n.init);
