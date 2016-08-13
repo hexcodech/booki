@@ -32,5 +32,8 @@ build/Release
 # Optional REPL history
 .node_repl_history
 
+# Node modules
+# Placeholder adding after deleting node_modules from git
+
 # WebStorm files (Don't really need these shared, do we?)
 .idea
