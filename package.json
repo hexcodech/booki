@@ -15,9 +15,12 @@
     "booki"
   ],
   "author": "hexcode",
-  "license": "ISC",
+  "license": "?",
   "bugs": {
     "url": "https://github.com/hexcodech/booki/issues"
   },
-  "homepage": "https://github.com/hexcodech/booki#readme"
+  "homepage": "http://booki.me",
+  "dependencies": {
+    "express": "^4.14.0"
+  }
 }
