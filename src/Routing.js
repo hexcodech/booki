@@ -26,8 +26,8 @@ var Routing = function(booki){
 				Facebook will redirect the user back to us at
 				/auth/facebook/callback
 			*/
-			booki.rest.get("/auth/facebook",			passport.authenticate("facebook"));
-			booki.rest.get("/auth/facebook/callback",	passport.authenticate("facebook", {
+			booki.rest.get("/auth/facebook",			booki.passport.authenticate("facebook"));
+			booki.rest.get("/auth/facebook/callback",	booki.passport.authenticate("facebook", {
 				successRedirect: "/",
 				failureRedirect: "/login"
 			}));

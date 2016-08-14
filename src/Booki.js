@@ -13,24 +13,25 @@ var Booki = function(){
 	this.events			= require("events");
 	this.sql			= require("mysql"); 
 	this.i18n			= require("i18n");
+	this.passport		= require("passport");
 	
 	this.Routing		= require("./Routing.js"); 
 	this.User			= require("./User.js");
 
 	//Init variables
-	this.config			= require(""../config.json");
+	this.config			= require("../config.json");
 	this.eventEmitter	= new this.events.EventEmitter();
 	this.rest			= new this.express();
 	
-	this.server = this.rest.listen(this.config.httpPort, function(){
+	this.server = this.rest.listen(this.config.HTTP_PORT, function(){
 		self.eventEmitter.emit("Booki::server::init", self.server.address().address, self.server.address().port);
 	});
 	
 	this.sqlConnection = this.sql.createConnection({
-		host			: this.config.host,
-		user			: this.config.user,
-		password		: this.config.password,
-		database		: this.config.database
+		host			: this.config.HOST,
+		user			: this.config.USER,
+		password		: this.config.PASSWORD,
+		database		: this.config.DATABASE
 	});
 	this.sqlConnection.connect();
 	
