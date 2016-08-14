@@ -1,5 +1,7 @@
 /**
- * Created by Marc on 14.08.2016.
+ * Handles all API calls on /book/
+ * @param booki
+ * @constructor
  */
 
 var Book = function (booki) {
