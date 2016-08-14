@@ -17,6 +17,7 @@ var Booki = function(){
 	
 	this.Routing		= require("./Routing.js"); 
 	this.User			= require("./User.js");
+	this.Book			= require("./Book.js");
 
 	//Init variables
 	this.config			= require("../config.json");
@@ -37,6 +38,7 @@ var Booki = function(){
 	
 	this.routing		= new this.Routing(this);
 	this.user			= new this.User(this);
+	this.book			= new this.Book(this);
 	
 	//Configure the rest server
 	this.rest.use(this.i18n.init);

@@ -9,7 +9,7 @@ var User = function (booki) {
     var self            = this;
 
     this.selectUserID = function (id, callback) {
-        booki.sqlConnection.query("SELECT * FROM users WHERE id=1", function (err, results) {
+        booki.sqlConnection.query("SELECT * FROM users WHERE id=" + id, function (err, results) {
             if(err)
                 throw err;
 

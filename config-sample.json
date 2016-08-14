@@ -5,7 +5,7 @@
 	"PASSWORD"					: "bookiPassword",
 	"DATABASE"					: "booki",
 	
-	"HTTP_PORT"					: "8101",
+	"HTTP_PORT"					: 8101,
 	
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",

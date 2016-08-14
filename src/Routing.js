@@ -36,12 +36,19 @@ var Routing = function(booki){
 
 			booki.rest.get("/user/:id", function(request, response){
 				booki.user.selectUserID(request.params.id, function (result) {
-					response.end(
-						result
-					)
+					response.end(result);
 				});
 			});
-	
+
+	//Book
+
+		//GET
+
+			booki.rest.get("/book/isbn13/:id", function(request, response){
+				booki.book.selectBookISBN13(request.params.id, function (result)	{
+					response.end(result);
+				});
+			});
 };
 
 module.exports = Routing;
