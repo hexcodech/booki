@@ -1,7 +1,13 @@
 /* has to be renamed to config.json and this comment has to be removed*/
 {
-	"host"			: "localhost",
-	"user"			: "bookiUser",
-	"password"		: "toor",
-	"database"		: "booki"
+	"HOST"						: "localhost",
+	"USER"						: "bookiUser",
+	"PASSWORD"					: "bookiPassword",
+	"DATABASE"					: "booki",
+	
+	"HTTP_PORT"					: "8101",
+	
+	"FACEBOOK_APP_ID"			: "",
+	"FACEBOOK_APP_SECRET"		: "",
+	"FACEBOOK_CALLBACK_URL"		: ""
 }
