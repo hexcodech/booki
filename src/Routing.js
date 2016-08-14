@@ -5,7 +5,7 @@
  */
 
 var Routing = function(booki){
-	//keep reference to 'this'
+	//keep reference to "this"
 	var self			= this;
 	
 	//Require modules
@@ -18,6 +18,19 @@ var Routing = function(booki){
 	
 	
 	//User
+	
+		//AUTH
+			
+			/*
+				Redirects the user to Facebook. When the authentication completes,
+				Facebook will redirect the user back to us at
+				/auth/facebook/callback
+			*/
+			booki.rest.get("/auth/facebook",			passport.authenticate("facebook"));
+			booki.rest.get("/auth/facebook/callback",	passport.authenticate("facebook", {
+				successRedirect: "/",
+				failureRedirect: "/login"
+			}));
 	
 		//GET
 
