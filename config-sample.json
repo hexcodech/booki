@@ -9,5 +9,7 @@
 	
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",
-	"FACEBOOK_CALLBACK_URL"		: ""
+	"FACEBOOK_CALLBACK_URL"		: "",
+
+	"GOOGLEBOOKS_API_KEY"		: ""
 }

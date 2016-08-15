@@ -15,7 +15,8 @@ var Routing = function(booki){
 	this.UserController	= require("./controllers/UserController");
 	
 	//Init variables
-	
+	this.userController = new this.UserController(booki.i18n, booki.sqlConnection);
+	this.bookController = new this.BookController(booki.sqlConnection);
 	
 	//Start routing
 	
@@ -40,7 +41,7 @@ var Routing = function(booki){
 		//GET
 
 			booki.app.get("/user/:id", function(request, response){
-				this.UserController.selectUserID(request.params.id, function (result){
+				this.userController.get(request.params.id, function (result){
 					response.end(JSON.stringify(result));
 				});
 			});
@@ -48,9 +49,17 @@ var Routing = function(booki){
 	//Book
 
 		//GET
-
+	
+			//Get from database
 			booki.app.get("/book/isbn13/:id", function(request, response){
-				this.BookController.selectBookISBN13(request.params.id, function (result){
+				this.bookController.selectBookISBN13(request.params.id, function (result){
+					response.end(JSON.stringify(result));
+				});
+			});
+
+			//Get from Google API
+			booki.app.get("/book/google/isbn13/:id", function (request, response) {
+				this.bookController.selectBookISBN13GoogleAPI(request.params.id, function (result) {
 					response.end(JSON.stringify(result));
 				});
 			});
