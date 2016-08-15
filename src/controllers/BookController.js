@@ -12,6 +12,11 @@ var BookController = function(sqlConnection){
     this.config         = require("../../config.json");
     this.googlebooks	= require("google-books-search");
 
+    /**
+     * Get book using ISBN13 from DB
+     * @param id
+     * @param callback
+     */
     this.selectBookISBN13 = function (id, callback) {
         this.sqlConnection.query("SELECT * FROM books WHERE isbn13=" + id, function (err, results) {
             if(err)
@@ -19,7 +24,12 @@ var BookController = function(sqlConnection){
             callback(JSON.stringify(results));
         });
     };
-    
+
+    /**
+     * Get book using ISBN13 from the Google API
+     * @param id
+     * @param callback
+     */
     this.selectBookISBN13GoogleAPI = function (id, callback) {
         var queryOptions = {
             key:    this.config.GOOGLEBOOKS_API_KEY,

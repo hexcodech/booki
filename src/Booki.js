@@ -9,6 +9,8 @@ var Booki = function(){
 	var self			= this;
 	
 	//Require modules
+	this.apicache		= require("apicache");
+	this.apicacheMiddle	= this.apicache.middleware;
 	this.express		= require("express");
 	this.events			= require("events");
 	this.sql			= require("mysql"); 

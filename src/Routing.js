@@ -49,7 +49,7 @@ var Routing = function(booki){
 	//Book
 
 		//GET
-	
+
 			//Get from database
 			booki.app.get("/book/isbn13/:id", function(request, response){
 				this.bookController.selectBookISBN13(request.params.id, function (result){
@@ -57,12 +57,16 @@ var Routing = function(booki){
 				});
 			});
 
-			//Get from Google API
-			booki.app.get("/book/google/isbn13/:id", function (request, response) {
+			//Get from Google API, cache this for 3 hours.
+			booki.app.get("/book/google/isbn13/:id", booki.apicacheMiddle('3 hours'), function (request, response) {
+				request.apicacheGroup	= "googleBooks";
+
 				this.bookController.selectBookISBN13GoogleAPI(request.params.id, function (result) {
 					response.end(JSON.stringify(result));
 				});
 			});
+
+		//POST
 };
 
 module.exports = Routing;
