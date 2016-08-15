@@ -40,3 +40,9 @@ node_modules
 
 # Config file
 config.json
+
+# MacOS Stuff
+.DS_Store
+
+# Eclipse
+.project
