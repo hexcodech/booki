@@ -16,15 +16,13 @@ var Booki = function(){
 	this.passport		= require("passport");
 	
 	this.Routing		= require("./Routing.js"); 
-	this.User			= require("./User.js");
-	this.Book			= require("./Book.js");
 
 	//Init variables
 	this.config			= require("../config.json");
 	this.eventEmitter	= new this.events.EventEmitter();
-	this.rest			= new this.express();
+	this.app			= new this.express();
 	
-	this.server = this.rest.listen(this.config.HTTP_PORT, function(){
+	this.server = this.app.listen(this.config.HTTP_PORT, function(){
 		self.eventEmitter.emit("Booki::server::init", self.server.address().address, self.server.address().port);
 	});
 	
@@ -37,12 +35,12 @@ var Booki = function(){
 	this.sqlConnection.connect();
 	
 	this.routing		= new this.Routing(this);
-	this.user			= new this.User(this);
-	this.book			= new this.Book(this);
 	
 	//Configure the rest server
-	this.rest.use(this.i18n.init);
-	
+	this.app.configure(function() {
+		this.app.use(this.i18n.init);
+		this.app.use(this.passport.initialize());
+	});
 };
 
 module.exports = Booki;

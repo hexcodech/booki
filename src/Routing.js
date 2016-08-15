@@ -9,7 +9,10 @@ var Routing = function(booki){
 	var self			= this;
 	
 	//Require modules
+	this.AuthController	= require("./controllers/AuthController");
 	
+	this.BookController	= require("./controllers/BookController");
+	this.UserController	= require("./controllers/UserController");
 	
 	//Init variables
 	
@@ -26,17 +29,19 @@ var Routing = function(booki){
 				Facebook will redirect the user back to us at
 				/auth/facebook/callback
 			*/
-			booki.rest.get("/auth/facebook",			booki.passport.authenticate("facebook"));
-			booki.rest.get("/auth/facebook/callback",	booki.passport.authenticate("facebook", {
+			booki.app.get("/auth/facebook",			booki.passport.authenticate("facebook", {
+				session: false
+			}));
+			booki.app.get("/auth/facebook/callback",	booki.passport.authenticate("facebook", {
 				successRedirect: "/",
 				failureRedirect: "/login"
 			}));
 	
 		//GET
 
-			booki.rest.get("/user/:id", function(request, response){
-				booki.user.selectUserID(request.params.id, function (result) {
-					response.end(result);
+			booki.app.get("/user/:id", function(request, response){
+				this.UserController.selectUserID(request.params.id, function (result){
+					response.end(JSON.stringify(result));
 				});
 			});
 
@@ -44,9 +49,9 @@ var Routing = function(booki){
 
 		//GET
 
-			booki.rest.get("/book/isbn13/:id", function(request, response){
-				booki.book.selectBookISBN13(request.params.id, function (result)	{
-					response.end(result);
+			booki.app.get("/book/isbn13/:id", function(request, response){
+				this.BookController.selectBookISBN13(request.params.id, function (result){
+					response.end(JSON.stringify(result));
 				});
 			});
 };

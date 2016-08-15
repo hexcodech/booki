@@ -4,12 +4,14 @@
  * @constructor
  */
 
-var Book = function (booki) {
+var BookController = function(sqlConnection){
     //keep reference to 'this'
     var self            = this;
+    
+    this.sqlConnection	= sqlConnection;
 
     this.selectBookISBN13 = function (id, callback) {
-        booki.sqlConnection.query("SELECT * FROM books WHERE isbn13=" + id, function (err, results) {
+        this.sqlConnection.query("SELECT * FROM books WHERE isbn13=" + id, function (err, results) {
             if(err)
                 throw err;
 
@@ -18,4 +20,4 @@ var Book = function (booki) {
     };
 };
 
-module.exports = Book;
+module.exports = BookController;

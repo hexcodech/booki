@@ -23,19 +23,43 @@ var AuthController = function(i18n, sqlConnection){
 	this.eventEmitter	= new this.events.EventEmitter();
 	
 	//Register providers
-	var FacebookStrategy = require("passport-facebook").Strategy;
+	var LocalStrategy		= require('passport-local').Strategy;
+	var FacebookStrategy	= require("passport-facebook").Strategy;
 	
+	//With username(email)/password
+	passport.use(new LocalStrategy(
+		function(username, password, done){
+			this.UserController.get({ mail: username }, function(err, user){
+				
+				if(err){return done(err);}
+				
+				if(!user){
+					return done(null, false, { message: 'Incorrect username.' });
+				}
+				if(!user.validPassword(password)) {
+					return done(null, false, { message: 'Incorrect password.' });
+				}
+				return done(null, user);
+			});
+		}
+	));
+	
+	//With facebook
 	this.passport.use(
 		new FacebookStrategy({
 			clientID:			this.config.FACEBOOK_APP_ID,
 			clientSecret:		this.config.FACEBOOK_APP_SECRET,
 			callbackURL:		this.config.FACEBOOK_CALLBACK_URL
 		},
-		function(accessToken, refreshToken, profile, done) {
-			/*User.findOrCreate(..., function(err, user) {
-				if (err) { return done(err); }
-					done(null, user);
-			});*/
+		function(accessToken, refreshToken, profile, done){
+			this.UserController.findOrCreate(accessToken, refreshToken, profile, function(err, user){
+				
+				if(err){
+					return done(err, false, { message: 'Unknown error.' });
+				}
+				
+				done(null, user);
+			});
 		})
 	);
 	
