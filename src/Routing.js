@@ -15,7 +15,7 @@ var Routing = function(booki){
 	this.UserController	= require("./controllers/UserController");
 	
 	//Init variables
-	this.userController = new this.UserController(booki.i18n, booki.sqlConnection);
+	this.userController = new this.UserController(booki.i18n, booki.errors, booki.sqlConnection);
 	this.bookController = new this.BookController(booki.sqlConnection);
 	
 	//Start routing

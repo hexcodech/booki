@@ -102,6 +102,12 @@ var Error = function(i18n){
 		code				: 451,
 		defaultMessage		: i18n.__("The requested couldn't be processed for legal reasons"),
 	});
+	
+	errors.create({
+		name				: i18n.__("DatabaseError"),
+		code				: 601,
+		defaultMessage		: i18n.__("The database query failed"),
+	});
 };
 
 Error.prototype.getErrorsObject = function(){

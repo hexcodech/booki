@@ -3,7 +3,7 @@
  * @constructor
  */
 
-var AuthController = function(i18n, sqlConnection){
+var AuthController = function(i18n, errors, sqlConnection){
 	
 	//keep reference to 'this'
 	var self			= this;
@@ -18,6 +18,8 @@ var AuthController = function(i18n, sqlConnection){
 	
 	//init variables
 	this.config			= require("../../config.json");
+	
+	this.errors			= errors;
 	this.i18n			= i18n;
 	this.sqlConnection	= sqlConnection;
 	this.eventEmitter	= new this.events.EventEmitter();
@@ -31,14 +33,12 @@ var AuthController = function(i18n, sqlConnection){
 		function(username, password, done){
 			this.UserController.get({ email: username }, function(err, user){
 				
-				if(err){return done(err);}
+				if(err){return done(null, false, err);}
 				
-				if(!user){
-					return done(null, false, { message: 'Incorrect username.' });
+				if(!user || !user.validPassword(password)) {
+					return done(null, false, new this.errors.LoginError());
 				}
-				if(!user.validPassword(password)) {
-					return done(null, false, { message: 'Incorrect password.' });
-				}
+				
 				return done(null, user);
 			});
 		}

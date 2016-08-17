@@ -3,7 +3,7 @@
  * @constructor
  */
 
-var UserController = function(i18n, sqlConnection){
+var UserController = function(i18n, errors, sqlConnection){
 	
 	//keep reference to 'this'
 	var self			= this;
@@ -15,6 +15,7 @@ var UserController = function(i18n, sqlConnection){
 	this.sql			= require("mysql"); 
 	
 	this.i18n			= i18n;
+	this.errors			= errors;
 	this.sqlConnection	= sqlConnection;
 	this.eventEmitter	= new this.events.EventEmitter();
 };
@@ -49,6 +50,11 @@ UserController.prototype.get = function (userData, callback){
 	
 	self.sqlConnection.query(query, params,
 		function(err, rows, fields){
+			
+			if(err){
+				callback(err, new this.errors.DatabaseError(), false);
+			}
+			
 			callback(err, results);
 		}
 	);
