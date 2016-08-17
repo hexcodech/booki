@@ -13,6 +13,8 @@ var Routing = function(booki){
 	
 	this.BookController	= require("./controllers/BookController");
 	this.UserController	= require("./controllers/UserController");
+
+	this.book_isbn13_id = require("./validation/book_isbn13_id");
 	
 	//Init variables
 	this.userController = new this.UserController(booki.i18n, booki.errors, booki.sqlConnection);
@@ -51,14 +53,14 @@ var Routing = function(booki){
 		//GET
 
 			//Get from database
-			booki.app.get("/book/isbn13/:id", function(request, response){
+			booki.app.get("/book/isbn13/:id", booki.validate(this.book_isbn13_id), function(request, response){
 				this.bookController.selectBookISBN13(request.params.id, function (result){
 					response.end(JSON.stringify(result));
 				});
 			});
 
-			//Get from Google API, cache this for 3 hours.
-			booki.app.get("/book/google/isbn13/:id", booki.apicacheMiddle('3 hours'), function (request, response) {
+			//Get from Google API, cache this for 12 hours.
+			booki.app.get("/book/google/isbn13/:id", booki.validate(this.book_isbn13_id), booki.apicacheMiddle('12 hours'), function (request, response) {
 				request.apicacheGroup	= "googleBooks";
 
 				this.bookController.selectBookISBN13GoogleAPI(request.params.id, function (result) {

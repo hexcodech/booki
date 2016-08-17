@@ -18,7 +18,7 @@ var BookController = function(sqlConnection){
      * @param callback
      */
     this.selectBookISBN13 = function (id, callback) {
-        this.sqlConnection.query("SELECT * FROM books WHERE isbn13=" + id, function (err, results) {
+        this.sqlConnection.query("SELECT * FROM books WHERE isbn13=?", [id], function (err, results) {
             if(err)
                 throw err;
             callback(JSON.stringify(results));

@@ -11,11 +11,14 @@ var Booki = function(){
 	//Require modules
 	this.apicache		= require("apicache");
 	this.apicacheMiddle	= this.apicache.middleware;
+	this.bodyParser		= require("body-parser");
+	this.cookieParser	= require("cookie-parser");
 	this.express		= require("express");
 	this.events			= require("events");
 	this.sql			= require("mysql"); 
 	this.i18n			= require("i18n");
 	this.passport		= require("passport");
+	this.validate		= require("express-validation");
 	
 	
 	this.Error			= require("./Error.js");
@@ -54,6 +57,8 @@ var Booki = function(){
 	
 	//Configure the rest server
 	this.app.configure(function() {
+		this.app.use(this.bodyParser.json());
+		this.app.use(this.cookieParser());
 		this.app.use(this.i18n.init);
 		this.app.use(this.passport.initialize());
 	});
