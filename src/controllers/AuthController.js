@@ -9,12 +9,12 @@ var AuthController = function(i18n, sqlConnection){
 	var self			= this;
 	
 	//Require modules
-	this.UserController	= require("../controllers/UserController");
-	
 	this.events			= require("events");
 	this.sql			= require("mysql"); 
 	this.crypto			= require("crypto");
 	this.passport		= require("passport");
+	
+	this.UserController	= require("../controllers/UserController");
 	
 	//init variables
 	this.config			= require("../../config.json");
@@ -29,7 +29,7 @@ var AuthController = function(i18n, sqlConnection){
 	//With username(email)/password
 	passport.use(new LocalStrategy(
 		function(username, password, done){
-			this.UserController.get({ mail: username }, function(err, user){
+			this.UserController.get({ email: username }, function(err, user){
 				
 				if(err){return done(err);}
 				

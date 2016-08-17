@@ -17,10 +17,14 @@ var Booki = function(){
 	this.i18n			= require("i18n");
 	this.passport		= require("passport");
 	
+	
+	this.Error			= require("./Error.js");
 	this.Routing		= require("./Routing.js"); 
 
 	//Init variables
 	this.config			= require("../config.json");
+	
+	this.errors			= this.Error.getErrorsObject();
 	this.eventEmitter	= new this.events.EventEmitter();
 	this.app			= new this.express();
 	
@@ -37,6 +41,16 @@ var Booki = function(){
 	this.sqlConnection.connect();
 	
 	this.routing		= new this.Routing(this);
+	
+	//Configure i18n
+	i18n.configure({
+		locales			:["en", "de"],
+		defaultLocale	: "en",
+		directory		: __dirname + "../locales",
+		autoReload		: true,
+		extension		: ".json",
+		prefix			: "booki-",
+	});
 	
 	//Configure the rest server
 	this.app.configure(function() {

@@ -39,7 +39,7 @@ UserController.prototype.get = function (userData, callback){
 				query += " AND users.id = ?";
 				params.push(userData[key]);
 				
-			}else if(key === "mail"){
+			}else if(key === "email"){
 				query += " AND users.mail = ?";
 				params.push(userData[key]);
 				
