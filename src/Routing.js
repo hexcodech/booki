@@ -15,6 +15,7 @@ var Routing = function(booki){
 	this.UserController	= require("./controllers/UserController");
 
 	this.book_isbn13_id = require("./validation/book_isbn13_id");
+	this.book_post		= require("./validation/book_post");
 	
 	//Init variables
 	this.userController = new this.UserController(booki.i18n, booki.errors, booki.sqlConnection);
@@ -69,6 +70,11 @@ var Routing = function(booki){
 			});
 
 		//POST
+	
+			//Add new book to database
+			booki.app.post("/book", booki.validate(this.book_post), function(request, response)	{
+				
+			});
 };
 
 module.exports = Routing;
