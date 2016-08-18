@@ -14,8 +14,30 @@
   "keywords": [
     "booki"
   ],
-  "author": "hexcode",
-  "license": "All rights reserved",
+  "author": "booki.me",
+	"contributors" : [
+		{
+			"name"	: "Marc Berchtold",
+			"email"	: "marc.berchtold@hotmail.de",
+			"url"	: ""
+		},
+		{
+			"name"	: "Dario Breitenstein",
+			"email"	: "",
+			"url"	: ""
+		},
+		{
+			"name"	: "Nico Hauser",
+			"email"	: "me@tyratox.ch",
+			"url"	: "https://tyratox.ch"
+		},
+		{
+			"name"	: "David Schmid",
+			"email"	: "",
+			"url"	: ""
+		}
+	],
+	"license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/hexcodech/booki/issues"
   },
