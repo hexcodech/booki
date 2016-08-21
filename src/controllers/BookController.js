@@ -4,11 +4,11 @@
  * @constructor
  */
 
-var BookController = function(sqlConnection){
+var BookController = function(mongoose){
     //keep reference to 'this'
     var self            = this;
     
-    this.sqlConnection	= sqlConnection;
+    this.mongoose		= mongoose;
     this.config         = require("../../config.json");
     this.googlebooks	= require("google-books-search");
 
@@ -18,11 +18,11 @@ var BookController = function(sqlConnection){
      * @param callback
      */
     this.selectBookISBN13 = function (id, callback) {
-        this.sqlConnection.query("SELECT * FROM books WHERE isbn13=?", [id], function (err, results) {
+        /*this.sqlConnection.query("SELECT * FROM books WHERE isbn13=?", [id], function (err, results) {
             if(err)
                 throw err;
             callback(JSON.stringify(results));
-        });
+        });*/
     };
 
     /**

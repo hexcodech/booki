@@ -18,8 +18,8 @@ var Routing = function(booki){
 	this.book_post		= require("./validation/book_post");
 	
 	//Init variables
-	this.userController = new this.UserController(booki.i18n, booki.errors, booki.sqlConnection);
-	this.bookController = new this.BookController(booki.sqlConnection);
+	this.userController = new this.UserController(booki.i18n, booki.errors, booki.mongoose);
+	this.bookController = new this.BookController(booki.mongoose);
 	
 	//Start routing
 	

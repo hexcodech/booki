@@ -3,14 +3,13 @@
  * @constructor
  */
 
-var AuthController = function(i18n, errors, sqlConnection){
+var AuthController = function(i18n, errors, mongoose){
 	
 	//keep reference to 'this'
 	var self			= this;
 	
 	//Require modules
 	this.events			= require("events");
-	this.sql			= require("mysql"); 
 	this.crypto			= require("crypto");
 	this.passport		= require("passport");
 	
@@ -21,11 +20,11 @@ var AuthController = function(i18n, errors, sqlConnection){
 	
 	this.errors			= errors;
 	this.i18n			= i18n;
-	this.sqlConnection	= sqlConnection;
+	this.mongoose		= mongoose;
 	this.eventEmitter	= new this.events.EventEmitter();
 	
 	//Register providers
-	var LocalStrategy		= require('passport-local').Strategy;
+	var LocalStrategy		= require("passport-local").Strategy;
 	var FacebookStrategy	= require("passport-facebook").Strategy;
 	
 	//With username(email)/password
@@ -55,7 +54,7 @@ var AuthController = function(i18n, errors, sqlConnection){
 			this.UserController.findOrCreate(accessToken, refreshToken, profile, function(err, user){
 				
 				if(err){
-					return done(err, false, { message: 'Unknown error.' });
+					return done(err, false, new this.errors.LoginError());
 				}
 				
 				done(null, user);
