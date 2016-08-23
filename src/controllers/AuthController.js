@@ -3,7 +3,12 @@
  * @constructor
  */
 
-var AuthController = function(i18n, errors, mongoose){
+var AuthController = function(app, i18n, errors, mongoose){
+	//store passed params
+	this.app			= app;
+	this.errors			= errors;
+	this.i18n			= i18n;
+	this.mongoose		= mongoose;
 	
 	//keep reference to 'this'
 	var self			= this;
@@ -17,10 +22,6 @@ var AuthController = function(i18n, errors, mongoose){
 	
 	//init variables
 	this.config			= require("../../config.json");
-	
-	this.errors			= errors;
-	this.i18n			= i18n;
-	this.mongoose		= mongoose;
 	this.eventEmitter	= new this.events.EventEmitter();
 	
 	//Register providers
@@ -62,6 +63,22 @@ var AuthController = function(i18n, errors, mongoose){
 		})
 	);
 	
+	//Do the routings
+	
+	/*
+		Redirects the user to Facebook. When the authentication completes,
+		Facebook will redirect the user back to us at
+		/auth/facebook/callback
+	*/
+	
+	this.app.get("/auth/facebook",			this.passport.authenticate("facebook", {
+		session: false
+	}));
+	
+	this.app.get("/auth/facebook/callback",	this.passport.authenticate("facebook", {
+		successRedirect: "/",
+		failureRedirect: "/login"
+	}));
 	
 };
 

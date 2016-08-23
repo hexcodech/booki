@@ -11,17 +11,17 @@ var Booki = function(){
 	//Require modules
 	this.mongoose		= require("mongoose");
 	this.apicache		= require("apicache");
+	this.passport		= require("passport");
 	this.bodyParser		= require("body-parser");
 	this.cookieParser	= require("cookie-parser");
 	this.express		= require("express");
 	this.events			= require("events");
 	this.i18n			= require("i18n");
-	this.passport		= require("passport");
 	this.validate		= require("express-validation");
 	
-	//Custom modules
-	this.Error			= require("./Error.js");
-	this.Routing		= require("./Routing.js");
+	//Store some values
+	this.apicacheMiddle	= this.apicache.middleware;
+	this.eventEmitter	= new this.events.EventEmitter();
 	
 	//Configure i18n
 	this.i18n.configure({
@@ -32,35 +32,35 @@ var Booki = function(){
 		extension		: ".json",
 		prefix			: "booki-",
 	});
-
-	//Init variables
-	this.config			= require("../config.json");
 	
-	this.apicacheMiddle	= this.apicache.middleware;
-	this.errors_		= new this.Error(this.i18n);
-	this.errors			= this.errors_.getErrorsObject();
-	this.eventEmitter	= new this.events.EventEmitter();
-	this.app			= new this.express();
+	//Load error messages
+	this.Error			= require("./Error.js")(this.i18n);
 	
 	//Register mongoose schemaTypes
 	this.mongoose.Schema.Types.Email		= require("./schemaTypes/Email.js");
 	this.mongoose.Schema.Types.URL			= require("./schemaTypes/URL.js");
 	
-	//Init the other stuff
+	//Load config
+	this.config			= require("../config.json");
+	
+	//Connect to to the database
+	this.mongoose.connect("mongodb://" + this.config.DB_HOST + "/" + this.config.DB_NAME);
+	
+	//Start the server
+	this.app			= new this.express();
 	
 	this.server = this.app.listen(this.config.HTTP_PORT, function(){
 		self.eventEmitter.emit("Booki::server::init", self.server.address().address, self.server.address().port);
 	});
 	
-	this.mongoose.connect("mongodb://localhost/booki");
-	
-	this.routing		= new this.Routing(this);
-	
-	//Configure the rest server
+	//Configure the server
 	this.app.use(this.bodyParser.json());
 	this.app.use(this.cookieParser());
 	this.app.use(this.i18n.init);
 	this.app.use(this.passport.initialize());
+	
+	//Do the routing
+	this.Routing		= require("./Routing.js")(this);
 };
 
 module.exports = Booki;

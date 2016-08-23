@@ -1,9 +1,7 @@
 /* has to be renamed to config.json and this comment has to be removed*/
 {
-	"HOST"						: "localhost",
-	"USER"						: "bookiUser",
-	"PASSWORD"					: "bookiPassword",
-	"DATABASE"					: "booki",
+	"DB_HOST"					: "localhost",
+	"DB_NAME"					: "booki",
 	
 	"HTTP_PORT"					: 8101,
 	

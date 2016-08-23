@@ -9,10 +9,10 @@ URL.prototype = Object.create(mongoose.SchemaType.prototype);
 
 URL.prototype.cast = function(value){
 	
-	if(validUrl.isUri(value)){
+	if(validUrl.is_https_uri(value)){
 		return value;
 	}else{
-		throw new Error("The string " + value + " doesn't look like an actual URL!");
+		throw new Error("The string " + value + " doesn't look like an actual HTTPS-URL!");
 	}
 	
 	return false;

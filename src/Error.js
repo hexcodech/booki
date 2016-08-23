@@ -4,15 +4,14 @@
  */
 
 var Error = function(i18n){
+	//store passed params
+	this.i18n			= i18n;
 	
 	//keep reference to 'this'
 	var self			= this;
 	
 	//Require modules
 	this.errors			= require("errors");
-	
-	//init variables
-	this.i18n			= i18n;
 	
 	//Create erros
 	
@@ -115,10 +114,8 @@ var Error = function(i18n){
 			defaultMessage		: i18n.__("The database query returned an unexpected result"),
 			parent				: this.errors.DatabaseError
 		});
-};
-
-Error.prototype.getErrorsObject = function(){
+		
 	return this.errors;
-}
+};
 
 module.exports = Error;
