@@ -18,7 +18,7 @@ var AuthController = function(app, i18n, errors, mongoose){
 	this.crypto			= require("crypto");
 	this.passport		= require("passport");
 	
-	this.UserController	= require("../controllers/UserController");
+	this.User			= require("../models/User");
 	
 	//init variables
 	this.config			= require("../../config.json");
@@ -30,12 +30,12 @@ var AuthController = function(app, i18n, errors, mongoose){
 	
 	//With username(email)/password
 	passport.use(new LocalStrategy(
-		function(username, password, done){
-			this.UserController.get({ email: username }, function(err, user){
+		function(email, password, done){
+			this.User.findOne({email: email}, function(err, user){
 				
 				if(err){return done(null, false, err);}
 				
-				if(!user || !user.validPassword(password)) {
+				if(!user || !user.verifyPassword(password)) {
 					return done(null, false, new this.errors.LoginError());
 				}
 				
@@ -52,14 +52,38 @@ var AuthController = function(app, i18n, errors, mongoose){
 			callbackURL:		this.config.FACEBOOK_CALLBACK_URL
 		},
 		function(accessToken, refreshToken, profile, done){
-			this.UserController.findOrCreate(accessToken, refreshToken, profile, function(err, user){
+			//check if a user with the provided mail addresses exists
+			
+			var user	= null;
+			
+			for(var i=0;i<profile.emails.length;i++){
+				this.User.findOne({email: email}, function(err, _user){
+					
+					if(err){return done(null, false, err);}
+					
+					if(_user){
+						//User exists
+						user	= _user;
+						
+						i		= profile.emails.length;//breaks the loop
+					}
+					
+				});
+			}
+			
+			if(user){
+				//update values for the current user
 				
-				if(err){
-					return done(err, false, new this.errors.LoginError());
-				}
-				
-				done(null, user);
-			});
+			}else{
+				//we have to create a new user
+				user = new this.User.createFromPassportProfile(profile, {
+					email					: profile.emails[0].value,
+					
+					facebookAccessToken		: accessToken,
+					facebookRefreshToken	: refreshToken
+				});
+			}
+			
 		})
 	);
 	

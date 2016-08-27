@@ -53,9 +53,43 @@ var User = function(i18n, errors, mongoose){
 	
 	//Define constants
 	
+	userSchema.statics.crypto			= this.crypto;
+	
 	userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
 	userSchema.statics.saltLength		= this.config.SALT_LENGTH;
 	
+	/**
+	 * Creates an object including the keys and values needed to
+	 * create a new user based on the passed passport object
+	 * @function getPassportUserMappings
+	 * @param {Object} profile - The passport profile to base the new user on
+	 * @returns {Object} The user keys and values that can be used to create a user
+	 */
+	userSchema.statics.getPassportUserMappings = function(profile){
+		
+		return {
+			displayName				: profile.displayName,
+			firstName				: profile.name.givenName,
+			lastName				: profile.name.familyName,
+			
+			//email					: profile.emails[0].value, shouldn't be updated without the user wanting it
+			
+			profilePictureURL		: photos[0].value
+		};
+	}
+	
+	/**
+	 * Creates a new user based on the passed passport profile and the passed custom keys and values
+	 * @function createFromPassportProfile
+	 * @param {Object} profile - The passport profile to base the new user on
+	 * @param {Object} customKeysAndVals The custom keys and values to add to the user
+	 * @returns {Object} The user object
+	 */
+	userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals){
+		if(!customKeysAndVals){customKeysAndVals = {};}
+		
+		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals));
+	}
 	
 	/**
 	 * Generates random string of characters
@@ -63,7 +97,7 @@ var User = function(i18n, errors, mongoose){
 	 * @param {number} length - Length of the random string.
 	 * @returns {String} A random string of a given length
 	 */
-	userSchema.methods.generateRandomString = function(){
+	userSchema.statics.generateRandomString = function(){
 		return this.crypto.randomBytes(Math.ceil(length/2))
         	.toString("hex") //convert to hexadecimal format
         	.slice(0, length);
@@ -77,16 +111,34 @@ var User = function(i18n, errors, mongoose){
 	 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that should be used
 	 * @returns {string} The hashed password
 	 */
-	userSchema.methods.hash = function(password, salt, algorithm){
+	userSchema.statics.hash = function(password, salt, algorithm){
 		if(!algorithm){
 			algorithm = this.hashAlgorithm;
 		}
 		
-	    var hash = crypto.createHmac(algorithm, salt);
+	    var hash = this.crypto.createHmac(algorithm, salt);
 	    hash.update(password);
 	    
 	    return hash.digest("hex");
 	};
+	
+	
+	
+	//User methods
+	
+	
+	/**
+	 * Updates a new user based on the passed passport profile and the passed custom keys and values
+	 * @function updateFromPassportProfile
+	 * @param {Object} profile - The passport profile to update the user from
+	 * @param {Object} customKeysAndVals The custom keys and values to update
+	 * @returns {undefined}
+	 */
+	userSchema.methods.updateFromPassportProfile = function(profile, customKeysAndVals){
+		if(!customKeysAndVals){customKeysAndVals = {};}
+		
+		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals));
+	}
 	
 	/**
 	 * Verifies the password for a specific user
