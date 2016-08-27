@@ -5,6 +5,9 @@
 	
 	"HTTP_PORT"					: 8101,
 	
+	"HASH_ALGORITHM"			: "sha512",
+	"SALT_LENGTH"				: 30,
+	
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",
 	"FACEBOOK_CALLBACK_URL"		: "",

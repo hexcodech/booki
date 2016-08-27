@@ -13,6 +13,9 @@ var User = function(i18n, errors, mongoose){
 	//include required modules
 	this.crypto					= require("crypto");
 	
+	//Load config
+	this.config					= require("../../config.json");
+	
 	//setup some values
 	this.types					= this.mongoose.Schema.Types;
 	
@@ -32,7 +35,7 @@ var User = function(i18n, errors, mongoose){
 		
 		profilePictureURL			: {
 			type: this.mongoose.Schema.Types.URL,
-			"default": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm",
+			"default": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
 			required: true
 			//https://de.gravatar.com/site/implement/images/
 		},
@@ -50,23 +53,8 @@ var User = function(i18n, errors, mongoose){
 	
 	//Define constants
 	
-	/**
-	 * Gets the following constant: hash algorithm
-	 * @function getConstantHashAlgorithm
-	 * @returns {String} constant: hash algorithm
-	 */
-	userSchema.methods.getConstantHashAlgorithm = function(){
-		return "sha512";
-	}
-	
-	/**
-	 * Gets the following constant: salt length
-	 * @function getConstantSaltLength
-	 * @returns {String} constant: salt length
-	 */
-	userSchema.methods.getConstantSaltLength = function(){
-		return 30;
-	}
+	userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
+	userSchema.statics.saltLength		= this.config.SALT_LENGTH;
 	
 	
 	/**
@@ -91,7 +79,7 @@ var User = function(i18n, errors, mongoose){
 	 */
 	userSchema.methods.hash = function(password, salt, algorithm){
 		if(!algorithm){
-			algorithm = this.getConstantHashAlgorithm();
+			algorithm = this.hashAlgorithm;
 		}
 		
 	    var hash = crypto.createHmac(algorithm, salt);
@@ -111,7 +99,7 @@ var User = function(i18n, errors, mongoose){
 		if(this.hash(password, this.passwordSalt, this.passwordHashAlgorithm) == this.passwordHash){
 			//password is correct, check if the hash algorithm changed
 			
-			var hashAlgorithm = this.getConstantHashAlgorithm();
+			var hashAlgorithm = this.hashAlgorithm;
 			
 			if(this.passwordHashAlgorithm !== hashAlgorithm){
 				//yes it did, hash and store the password with the new algorithm one
@@ -140,12 +128,12 @@ var User = function(i18n, errors, mongoose){
 				( this.passwordResetCode  && this.passwordResetCode === passwordResetCode ) )
 		{
 			
-			var salt					= this.generateRandomString(this.getConstantSaltLength());
+			var salt					= this.generateRandomString(this.saltLength);
 			
 			this.passwordResetCode		= "";
 			
 			this.passwordHash			= this.hash(password, salt);
-			this.passwordHashAlgorithm	= this.getConstantHashAlgorithm();
+			this.passwordHashAlgorithm	= this.hashAlgorithm;
 			this.passwordSalt			= salt;
 			
 			return true;
