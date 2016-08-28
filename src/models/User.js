@@ -137,7 +137,13 @@ var User = function(i18n, errors, mongoose){
 	userSchema.methods.updateFromPassportProfile = function(profile, customKeysAndVals){
 		if(!customKeysAndVals){customKeysAndVals = {};}
 		
-		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals));
+		var obj = Object.assign(this.getPassportUserMappings(profile), customKeysAndVals);
+		for(key in obj){
+			if(obj.hasOwnProperty(key)){
+				this[key] = obj[key];
+			}
+		}
+		
 	}
 	
 	/**
