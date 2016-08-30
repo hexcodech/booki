@@ -34,7 +34,7 @@ var Booki = function(){
 	});
 	
 	//Load error messages
-	this.Error			= require("./Error.js")(this.i18n);
+	this.errors			= require("./Error.js")(this.i18n);
 	
 	//Register mongoose schemaTypes
 	this.mongoose.Schema.Types.Email		= require("./schemaTypes/Email.js");
@@ -54,13 +54,20 @@ var Booki = function(){
 	});
 	
 	//Configure the server
+	this.app.use(this.express.static("../static"));
 	this.app.use(this.bodyParser.json());
 	this.app.use(this.cookieParser());
 	this.app.use(this.i18n.init);
 	this.app.use(this.passport.initialize());
+	this.app.use(this.errorHandler);
 	
 	//Do the routing
 	this.Routing		= require("./Routing.js")(this);
 };
+
+Booki.prototype.errorHandler = function(err, req, res, next) {
+	console.log("#-#");
+	next(err, req, res, next);
+}
 
 module.exports = Booki;

@@ -37,5 +37,8 @@
 	"DatabaseError": "DatabaseError",
 	"The database query failed": "The database query failed",
 	"UnexpectedQueryResultError": "UnexpectedQueryResultError",
-	"The database query returned an unexpected result": "The database query returned an unexpected result"
+	"The database query returned an unexpected result": "The database query returned an unexpected result",
+	"Something went wrong with your authentication": "Something went wrong with your authentication",
+	"ClientUpgradeRequiredError": "ClientUpgradeRequiredError",
+	"TooManyRequestsError": "TooManyRequestsError"
 }

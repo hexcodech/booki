@@ -8,9 +8,14 @@
 	"HASH_ALGORITHM"			: "sha512",
 	"SALT_LENGTH"				: 30,
 	
+	"HOST"						: "booki.me",
+	
+	"LOGIN_SUCCESS_REDIRECT"	: "/logged-in",
+	"FAILURE_SUCCESS_REDIRECT"	: "/login",
+	
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",
-	"FACEBOOK_CALLBACK_URL"		: "",
+	"FACEBOOK_CALLBACK_PATH"	: "/auth/facebook/callback",
 
 	"GOOGLEBOOKS_API_KEY"		: ""
 }

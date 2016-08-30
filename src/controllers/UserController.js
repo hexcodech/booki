@@ -15,7 +15,7 @@ var UserController = function(app, i18n, errors, mongoose){
 	var self			= this;
 	
 	//Require modules
-	this.User			= require("../models/User")(this.i18n, this.errors, this.mongoose);
+	//this.User			= require("../models/User")(this.i18n, this.mongoose);
 	
 	this.events			= require("events");
 	

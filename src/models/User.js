@@ -2,10 +2,9 @@
  * Defines the user structure
  * @constructor
  */
-var User = function(i18n, errors, mongoose){
+var User = function(i18n, mongoose){
 	//store passed params
 	this.i18n					= i18n;
-	this.errors					= errors;
 	this.mongoose				= mongoose;
 	
 	var self					= this;
@@ -57,6 +56,34 @@ var User = function(i18n, errors, mongoose){
 	
 	userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
 	userSchema.statics.saltLength		= this.config.SALT_LENGTH;
+	
+	/**
+	 * Finds a matching user to the passed passport profile
+	 * @function getPassportUserMappings
+	 * @param {Object} profile - The passport profile to base the new user on
+	 * @param {Function} callback - The function to execute when this function found a user
+	 * @returns {Object} The user keys and values that can be used to create a user
+	 */
+	userSchema.statics.getUserByPassportProfile = function(profile, callback){
+		var user	= null;
+		
+		for(var i=0;i<profile.emails.length;i++){
+			this.findOne({email: profile.emails[i]}, function(err, _user){
+				
+				if(err){return callback(null, err);}
+				
+				if(_user){
+					//User exists
+					user	= _user;
+					
+					i		= profile.emails.length;//breaks the loop
+				}
+				
+			});
+		}
+		
+		callback(user, null);
+	}
 	
 	/**
 	 * Creates an object including the keys and values needed to
@@ -144,6 +171,7 @@ var User = function(i18n, errors, mongoose){
 			}
 		}
 		
+		return this;
 	}
 	
 	/**
@@ -201,7 +229,7 @@ var User = function(i18n, errors, mongoose){
 	};
 	
 	
-	userSchema.set('toJSON', {
+	userSchema.set("toJSON", {
 	    transform: function(doc, ret, options) {
 	        return {
 	        	id				: ret._id,

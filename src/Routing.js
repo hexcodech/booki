@@ -12,16 +12,15 @@ var Routing = function(booki){
 	var self			= this;
 	
 	//Require modules
-	this.AuthController	= require("./controllers/AuthController");
+	this.AuthController	= require("./controllers/AuthController")(this.booki.app, this.booki.i18n, this.booki.errors, this.booki.mongoose);
 	
 	this.BookController	= require("./controllers/BookController");
-	this.UserController	= require("./controllers/UserController");
+	this.UserController	= require("./controllers/UserController")(this.booki.app, this.booki.i18n, this.booki.errors, this.booki.mongoose);
 
 	this.book_isbn13_id = require("./validation/book_isbn13_id");
 	this.book_post		= require("./validation/book_post");
 	
 	//Init variables
-	this.userController = new this.UserController(this.booki.app, this.booki.i18n, this.booki.errors, this.booki.mongoose);
 	this.bookController = new this.BookController(this.booki.mongoose);
 	
 	//Start routing
