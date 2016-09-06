@@ -4,45 +4,23 @@
  * @constructor
  */
 
-var BookController = function(mongoose){
+var BookController = function(app, i18n, errors, mongoose){
+    //store passed params
+    this.app			= app;
+    this.i18n			= i18n;
+    this.errors			= errors;
+    this.mongoose		= mongoose;
+
     //keep reference to 'this'
     var self            = this;
-    
-    this.mongoose		= mongoose;
-    this.config         = require("../../config.json");
-    this.googlebooks	= require("google-books-search");
 
-    /**
-     * Get book using ISBN13 from DB
-     * @param id
-     * @param callback
-     */
-    this.selectBookISBN13 = function (id, callback) {
-        /*this.sqlConnection.query("SELECT * FROM books WHERE isbn13=?", [id], function (err, results) {
-            if(err)
-                throw err;
-            callback(JSON.stringify(results));
-        });*/
-    };
+    //Require modules
+    //this.Book			= require("../models/Book")(this.i18n, this.mongoose);
 
-    /**
-     * Get book using ISBN13 from the Google API
-     * @param id
-     * @param callback
-     */
-    this.selectBookISBN13GoogleAPI = function (id, callback) {
-        var queryOptions = {
-            key:    this.config.GOOGLEBOOKS_API_KEY,
-            field:  "isbn"
-        };
+    this.events			= require("events");
 
-        this.googlebooks.search(id.toString(), queryOptions, function (error, results, apiResponse) {
-            if(error)
-                throw error;
-
-            callback(JSON.stringify(results));
-        });
-    };
+    //init values
+    this.eventEmitter	= new this.events.EventEmitter();
 };
 
 module.exports = BookController;
