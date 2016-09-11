@@ -19,7 +19,7 @@ var AuthController = function(app, i18n, errors, mongoose){
 	this.crypto			= require("crypto");
 	this.passport		= require("passport");
 	
-	this.User			= require("../models/User")(this.i18n, this.mongoose);
+	this.User			= require("../models/User")(this.i18n, this.errors, this.mongoose);
 	
 	//init variables
 	this.config			= require("../../config.json");
@@ -28,6 +28,8 @@ var AuthController = function(app, i18n, errors, mongoose){
 	//Register providers
 	var LocalStrategy		= require("passport-local").Strategy;
 	var FacebookStrategy	= require("passport-facebook").Strategy;
+	var TwitterStrategy		= require("passport-twitter").Strategy;
+	var GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
 	
 	//With username(email)/password
 	this.passport.use(new LocalStrategy(
@@ -37,7 +39,7 @@ var AuthController = function(app, i18n, errors, mongoose){
 				if(err){return done(null, false, err);}
 				
 				if(!user || !user.verifyPassword(password)) {
-					return done(null, false, new this.errors.Loginerrors());
+					return done(null, false, new this.errors.LoginError());
 				}
 				
 				return done(null, user);
@@ -51,60 +53,73 @@ var AuthController = function(app, i18n, errors, mongoose){
 		})(request, response, next);
 	});
 	
-	//With facebook
+	//With Facebook
 	this.passport.use(
 		new FacebookStrategy({
-			clientID:			this.config.FACEBOOK_APP_ID,
-			clientSecret:		this.config.FACEBOOK_APP_SECRET,
-			callbackURL:		this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH
+			clientID					: this.config.FACEBOOK_APP_ID,
+			clientSecret				: this.config.FACEBOOK_APP_SECRET,
+			callbackURL					: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH
 		},
 		function(accessToken, refreshToken, profile, done){
-			//check if a user with the provided mail addresses exists
-			this.User.getUserByPassportProfile(profile, function(user, err){
-				if(err){return done(err, false);}
-				
-				if(user){
-					//update values for the current user
-					
-					user.updateFromPassportProfile(profile, {
-						facebookAccessToken		: accessToken,
-						facebookRefreshToken	: refreshToken
-					});
-					
-				}else{
-					//we have to create a new user
-					user = new this.User.createFromPassportProfile(profile, {
-						email					: profile.emails[0].value,
-						
-						facebookAccessToken		: accessToken,
-						facebookRefreshToken	: refreshToken
-					});
-				}
-				
-				user.save(function(err){
-					if(err){return done(err, false);}
-					
-					done(null, user)
-				});
-				
-			});
+			this.User.findOrCreateUserByPassportProfile(profile, {
+				facebookAccessToken		: accessToken,
+				facebookRefreshToken	: refreshToken
+			}, done);
 		})
 	);
 	
-	//Do the routings
+	this.app.get("/auth/facebook",		this.passport.authenticate("facebook"));
 	
-	/*
-		Redirects the user to Facebook. When the authentication completes,
-		Facebook will redirect the user back to us at FACEBOOK_CALLBACK_PATH
-	*/
-	
-	this.app.get("/auth/facebook",			this.passport.authenticate("facebook"));
-	
-	this.app.get(this.config.FACEBOOK_CALLBACK_PATH,	this.passport.authenticate("facebook", {
-		successRedirect: this.config.LOGIN_SUCCESS_REDIRECT,
-		failureRedirect: this.config.FAILURE_SUCCESS_REDIRECT
+	this.app.get(this.config.FACEBOOK_CALLBACK_PATH, this.passport.authenticate("facebook", {
+		successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+		failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
 	}));
 	
+	//With Twitter
+	this.passport.use(
+		new TwitterStrategy({
+			consumerKey					: this.config.TWITTER_CONSUMER_KEY,
+			consumerSecret				: this.config.TWITTER_CONSUMER_SECRET,
+			callbackURL					: this.config.HOST + this.config.TWITTER_CALLBACK_PATH
+		},
+		function(token, tokenSecret, profile, done) {
+			this.User.findOrCreateUserByPassportProfile(profile, {
+				twitterToken		: token,
+				twitterTokenSecret	: tokenSecret
+			}, done);
+		})
+	);
+	
+	this.app.get("/auth/twitter",		this.passport.authenticate("twitter"));
+	
+	this.app.get(this.config.TWITTER_CALLBACK_PATH, this.passport.authenticate("twitter", {
+		successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+		failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
+	}));
+	
+	//With Google
+	passport.use(
+		new GoogleStrategy({
+			clientID					: this.config.GOOGLE_CLIENT_ID,
+			clientSecret				: this.config.GOOGLE_CLIENT_SECRET,
+			callbackURL					: this.config.HOST + this.config.GOOGLE_CALLBACK_PATH
+		},
+		function(accessToken, refreshToken, profile, done) {
+			this.User.findOrCreateUserByPassportProfile(profile, {
+				googleAccessToken		: accessToken,
+				googleRefreshToken		: refreshToken
+			}, done);
+		})
+	);
+	
+	app.get("/auth/google", passport.authenticate("google",{
+		scope: ["https://www.googleapis.com/auth/plus.login"]
+	}));
+	
+	this.app.get(this.config.GOOGLE_CALLBACK_PATH, this.passport.authenticate("google", {
+		successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+		failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
+	}));
 	
 	
 	function auth(request, response, next, err, user, info){

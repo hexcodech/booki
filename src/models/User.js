@@ -2,9 +2,10 @@
  * Defines the user structure
  * @constructor
  */
-var User = function(i18n, mongoose){
+var User = function(i18n, errors, mongoose){
 	//store passed params
 	this.i18n					= i18n;
+	this.errors					= errors;
 	this.mongoose				= mongoose;
 	
 	var self					= this;
@@ -46,8 +47,8 @@ var User = function(i18n, mongoose){
 		twitterToken				: {type: String, "default": "", required: false},
 		twitterTokenSecret			: {type: String, "default": "", required: false},
 		
-		googleToken					: {type: String, "default": "", required: false},
-		googleTokenSecret			: {type: String, "default": "", required: false},
+		googleAccessToken			: {type: String, "default": "", required: false},
+		googleRefreshToken			: {type: String, "default": "", required: false},
 	});
 	
 	//Define constants
@@ -59,10 +60,10 @@ var User = function(i18n, mongoose){
 	
 	/**
 	 * Finds a matching user to the passed passport profile
-	 * @function getPassportUserMappings
+	 * @function getUserByPassportProfile
 	 * @param {Object} profile - The passport profile to base the new user on
 	 * @param {Function} callback - The function to execute when this function found a user
-	 * @returns {Object} The user keys and values that can be used to create a user
+	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.statics.getUserByPassportProfile = function(profile, callback){
 		var user	= null;
@@ -70,7 +71,11 @@ var User = function(i18n, mongoose){
 		for(var i=0;i<profile.emails.length;i++){
 			this.findOne({email: profile.emails[i]}, function(err, _user){
 				
-				if(err){return callback(null, err);}
+				if(err){
+					return callback(new this.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
 				
 				if(_user){
 					//User exists
@@ -82,7 +87,43 @@ var User = function(i18n, mongoose){
 			});
 		}
 		
-		callback(user, null);
+		callback(null, user);
+	}
+	
+	/**
+	 * Finds or creates a matching user to the passed passport profile
+	 * @function findOrCreateUserByPassportProfile
+	 * @param {Object} profile - The passport profile to base the new user on
+	 * @param {Object} customKeysAndVals The custom keys and values used to find or create the user
+	 * @param {Function} callback - The function to execute when this function found a user
+	 * @returns {undefined} The data is returned with the callback parameter
+	 */
+	userSchema.statics.findOrCreateUserByPassportProfile = function(profile, customKeysAndVals, callback){
+		
+		this.getUserByPassportProfile(profile, function(errorObj, user){
+			
+			if(err1){
+				return callback(errorObj, null);
+			}
+			
+			if(user){
+				//update values for the current user
+				user.updateFromPassportProfile(profile, customKeysAndVals);
+			}else{
+				//we have to create a new user
+				user = this.createFromPassportProfile(profile, customKeysAndVals);
+			}
+			
+			user.save(function(err){
+				if(err){
+					return callback(new this.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
+				
+				return callback(null, user);
+			});
+		});
 	}
 	
 	/**
@@ -115,7 +156,10 @@ var User = function(i18n, mongoose){
 	userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals){
 		if(!customKeysAndVals){customKeysAndVals = {};}
 		
-		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals));
+		return new this(Object.assign(this.getPassportUserMappings(profile), Object.assign(
+			customKeysAndVals,
+			{email : profile.emails[0].value}
+		)));
 	}
 	
 	/**

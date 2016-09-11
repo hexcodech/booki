@@ -16,6 +16,14 @@
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",
 	"FACEBOOK_CALLBACK_PATH"	: "/auth/facebook/callback",
+	
+	"TWITTER_CONSUMER_KEY"		: "",
+	"TWITTER_CONSUMER_SECRET"	: "",
+	"TWITTER_CALLBACK_PATH"		: "/auth/twitter/callback",
+	
+	"GOOGLE_CLIENT_ID"			: "",
+	"GOOGLE_CLIENT_SECRET"		: "",
+	"GOOGLE_CALLBACK_PATH"		: "/auth/google/callback",
 
 	"GOOGLEBOOKS_API_KEY"		: ""
 }
