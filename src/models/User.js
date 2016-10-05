@@ -3,7 +3,7 @@
  * @constructor
  */
 var User = function(i18n, errors, mongoose){
-	//store passed params
+	//store the passed parameters
 	this.i18n					= i18n;
 	this.errors					= errors;
 	this.mongoose				= mongoose;
@@ -12,6 +12,8 @@ var User = function(i18n, errors, mongoose){
 	
 	//include required modules
 	this.crypto					= require("crypto");
+	this.mailController			= require("MailController");
+	this.EmailTemplate			= require("email-templates").EmailTemplate;
 	
 	//Load config
 	this.config					= require("../../config.json");
@@ -30,6 +32,7 @@ var User = function(i18n, errors, mongoose){
 		passwordSalt				: {type: String, "default": "", required: false},
 		
 		passwordResetCode			: {type: String, "default": "", required: false},
+		registrationCode			: {type: String, "default": "", required: false},
 		
 		dateCreated					: {type: Date, "default": Date.now, required: true},
 		
@@ -51,12 +54,15 @@ var User = function(i18n, errors, mongoose){
 		googleRefreshToken			: {type: String, "default": "", required: false},
 	});
 	
-	//Define constants
+	//Define constants and pass some modules
 	
 	userSchema.statics.crypto			= this.crypto;
+	userSchema.statics.mailController	= this.mailController;
+	userSchema.statics.EmailTemplate	= this.EmailTemplate;
 	
 	userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
 	userSchema.statics.saltLength		= this.config.SALT_LENGTH;
+	userSchema.statics.tokenLength		= this.config.TOKEN_LENGTH;
 	
 	/**
 	 * Finds a matching user to the passed passport profile
@@ -88,6 +94,26 @@ var User = function(i18n, errors, mongoose){
 		}
 		
 		callback(null, user);
+	}
+	
+	/**
+	 * Registers a new user
+	 * @function register
+	 * @param {Object} profile - The passport profile to base the new user on
+	 * @param {Function} callback - The function to execute when this function found a user
+	 * @returns {undefined} The data is returned with the callback parameter
+	 */
+	userSchema.statics.register = function(firstName, lastName, email, callback){
+		var user = {
+			displayName					: firstName + " " + lastName,
+			firstName					: firstName,
+			lastName					: lastName,
+			
+			email						: email,
+			
+			passwordResetCode			: "",
+			registrationCode			: "",
+		};
 	}
 	
 	/**
@@ -168,7 +194,7 @@ var User = function(i18n, errors, mongoose){
 	 * @param {number} length - Length of the random string.
 	 * @returns {String} A random string of a given length
 	 */
-	userSchema.statics.generateRandomString = function(){
+	userSchema.statics.generateRandomString = function(length){
 		return this.crypto.randomBytes(Math.ceil(length/2))
         	.toString("hex") //convert to hexadecimal format
         	.slice(0, length);
@@ -270,6 +296,41 @@ var User = function(i18n, errors, mongoose){
 		}
 		
 		return false;
+	};
+	
+	/**
+	 * Sends a mail to the current user with the correct name
+	 * @function sendMail
+	 * @param {Array} cc - An array of recipients who will appear in the cc field
+	 * @param {Array} bcc - An array of recipients who won't be displayed
+	 * @param {String} subject - The subject of the email
+	 * @param {String} html - The content of the email
+	 * @param {String} replyTo - A mail address to who the recipients should reply
+	 * @param {Function} callback - A callback function that will be called after
+	 * sending the mail or encountering an error
+	 * @returns {undefined} The data is returned with the callback parameter
+	 */
+	userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
+		mailController.sendMail(['"' + this.firstName + " " + this.lastName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
+	}
+	
+	/**
+	 * Inits a password reset for the current user by generating a reset code and sending it by mail
+	 * @function initPasswordReset
+	 * @param 
+	 */
+	userSchema.methods.initPasswordReset = function(){
+		var passwordResetCode = this.generateRandomString(this.tokenLength);
+		var resetMail = new this.EmailTemplate(__dirname + "../templates/password-reset-email");
+		
+		resetMail.render(this, function(error, result){
+			if(error){
+				//TODO
+			}
+			this.sendMail([], [], result.subject, result.html, null, function(error, success){
+				//TODO
+			});
+		});
 	};
 	
 	

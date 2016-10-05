@@ -1,5 +1,5 @@
 /**
- * Authenticates a user
+ * Authenticates users
  * @constructor
  */
 
