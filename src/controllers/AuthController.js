@@ -3,13 +3,12 @@
  * @constructor
  */
 
-var AuthController = function(app, i18n, errors, mongoose){
+var AuthController = function(app, i18n, errors, User){
 	//store passed params
 	
 	this.app			= app;
 	this.errors			= errors;
 	this.i18n			= i18n;
-	this.mongoose		= mongoose;
 	
 	//keep reference to 'this'
 	var self			= this;
@@ -19,7 +18,7 @@ var AuthController = function(app, i18n, errors, mongoose){
 	this.crypto			= require("crypto");
 	this.passport		= require("passport");
 	
-	this.User			= require("../models/User")(this.i18n, this.errors, this.mongoose);
+	this.User			= User;
 	
 	//init variables
 	this.config			= require("../../config.json");

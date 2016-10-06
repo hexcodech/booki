@@ -40,5 +40,8 @@
 	"The database query returned an unexpected result": "The database query returned an unexpected result",
 	"Something went wrong with your authentication": "Something went wrong with your authentication",
 	"ClientUpgradeRequiredError": "ClientUpgradeRequiredError",
-	"TooManyRequestsError": "TooManyRequestsError"
+	"TooManyRequestsError": "TooManyRequestsError",
+	"This is probably our fault. Please contact the support.": "This is probably our fault. Please contact the support.",
+	"RenderError": "RenderError",
+	"The data could not be rendered": "The data could not be rendered"
 }

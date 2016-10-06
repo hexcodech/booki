@@ -12,7 +12,7 @@ var User = function(i18n, errors, mongoose){
 	
 	//include required modules
 	this.crypto					= require("crypto");
-	this.mailController			= require("MailController");
+	this.mailController			= require("../controllers/MailController");
 	this.EmailTemplate			= require("email-templates").EmailTemplate;
 	
 	//Load config
@@ -31,8 +31,10 @@ var User = function(i18n, errors, mongoose){
 		passwordHashAlgorithm		: {type: String, "default": "", required: false},
 		passwordSalt				: {type: String, "default": "", required: false},
 		
+		preferedLocale				: {type: String, required: true},
+		
 		passwordResetCode			: {type: String, "default": "", required: false},
-		registrationCode			: {type: String, "default": "", required: false},
+		mailConfirmationCode		: {type: String, "default": "", required: false},
 		
 		dateCreated					: {type: Date, "default": Date.now, required: true},
 		
@@ -57,6 +59,7 @@ var User = function(i18n, errors, mongoose){
 	//Define constants and pass some modules
 	
 	userSchema.statics.crypto			= this.crypto;
+	userSchema.statics.errors			= this.errors;
 	userSchema.statics.mailController	= this.mailController;
 	userSchema.statics.EmailTemplate	= this.EmailTemplate;
 	
@@ -93,7 +96,7 @@ var User = function(i18n, errors, mongoose){
 			});
 		}
 		
-		callback(null, user);
+		return callback(null, user);
 	}
 	
 	/**
@@ -104,7 +107,7 @@ var User = function(i18n, errors, mongoose){
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.statics.register = function(firstName, lastName, email, callback){
-		var user = {
+		var userData = {
 			displayName					: firstName + " " + lastName,
 			firstName					: firstName,
 			lastName					: lastName,
@@ -112,8 +115,25 @@ var User = function(i18n, errors, mongoose){
 			email						: email,
 			
 			passwordResetCode			: "",
-			registrationCode			: "",
+			mailConfirmationCode		: "",
 		};
+		
+		var user = new this(userData);
+		
+		user.save(function(err){
+			if(err){
+				return callback(new this.errors.DatabaseError({
+					message: err.message
+				}), null);
+			}
+			
+			user.initEmailConfirmation(function(error, success){
+				if(error){
+					return callback(error, false);
+				}
+				return callback(null, this);
+			});
+		});
 	}
 	
 	/**
@@ -317,18 +337,50 @@ var User = function(i18n, errors, mongoose){
 	/**
 	 * Inits a password reset for the current user by generating a reset code and sending it by mail
 	 * @function initPasswordReset
-	 * @param 
+	 * @param {Function} callback - The function that will be called if the render succeeds or an error occurs
+	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.methods.initPasswordReset = function(){
+	userSchema.methods.initPasswordReset = function(callback){
 		var passwordResetCode = this.generateRandomString(this.tokenLength);
-		var resetMail = new this.EmailTemplate(__dirname + "../templates/password-reset-email");
+		var resetMail = new this.EmailTemplate(__dirname + "../templates/emails/password-reset");
 		
-		resetMail.render(this, function(error, result){
-			if(error){
-				//TODO
+		resetMail.render(this, this.preferedLocale, function(err, result){
+			if(err){
+				return callback(new this.errors.RenderError({
+					message: err.message
+				}), false);
 			}
 			this.sendMail([], [], result.subject, result.html, null, function(error, success){
-				//TODO
+				if(success){
+					this.passwordResetCode = passwordResetCode;
+				}
+				return callback(error, success);
+			});
+		});
+	};
+	
+	/**
+	 * Inits a email confirmation for the current user by generating a code and sending it by mail
+	 * @function initEmailConfirmation
+	 * @param {Function} callback - The function that will be called if the
+	 * mail was sent successfully or an error occurs
+	 * @returns {undefined} The data is returned with the callback parameter
+	 */
+	userSchema.methods.initEmailConfirmation = function(callback){
+		var mailConfirmationCode = this.generateRandomString(this.tokenLength);
+		var confirmationMail = new this.EmailTemplate(__dirname + "../templates/emails/email-confirmation");
+		
+		confirmationMail.render(this, this.preferedLocale, function(err, result){
+			if(err){
+				return callback(new this.errors.RenderError({
+					message: err.message
+				}), false);
+			}
+			this.sendMail([], [], result.subject, result.html, null, function(error, success){
+				if(success){
+					this.mailConfirmationCode = mailConfirmationCode;
+				}
+				return callback(error, success);
 			});
 		});
 	};

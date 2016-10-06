@@ -129,15 +129,25 @@ var Error = function(i18n){
 			name				: i18n.__("DatabaseError"),
 			code				: 601,
 			defaultMessage		: i18n.__("The database query failed"),
+			defaultResponse		: i18n.__("This is probably our fault. Please contact the support."),
 		},
 		
 		UnexpectedQueryResultError : {
 			name				: i18n.__("UnexpectedQueryResultError"),
 			code				: 602,
 			defaultMessage		: i18n.__("The database query returned an unexpected result"),
+			defaultResponse		: i18n.__("This is probably our fault. Please contact the support."),
 			parent				: "DatabaseError"
-		}
+		},
 		
+		
+		
+		RenderError : {
+			name				: i18n.__("RenderError"),
+			code				: 603,
+			defaultMessage		: i18n.__("The data could not be rendered"),
+		    defaultResponse		: i18n.__("This is probably our fault. Please contact the support.")
+		}
 		
 		
 	};
