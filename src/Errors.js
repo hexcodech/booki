@@ -3,19 +3,14 @@
  * @constructor
  */
 
-var Error = function(i18n){
-	//store passed params
-	this.i18n			= i18n;
-	
-	//keep reference to 'this'
-	var self			= this;
+var Errors = function(i18n){
 	
 	//Require modules
-	this.errors			= require("errors");
+	var errors			= require("errors");
 	
 	//Create errors
 	
-	this.errorMessages = {
+	var errorMessages = {
 		
 		InternalServerError : {
 			name				: i18n.__("InternalServerError"),
@@ -156,16 +151,16 @@ var Error = function(i18n){
 		if(!errorMessages.hasOwnProperty(errorKey)){continue;}
 		
 		if("parent" in errorMessages[errorKey]){
-			errorMessages[errorKey].parent = this.errors[this.errorMessages[errorKey].parent];
+			errorMessages[errorKey].parent = errors[errorMessages[errorKey].parent];
 		}
 		
-		this.errors.create(this.errorMessages[errorKey]);
+		errors.create(errorMessages[errorKey]);
 	}
 	
 	return {
-		errorMessages		: this.errorMessages,
-		err					: this.errors
+		errorMessages		: errorMessages,
+		err					: errors
 	};
 };
 
-module.exports = Error;
+module.exports = Errors;

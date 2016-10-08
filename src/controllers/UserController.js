@@ -4,29 +4,30 @@
  */
 
 var UserController = function(app, i18n, errors, User){
-	//store passed params
-	this.app			= app;
-	this.i18n			= i18n;
-	this.errors			= errors;
 	
-	
-	//keep reference to 'this'
 	var self			= this;
 	
-	//Require modules
-	this.User			= User;
+	//store passed parameters
+	self.app			= app;
+	self.i18n			= i18n;
+	self.errors			= errors;
 	
-	this.events			= require("events");
+	//Require modules
+	self.User			= User;
+	
+	self.events			= require("events");
 	
 	//init values
-	this.eventEmitter	= new this.events.EventEmitter();
+	self.eventEmitter	= new self.events.EventEmitter();
 	
-	app.post("/register", function(request, response){
-	    var first_name	= request.body.first_name,
-	        last_name	= request.body.last_name,
-	        email		= request.body.email;
+	self.app.post("/register", function(request, response){
+		
+	    var first_name		= request.body.first_name,
+	        last_name		= request.body.last_name,
+	        email			= request.body.email
+	        preferedLocale	= request.body.preferedLocale;
 	    
-	    User.register(first_name, last_name, email, function(error, user){
+	    self.User.register(first_name, last_name, email, preferedLocale, function(error, user){
 	    	if(error){
 	    		console.log(error);
 	    	}else{

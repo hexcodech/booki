@@ -4,25 +4,27 @@
  */
 
 var MailController = function(errors){
+	
+	var self			= this;
+	
 	//store the passed parameters
-	this.errors					= errors;
+	self.errors			= errors;
 	
 	//Load modules
-	this.nodemailer		= require("nodemailer");
+	self.nodemailer		= require("nodemailer");
 	
 	//init variables
-	this.config			= require("../../config.json");
+	self.config			= require("../../config.json");
 	
-	this.transporter	= this.nodemailer.createTransport({
-		host				: this.config.MAIL_HOST,
-	    port				: this.config.MAIL_PORT,
+	self.transporter	= self.nodemailer.createTransport({
+		host				: self.config.MAIL_HOST,
+	    port				: self.config.MAIL_PORT,
 	    secure: true,
 	    auth: {
-	        user			: this.config.MAIL_USER,
-	        pass			: this.config.MAIL_PASSWORD
+	        user			: self.config.MAIL_USER,
+	        pass			: self.config.MAIL_PASSWORD
 	    }
 	});
-	
 };
 
 /**
@@ -42,7 +44,7 @@ MailController.prototype.sendMail = function(to, cc, bcc, subject, html, replyTo
 	var self	= this;
 	
 	var data	= {
-		from		: '"' + self.config.MAIL_FROM_NAME + '" <' + this.config.MAIL_USER + ">"
+		from		: '"' + self.config.MAIL_FROM_NAME + '" <' + self.config.MAIL_USER + ">"
 	};
 	
 	var i;
@@ -52,7 +54,7 @@ MailController.prototype.sendMail = function(to, cc, bcc, subject, html, replyTo
 	];
 	
 	var arrayFields	= [
-		{ value: to, name: "to" }, { value: cc, name: "cc" }, { value: bc , name: "cc" }	
+		{ value: to, name: "to" }, { value: cc, name: "cc" }, { value: bcc , name: "bcc" }	
 	];
 	var stringFields = [
 		{ value: subject, name: "subject" }, { value: html, name: "html" },
@@ -62,7 +64,7 @@ MailController.prototype.sendMail = function(to, cc, bcc, subject, html, replyTo
 	
 	for(i=0;i<requiredFields.length;i++){
 		if(!requiredFields[i].value){
-			callback(new this.errors.InputValidationError(), false);
+			callback(new self.errors.err.InputValidationError(), false);
 		}
 	}
 	

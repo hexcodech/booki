@@ -4,27 +4,25 @@
  */
 
 var Booki = function(){
-	
-	//keep reference to 'this'
 	var self			= this;
 	
 	//Require modules
-	this.mongoose		= require("mongoose");
-	this.apicache		= require("apicache");
-	this.passport		= require("passport");
-	this.bodyParser		= require("body-parser");
-	this.cookieParser	= require("cookie-parser");
-	this.express		= require("express");
-	this.events			= require("events");
-	this.i18n			= require("i18n");
-	this.validate		= require("express-validation");
+	self.mongoose		= require("mongoose");
+	self.apicache		= require("apicache");
+	self.passport		= require("passport");
+	self.bodyParser		= require("body-parser");
+	self.cookieParser	= require("cookie-parser");
+	self.express		= require("express");
+	self.events			= require("events");
+	self.i18n			= require("i18n");
+	self.validate		= require("express-validation");
 	
 	//Store some values
-	this.apicacheMiddle	= this.apicache.middleware;
-	this.eventEmitter	= new this.events.EventEmitter();
+	self.apicacheMiddle	= self.apicache.middleware;
+	self.eventEmitter	= new self.events.EventEmitter();
 	
 	//Configure i18n
-	this.i18n.configure({
+	self.i18n.configure({
 		locales			:["en", "de"],
 		defaultLocale	: "en",
 		directory		: __dirname + "/../locales",
@@ -34,35 +32,39 @@ var Booki = function(){
 	});
 	
 	//Load error messages
-	this.errors			= require("./Error.js")(this.i18n);
+	self.Errors			= require("./Errors");
+	self.errors			= new self.Errors(self.i18n);
 	
 	//Register mongoose schemaTypes
-	this.mongoose.Schema.Types.Email		= require("./schemaTypes/Email.js");
-	this.mongoose.Schema.Types.URL			= require("./schemaTypes/URL.js");
+	self.mongoose.Schema.Types.Email	= require("./schemaTypes/Email");
+	self.mongoose.Schema.Types.URL		= require("./schemaTypes/URL");
 	
 	//Load config
-	this.config			= require("../config.json");
+	self.config							= require("../config.json");
 	
 	//Connect to to the database
-	this.mongoose.connect("mongodb://" + this.config.DB_HOST + "/" + this.config.DB_NAME);
+	self.mongoose.connect("mongodb://" + self.config.DB_HOST + "/" + self.config.DB_NAME);
 	
 	//Start the server
-	this.app			= new this.express();
+	self.app			= new self.express();
 	
-	this.server = this.app.listen(this.config.HTTP_PORT, function(){
+	self.server = self.app.listen(self.config.HTTP_PORT, function(){
 		self.eventEmitter.emit("Booki::server::init", self.server.address().address, self.server.address().port);
 	});
 	
 	//Configure the server
-	this.app.use(this.express.static("../static"));
-	this.app.use(this.bodyParser.json());
-	this.app.use(this.cookieParser());
-	this.app.use(this.i18n.init);
-	this.app.use(this.passport.initialize());
-	this.app.use(this.errorHandler);
+	self.app.use(self.express.static("../static"));
+	self.app.use(self.bodyParser.json());
+	self.app.use(self.bodyParser.urlencoded({
+		extended: true
+	}));
+	self.app.use(self.i18n.init);
+	self.app.use(self.cookieParser());
+	self.app.use(self.passport.initialize());
+	self.app.use(self.errorHandler);
 	
 	//Do the routing
-	this.Routing		= require("./Routing.js")(this);
+	self.Routing		= require("./Routing")(self);
 };
 
 Booki.prototype.errorHandler = function(err, req, res, next) {

@@ -5,22 +5,22 @@
  */
 
 var BookController = function(app, i18n, errors, mongoose){
-    //store passed params
-    this.app			= app;
-    this.i18n			= i18n;
-    this.errors			= errors;
-    this.mongoose		= mongoose;
-
-    //keep reference to 'this'
-    var self            = this;
-
+	
+	var self			= this;
+	
+	//Store passed parameters
+	self.app			= app;
+	self.i18n			= i18n;
+	self.errors			= errors;
+	self.mongoose		= mongoose;
+	
     //Require modules
     //this.Book			= require("../models/Book")(this.i18n, this.mongoose);
 
-    this.events			= require("events");
+	self.events			= require("events");
 
     //init values
-    this.eventEmitter	= new this.events.EventEmitter();
+	self.eventEmitter	= new self.events.EventEmitter();
 };
 
 module.exports = BookController;

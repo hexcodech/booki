@@ -5,42 +5,46 @@
  */
 
 var Routing = function(booki){
-	//store passed params
-	this.booki = booki;
 	
-	//keep reference to "this"
 	var self			= this;
 	
-	//Require modules
+	//Store passed variables
+	self.booki			= booki;
 	
 	//Models first
-	this.User			= require("./models/User")(
-			this.booki.i18n,
-			this.booki.errors,
-			this.booki.mongoose
+	self.User			= new require("./models/User")(
+			self.booki.i18n,
+			self.booki.errors,
+			self.booki.mongoose
 	);
 	
 	//Then the controllers
-	this.AuthController	= require("./controllers/AuthController")(
-			this.booki.app,
-			this.booki.i18n,
-			this.booki.errors,
-			this.User
+	self.AuthController	= require("./controllers/AuthController");
+	
+	self.authController	= new self.AuthController(
+			self.booki.app,
+			self.booki.i18n,
+			self.booki.errors,
+			self.User
 	);
 	
-	this.BookController	= require("./controllers/BookController");
-	this.UserController	= require("./controllers/UserController")(
-			this.booki.app,
-			this.booki.i18n,
-			this.booki.errors,
-			this.User
+	self.BookController	= require("./controllers/BookController");
+	
+	self.bookController = new self.BookController(
+			self.booki.mongoose
+	);
+	
+	self.UserController	= require("./controllers/UserController");
+	
+	self.userController	= new self.UserController(
+			self.booki.app,
+			self.booki.i18n,
+			self.booki.errors,
+			self.User
 	);
 
-	this.book_isbn13_id = require("./validation/book_isbn13_id");
-	this.book_post		= require("./validation/book_post");
-	
-	//Init variables
-	this.bookController = new this.BookController(this.booki.mongoose);
+	self.book_isbn13_id	= require("./validation/book_isbn13_id");
+	self.book_post		= require("./validation/book_post");
 	
 	//Start routing
 
@@ -49,25 +53,19 @@ var Routing = function(booki){
 		//GET
 
 			//Get from database
-			this.booki.app.get("/book/isbn13/:id", this.booki.validate(this.book_isbn13_id), function(request, response){
-				this.bookController.selectthis.bookiSBN13(request.params.id, function (result){
-					response.end(JSON.stringify(result));
-				});
+			self.booki.app.get("/book/isbn13/:id", self.booki.validate(self.book_isbn13_id), function(request, response){
+				
 			});
 
 			//Get from Google API, cache this for 12 hours.
-			this.booki.app.get("/book/google/isbn13/:id", this.booki.validate(this.book_isbn13_id), this.booki.apicacheMiddle('12 hours'), function (request, response) {
+			self.booki.app.get("/book/google/isbn13/:id", self.booki.validate(self.book_isbn13_id), booki.apicacheMiddle('12 hours'), function (request, response) {
 				request.apicacheGroup	= "googleBooks";
-
-				this.bookController.selectthis.bookiSBN13GoogleAPI(request.params.id, function (result) {
-					response.end(JSON.stringify(result));
-				});
 			});
 
 		//POST
 	
 			//Add new book to database
-			this.booki.app.post("/book", this.booki.validate(this.book_post), function(request, response)	{
+			self.booki.app.post("/book", self.booki.validate(self.book_post), function(request, response)	{
 				
 			});
 };

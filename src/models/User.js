@@ -3,30 +3,34 @@
  * @constructor
  */
 var User = function(i18n, errors, mongoose){
-	//store the passed parameters
-	this.i18n					= i18n;
-	this.errors					= errors;
-	this.mongoose				= mongoose;
 	
-	var self					= this;
+	var self			= this;
+	
+	//store the passed parameters
+	self.i18n					= i18n;
+	self.errors					= errors;
+	self.mongoose				= mongoose;
 	
 	//include required modules
-	this.crypto					= require("crypto");
-	this.mailController			= require("../controllers/MailController");
-	this.EmailTemplate			= require("email-templates").EmailTemplate;
+	self.crypto					= require("crypto");
+	
+	self.MailController			= require("../controllers/MailController");
+	self.mailController			= new self.MailController(errors);
+	
+	self.EmailTemplate			= require("email-templates").EmailTemplate;
 	
 	//Load config
-	this.config					= require("../../config.json");
+	self.config					= require("../../config.json");
 	
 	//setup some values
-	this.types					= this.mongoose.Schema.Types;
+	self.types					= mongoose.Schema.Types;
 	
-	var userSchema = new this.mongoose.Schema({
+	var userSchema = new self.mongoose.Schema({
 		displayName					: {type: String, required: true},
 		firstName					: {type: String, required: true},
 		lastName					: {type: String, required: true},
 		
-		email						: {type: this.types.Email, unique: true, required: true},
+		email						: {type: self.types.Email, unique: true, required: true},
 		passwordHash				: {type: String, "default": "", required: false},
 		passwordHashAlgorithm		: {type: String, "default": "", required: false},
 		passwordSalt				: {type: String, "default": "", required: false},
@@ -39,7 +43,7 @@ var User = function(i18n, errors, mongoose){
 		dateCreated					: {type: Date, "default": Date.now, required: true},
 		
 		profilePictureURL			: {
-			type: this.mongoose.Schema.Types.URL,
+			type: self.types.URL,
 			"default": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
 			required: true
 			//https://de.gravatar.com/site/implement/images/
@@ -58,14 +62,14 @@ var User = function(i18n, errors, mongoose){
 	
 	//Define constants and pass some modules
 	
-	userSchema.statics.crypto			= this.crypto;
-	userSchema.statics.errors			= this.errors;
-	userSchema.statics.mailController	= this.mailController;
-	userSchema.statics.EmailTemplate	= this.EmailTemplate;
+	userSchema.statics.crypto			= self.crypto;
+	userSchema.statics.errors			= self.errors;
+	userSchema.statics.mailController	= self.mailController;
+	userSchema.statics.EmailTemplate	= self.EmailTemplate;
 	
-	userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
-	userSchema.statics.saltLength		= this.config.SALT_LENGTH;
-	userSchema.statics.tokenLength		= this.config.TOKEN_LENGTH;
+	userSchema.statics.hashAlgorithm	= self.config.HASH_ALGORITHM;
+	userSchema.statics.saltLength		= self.config.SALT_LENGTH;
+	userSchema.statics.tokenLength		= self.config.TOKEN_LENGTH;
 	
 	/**
 	 * Finds a matching user to the passed passport profile
@@ -106,13 +110,15 @@ var User = function(i18n, errors, mongoose){
 	 * @param {Function} callback - The function to execute when this function found a user
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.statics.register = function(firstName, lastName, email, callback){
+	userSchema.statics.register = function(firstName, lastName, email, preferedLocale, callback){
 		var userData = {
 			displayName					: firstName + " " + lastName,
 			firstName					: firstName,
 			lastName					: lastName,
 			
 			email						: email,
+			
+			preferedLocale				: preferedLocale,
 			
 			passwordResetCode			: "",
 			mailConfirmationCode		: "",
@@ -122,7 +128,7 @@ var User = function(i18n, errors, mongoose){
 		
 		user.save(function(err){
 			if(err){
-				return callback(new this.errors.DatabaseError({
+				return callback(new this.errors.err.DatabaseError({
 					message: err.message
 				}), null);
 			}
@@ -131,7 +137,7 @@ var User = function(i18n, errors, mongoose){
 				if(error){
 					return callback(error, false);
 				}
-				return callback(null, this);
+				return callback(null, user);
 			});
 		});
 	}
@@ -146,7 +152,9 @@ var User = function(i18n, errors, mongoose){
 	 */
 	userSchema.statics.findOrCreateUserByPassportProfile = function(profile, customKeysAndVals, callback){
 		
-		this.getUserByPassportProfile(profile, function(errorObj, user){
+		var self = this;
+		
+		self.getUserByPassportProfile(profile, function(errorObj, user){
 			
 			if(err1){
 				return callback(errorObj, null);
@@ -157,12 +165,12 @@ var User = function(i18n, errors, mongoose){
 				user.updateFromPassportProfile(profile, customKeysAndVals);
 			}else{
 				//we have to create a new user
-				user = this.createFromPassportProfile(profile, customKeysAndVals);
+				user = self.createFromPassportProfile(profile, customKeysAndVals);
 			}
 			
 			user.save(function(err){
 				if(err){
-					return callback(new this.errors.DatabaseError({
+					return callback(new self.errors.err.DatabaseError({
 						message: err.message
 					}), null);
 				}
@@ -254,7 +262,7 @@ var User = function(i18n, errors, mongoose){
 	userSchema.methods.updateFromPassportProfile = function(profile, customKeysAndVals){
 		if(!customKeysAndVals){customKeysAndVals = {};}
 		
-		var obj = Object.assign(this.getPassportUserMappings(profile), customKeysAndVals);
+		var obj = Object.assign(this.constructor.getPassportUserMappings(profile), customKeysAndVals);
 		for(key in obj){
 			if(obj.hasOwnProperty(key)){
 				this[key] = obj[key];
@@ -272,10 +280,10 @@ var User = function(i18n, errors, mongoose){
 	 */
 	userSchema.methods.verifyPassword = function(password){
 		
-		if(this.hash(password, this.passwordSalt, this.passwordHashAlgorithm) == this.passwordHash){
+		if(this.constructor.hash(password, this.passwordSalt, this.passwordHashAlgorithm) == this.passwordHash){
 			//password is correct, check if the hash algorithm changed
 			
-			var hashAlgorithm = this.hashAlgorithm;
+			var hashAlgorithm = this.constructor.hashAlgorithm;
 			
 			if(this.passwordHashAlgorithm !== hashAlgorithm){
 				//yes it did, hash and store the password with the new algorithm one
@@ -304,12 +312,12 @@ var User = function(i18n, errors, mongoose){
 				( this.passwordResetCode  && this.passwordResetCode === passwordResetCode ) )
 		{
 			
-			var salt					= this.generateRandomString(this.saltLength);
+			var salt					= this.constructor.generateRandomString(this.constructor.saltLength);
 			
 			this.passwordResetCode		= "";
 			
-			this.passwordHash			= this.hash(password, salt);
-			this.passwordHashAlgorithm	= this.hashAlgorithm;
+			this.passwordHash			= this.constructor.hash(password, salt);
+			this.passwordHashAlgorithm	= this.constructor.hashAlgorithm;
 			this.passwordSalt			= salt;
 			
 			return true;
@@ -331,7 +339,7 @@ var User = function(i18n, errors, mongoose){
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
-		mailController.sendMail(['"' + this.firstName + " " + this.lastName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
+		this.constructor.mailController.sendMail(['"' + this.firstName + " " + this.lastName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
 	}
 	
 	/**
@@ -341,18 +349,20 @@ var User = function(i18n, errors, mongoose){
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.methods.initPasswordReset = function(callback){
-		var passwordResetCode = this.generateRandomString(this.tokenLength);
-		var resetMail = new this.EmailTemplate(__dirname + "../templates/emails/password-reset");
+		var passwordResetCode = this.constructor.generateRandomString(this.constructor.tokenLength);
+		var resetMail = new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
 		
-		resetMail.render(this, this.preferedLocale, function(err, result){
+		var self = this;
+		
+		resetMail.render(self, self.preferedLocale, function(err, result){
 			if(err){
-				return callback(new this.errors.RenderError({
+				return callback(new self.constructor.errors.err.RenderError({
 					message: err.message
 				}), false);
 			}
-			this.sendMail([], [], result.subject, result.html, null, function(error, success){
+			self.sendMail([], [], result.subject, result.html, null, function(error, success){
 				if(success){
-					this.passwordResetCode = passwordResetCode;
+					self.passwordResetCode = passwordResetCode;
 				}
 				return callback(error, success);
 			});
@@ -367,18 +377,24 @@ var User = function(i18n, errors, mongoose){
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.methods.initEmailConfirmation = function(callback){
-		var mailConfirmationCode = this.generateRandomString(this.tokenLength);
-		var confirmationMail = new this.EmailTemplate(__dirname + "../templates/emails/email-confirmation");
 		
-		confirmationMail.render(this, this.preferedLocale, function(err, result){
+		var self = this;
+		
+		var mailConfirmationCode	= self.constructor.generateRandomString(self.constructor.tokenLength);
+		var confirmationMail		= new self.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
+		
+		confirmationMail.render({
+			displayName				: self.displayName,
+			mailConfirmationCode	: mailConfirmationCode
+		}, self.preferedLocale, function(err, result){
 			if(err){
-				return callback(new this.errors.RenderError({
+				return callback(new self.constructor.errors.err.RenderError({
 					message: err.message
 				}), false);
 			}
-			this.sendMail([], [], result.subject, result.html, null, function(error, success){
+			self.sendMail([], [], result.subject, result.html, null, function(error, success){
 				if(success){
-					this.mailConfirmationCode = mailConfirmationCode;
+					self.mailConfirmationCode = mailConfirmationCode;
 				}
 				return callback(error, success);
 			});
@@ -400,7 +416,7 @@ var User = function(i18n, errors, mongoose){
 	    }
 	});
 	
-	return this.mongoose.model("User", userSchema);
+	return self.mongoose.model("User", userSchema);
 }
 
 module.exports = User;

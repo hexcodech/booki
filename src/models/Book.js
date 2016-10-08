@@ -5,23 +5,17 @@
  * @constructor
  */
 var User = function(i18n, mongoose){
-    //store passed params
-    this.i18n					= i18n;
-    this.mongoose				= mongoose;
-
-    var self					= this;
-
     //include required modules
-    this.crypto					= require("crypto");
+    var crypto					= require("crypto");
 
     //Load config
-    this.config					= require("../../config.json");
+    var config					= require("../../config.json");
 
     //setup some values
-    this.types					= this.mongoose.Schema.Types;
+    var types					= mongoose.Schema.Types;
 
 
-    var bookSchema = new this.mongoose.Schema({
+    var bookSchema = new mongoose.Schema({
         subjectID                   : {type: Number, required: true},
         isbn10                      : {type: String, required: true},
         isbn12                      : {type: Number, required: true},
@@ -35,7 +29,7 @@ var User = function(i18n, mongoose){
         pageCount                   : {type: Number, required: false},
         language                    : {type: String, required: false},
 
-        imageURL                    : {type: this.mongoose.Schema.Types.URL, required: false},
+        imageURL                    : {type: types.URL, required: false},
 
         approved                    : {type: Boolean, required: true},
         dateCreated                 : {type: Date, "default": Date.now, required: true},
