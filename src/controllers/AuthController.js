@@ -5,22 +5,22 @@
 
 var AuthController = function(app, i18n, errors, User){
 	
-	var self			= this;
+	var self				= this;
 	
 	//Store passed parameters
-	self.app			= app;
-	self.i18n			= i18n;
-	self.errors			= errors;
-	self.User			= User;
+	self.app				= app;
+	self.i18n				= i18n;
+	self.errors				= errors;
+	self.User				= User;
 	
 	//Require modules
-	self.events			= require("events");
-	self.crypto			= require("crypto");
-	self.passport		= require("passport");
+	self.events				= require("events");
+	self.crypto				= require("crypto");
+	self.passport			= require("passport");
 	
 	//init variables
-	self.config			= require("../../config.json");
-	self.eventEmitter	= new self.events.EventEmitter();
+	self.config				= require("../../config.json");
+	self.eventEmitter		= new self.events.EventEmitter();
 	
 	//Register providers
 	var LocalStrategy		= require("passport-local").Strategy;
