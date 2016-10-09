@@ -43,5 +43,8 @@
 	"TooManyRequestsError": "TooManyRequestsError",
 	"This is probably our fault. Please contact the support.": "This is probably our fault. Please contact the support.",
 	"RenderError": "RenderError",
-	"The data could not be rendered": "The data could not be rendered"
+	"The data could not be rendered": "The data could not be rendered",
+	"UserAlreadyExistsError": "UserAlreadyExistsError",
+	"This email was already registered": "This email was already registered",
+	"Verify that you still own this email address": "Verify that you still own this email address"
 }

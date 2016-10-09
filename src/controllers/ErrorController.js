@@ -3,14 +3,16 @@
  * @constructor
  */
 
-var Errors = function(i18n){
+var ErrorController = function(i18n){
+	
+	var self					= this;
 	
 	//Require modules
-	var errors			= require("errors");
+	self.errors					= require("errors");
 	
 	//Create errors
 	
-	var errorMessages = {
+	self.errorMessages = {
 		
 		InternalServerError : {
 			name				: i18n.__("InternalServerError"),
@@ -142,25 +144,59 @@ var Errors = function(i18n){
 			code				: 603,
 			defaultMessage		: i18n.__("The data could not be rendered"),
 		    defaultResponse		: i18n.__("This is probably our fault. Please contact the support.")
+		},
+		
+		
+		UserAlreadyExistsError : {
+			name				: i18n.__("UserAlreadyExistsError"),
+			code				: 601,
+			defaultMessage		: i18n.__("This email was already registered"),
+			defaultResponse		: i18n.__("Verify that you still own this email address"),
 		}
 		
 		
 	};
 	
-	for(errorKey in errorMessages){
-		if(!errorMessages.hasOwnProperty(errorKey)){continue;}
+	var errorKey;
+	
+	for(errorKey in self.errorMessages){
+		if(!self.errorMessages.hasOwnProperty(errorKey)){continue;}
 		
-		if("parent" in errorMessages[errorKey]){
-			errorMessages[errorKey].parent = errors[errorMessages[errorKey].parent];
+		if("parent" in self.errorMessages[errorKey]){
+			self.errorMessages[errorKey].parent = self.errors[self.errorMessages[errorKey].parent];
 		}
 		
-		errors.create(errorMessages[errorKey]);
+		self.errors.create(self.errorMessages[errorKey]);
 	}
-	
-	return {
-		errorMessages		: errorMessages,
-		err					: errors
-	};
 };
 
-module.exports = Errors;
+ErrorController.prototype.expressErrorResponse = function(request, response, error){
+	
+	//Try to translate the properties into the requested locale if the error type is supported
+	
+	if(error.name in this.errors){
+		var msg, resp, exp; //"response" is already defined!
+		
+		if(error.message){
+			msg = request.__(error.message);
+		}
+		
+		if(error.response){
+			resp = request.__(error.response);
+		}
+		
+		if(error.explanation){
+			exp = request.__(error.explanation);
+		}
+		
+		error = new this.errors[error.name]({
+			message			: msg,
+			response		: resp,
+			explanation		: exp
+		});
+	}
+	
+	return response.end(JSON.stringify(error.toJSON()));
+};
+
+module.exports = ErrorController;

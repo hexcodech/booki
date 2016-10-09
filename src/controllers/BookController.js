@@ -4,15 +4,15 @@
  * @constructor
  */
 
-var BookController = function(app, i18n, errors, mongoose){
+var BookController = function(app, i18n, errorController, mongoose){
 	
 	var self			= this;
 	
 	//Store passed parameters
-	self.app			= app;
-	self.i18n			= i18n;
-	self.errors			= errors;
-	self.mongoose		= mongoose;
+	self.app				= app;
+	self.i18n				= i18n;
+	self.errorController	= errorController;
+	self.mongoose			= mongoose;
 	
     //Require modules
     //this.Book			= require("../models/Book")(this.i18n, this.mongoose);

@@ -3,14 +3,14 @@
  * @constructor
  */
 
-var AuthController = function(app, i18n, errors, User){
+var AuthController = function(app, i18n, errorController, User){
 	
 	var self				= this;
 	
 	//Store passed parameters
 	self.app				= app;
 	self.i18n				= i18n;
-	self.errors				= errors;
+	self.errorController	= errorController;
 	self.User				= User;
 	
 	//Require modules
@@ -33,9 +33,7 @@ var AuthController = function(app, i18n, errors, User){
 		function(email, password, done){
 			User.findOne({email: email}, function(err, user){
 				
-				if(err){return done(null, false, err);}
-				
-				if(!user || !user.verifyPassword(password)) {
+				if(err || user.passwordHash.length > 0 || !user || !user.verifyPassword(password)) {
 					return done(null, false, new errors.LoginError());
 				}
 				
@@ -121,26 +119,23 @@ var AuthController = function(app, i18n, errors, User){
 	}));
 	
 	
-	function auth(request, response, next, err, user, info){
+	function auth(request, response, next, error, user, info){
 		
-		response.setHeader("Content-Type", "application/json; charset=utf-8");
-		
-		if(err){
-			return response.end(JSON.stringify(err.toJSON()));
+		if(error){
+			return self.errorController.expressErrorResponse(request, response, error);
 		}
 		
 		if(!user){
 			
-			var e = new self.errors.err.AuthenticationError({
-				message: request.__(self.errors.errorMessages.AuthenticationError.defaultMessage)
-			});
-			
-			return response.end(JSON.stringify(e.toJSON()));
+			return self.errorController.expressErrorResponse(request, response, 
+					new self.errorController.errors.AuthenticationError()
+			);
 		}
 		
 		request.login(user, function(err) {
 			if (err) { return next(err); }
 			
+			//TODO correct json format
 			return response.end("auth successful")
 		});
 	}

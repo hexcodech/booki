@@ -14,7 +14,7 @@ var Routing = function(booki){
 	//Models first
 	self.User			= new require("./models/User")(
 			self.booki.i18n,
-			self.booki.errors,
+			self.booki.errorController,
 			self.booki.mongoose
 	);
 	
@@ -24,7 +24,7 @@ var Routing = function(booki){
 	self.authController	= new self.AuthController(
 			self.booki.app,
 			self.booki.i18n,
-			self.booki.errors,
+			self.booki.errorController,
 			self.User
 	);
 	
@@ -39,7 +39,7 @@ var Routing = function(booki){
 	self.userController	= new self.UserController(
 			self.booki.app,
 			self.booki.i18n,
-			self.booki.errors,
+			self.booki.errorController,
 			self.User
 	);
 

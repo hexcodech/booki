@@ -32,8 +32,8 @@ var Booki = function(){
 	});
 	
 	//Load error messages
-	self.Errors			= require("./Errors");
-	self.errors			= new self.Errors(self.i18n);
+	self.ErrorController	= require("./controllers/ErrorController");
+	self.errorController	= new self.ErrorController(self.i18n);
 	
 	//Register mongoose schemaTypes
 	self.mongoose.Schema.Types.Email	= require("./schemaTypes/Email");
@@ -53,6 +53,11 @@ var Booki = function(){
 	});
 	
 	//Configure the server
+	self.app.use(function(request, response, next) {
+		//UTF 8 JSON all the way
+		response.header("Content-Type", "application/json; charset=utf-8");
+	  next();
+	});
 	self.app.use(self.express.static("../static"));
 	self.app.use(self.bodyParser.json());
 	self.app.use(self.bodyParser.urlencoded({

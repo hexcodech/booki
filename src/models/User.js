@@ -2,20 +2,20 @@
  * Defines the user structure
  * @constructor
  */
-var User = function(i18n, errors, mongoose){
+var User = function(i18n, errorController, mongoose){
 	
 	var self			= this;
 	
 	//store the passed parameters
 	self.i18n					= i18n;
-	self.errors					= errors;
+	self.errorController		= errorController;
 	self.mongoose				= mongoose;
 	
 	//include required modules
 	self.crypto					= require("crypto");
 	
 	self.MailController			= require("../controllers/MailController");
-	self.mailController			= new self.MailController(errors);
+	self.mailController			= new self.MailController(errorController);
 	
 	self.EmailTemplate			= require("email-templates").EmailTemplate;
 	
@@ -63,7 +63,7 @@ var User = function(i18n, errors, mongoose){
 	//Define constants and pass some modules
 	
 	userSchema.statics.crypto			= self.crypto;
-	userSchema.statics.errors			= self.errors;
+	userSchema.statics.errorController	= self.errorController;
 	userSchema.statics.mailController	= self.mailController;
 	userSchema.statics.EmailTemplate	= self.EmailTemplate;
 	
@@ -85,7 +85,7 @@ var User = function(i18n, errors, mongoose){
 			this.findOne({email: profile.emails[i]}, function(err, _user){
 				
 				if(err){
-					return callback(new this.errors.DatabaseError({
+					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
@@ -126,19 +126,35 @@ var User = function(i18n, errors, mongoose){
 		
 		var user = new this(userData);
 		
-		user.save(function(err){
+		this.find({email: email}, function(err, users){
 			if(err){
-				return callback(new this.errors.err.DatabaseError({
+				return callback(new this.errorController.errors.DatabaseError({
 					message: err.message
 				}), null);
 			}
 			
-			user.initEmailConfirmation(function(error, success){
-				if(error){
-					return callback(error, false);
-				}
-				return callback(null, user);
-			});
+			if(users){
+				
+				return callback(new this.errorController.errors.UserAlreadyExistsError(), null);
+				
+			}else{
+				user.save(function(err2){
+					
+					if(err2){
+						return callback(new this.errorController.errors.DatabaseError({
+							message: err2.message
+						}), null);
+					}
+					
+					user.initEmailConfirmation(function(error, success){
+						if(error){
+							return callback(error, false);
+						}
+						return callback(null, user);
+						
+					}, true);
+				});
+			}
 		});
 	}
 	
@@ -170,7 +186,7 @@ var User = function(i18n, errors, mongoose){
 			
 			user.save(function(err){
 				if(err){
-					return callback(new self.errors.err.DatabaseError({
+					return callback(new self.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
@@ -356,7 +372,7 @@ var User = function(i18n, errors, mongoose){
 		
 		resetMail.render(self, self.preferedLocale, function(err, result){
 			if(err){
-				return callback(new self.constructor.errors.err.RenderError({
+				return callback(new self.constructor.errorController.errors.RenderError({
 					message: err.message
 				}), false);
 			}
@@ -376,7 +392,7 @@ var User = function(i18n, errors, mongoose){
 	 * mail was sent successfully or an error occurs
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.methods.initEmailConfirmation = function(callback){
+	userSchema.methods.initEmailConfirmation = function(callback, registration){
 		
 		var self = this;
 		
@@ -388,13 +404,17 @@ var User = function(i18n, errors, mongoose){
 			mailConfirmationCode	: mailConfirmationCode
 		}, self.preferedLocale, function(err, result){
 			if(err){
-				return callback(new self.constructor.errors.err.RenderError({
+				return callback(new self.constructor.errorController.errors.RenderError({
 					message: err.message
 				}), false);
 			}
 			self.sendMail([], [], result.subject, result.html, null, function(error, success){
 				if(success){
-					self.mailConfirmationCode = mailConfirmationCode;
+					self.mailConfirmationCode	= mailConfirmationCode;
+					
+					if(registration){
+						self.passwordResetCode	= mailConfirmationCode;
+					}
 				}
 				return callback(error, success);
 			});

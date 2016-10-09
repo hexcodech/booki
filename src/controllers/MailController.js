@@ -3,20 +3,20 @@
  * @constructor
  */
 
-var MailController = function(errors){
+var MailController = function(errorController){
 	
-	var self			= this;
+	var self				= this;
 	
 	//store the passed parameters
-	self.errors			= errors;
+	self.errorController	= errorController;
 	
 	//Load modules
-	self.nodemailer		= require("nodemailer");
+	self.nodemailer			= require("nodemailer");
 	
 	//init variables
-	self.config			= require("../../config.json");
+	self.config				= require("../../config.json");
 	
-	self.transporter	= self.nodemailer.createTransport({
+	self.transporter		= self.nodemailer.createTransport({
 		host				: self.config.MAIL_HOST,
 	    port				: self.config.MAIL_PORT,
 	    secure: true,
@@ -64,7 +64,7 @@ MailController.prototype.sendMail = function(to, cc, bcc, subject, html, replyTo
 	
 	for(i=0;i<requiredFields.length;i++){
 		if(!requiredFields[i].value){
-			callback(new self.errors.err.InputValidationError(), false);
+			callback(new self.errorController.errors.InputValidationError(), false);
 		}
 	}
 	
