@@ -66,6 +66,8 @@ var Booki = function(){
 		//UTF 8 JSON all the way EXCEPT /static/
 		if(!request.url.startsWith("/static/")){
 			response.header("Content-Type", "application/json; charset=utf-8");
+		}else{
+			res.setHeader("charset", "utf-8");
 		}
 	  next();
 	});
