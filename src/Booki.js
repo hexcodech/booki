@@ -53,12 +53,7 @@ var Booki = function(){
 	});
 	
 	//Configure the server
-	self.app.use(function(request, response, next) {
-		//UTF 8 JSON all the way
-		response.header("Content-Type", "application/json; charset=utf-8");
-	  next();
-	});
-	self.app.use(self.express.static("../static"));
+	self.app.use("/static/", self.express.static("../static"));
 	self.app.use(self.bodyParser.json());
 	self.app.use(self.bodyParser.urlencoded({
 		extended: true
@@ -66,6 +61,15 @@ var Booki = function(){
 	self.app.use(self.i18n.init);
 	self.app.use(self.cookieParser());
 	self.app.use(self.passport.initialize());
+	
+	self.app.use(function(request, response, next) {
+		//UTF 8 JSON all the way EXCEPT /static/
+		if(!request.url.startsWith("/static/")){
+			response.header("Content-Type", "application/json; charset=utf-8");
+		}
+	  next();
+	});
+	
 	self.app.use(self.errorHandler);
 	
 	//Do the routing
