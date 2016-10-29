@@ -1,134 +1,131 @@
 /**
  * Authenticates users
- * @constructor
  */
 
-var AuthController = function(app, i18n, errorController, User){
+class AuthController {
 	
-	var self				= this;
-	
-	//Store passed parameters
-	self.app				= app;
-	self.i18n				= i18n;
-	self.errorController	= errorController;
-	self.User				= User;
-	
-	//Require modules
-	self.events				= require("events");
-	self.crypto				= require("crypto");
-	self.passport			= require("passport");
-	
-	//init variables
-	self.config				= require("../../config.json");
-	self.eventEmitter		= new self.events.EventEmitter();
-	
-	//Register providers
-	var LocalStrategy		= require("passport-local").Strategy;
-	var FacebookStrategy	= require("passport-facebook").Strategy;
-	var TwitterStrategy		= require("passport-twitter").Strategy;
-	var GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
-	
-	//With username(email)/password
-	self.passport.use(new LocalStrategy(
-		function(email, password, done){
-			User.findOne({email: email}, function(err, user){
-				
-				if(err || user.passwordHash.length > 0 || !user || !user.verifyPassword(password)) {
-					return done(null, false, new errors.LoginError());
-				}
-				
-				return done(null, user);
-			});
-		}
-	));
-	
-	self.app.post("/auth/local", function(request, response, next){
-		self.passport.authenticate("local",	function(err, user, info){
+	constructor({booki, config, app, i18n, errorController, crypto, passport, LocalStrategy, FacebookStrategy, TwitterStrategy, GoogleStrategy}, User){
+		
+		//Store passed parameters
+		this.config				= config;
+		this.app				= app;
+		this.i18n				= i18n;
+		this.errorController	= errorController;
+		this.crypto				= crypto;
+		this.passport			= passport;
+		
+		this.User				= User;
+		
+		//With username(email)/password
+		this.passport.use(new LocalStrategy(
+			function(email, password, done){
+				User.findOne({email: email}, function(err, user){
+					
+					if(err || user.passwordHash.length > 0 || !user || !user.verifyPassword(password)) {
+						return done(null, false, new errors.LoginError());
+					}
+					
+					return done(null, user);
+				});
+			}
+		));
+		
+		this.app.post("/v1/auth/local", (request, response, next) => {
 			
-			auth(request, response, next, err, user, info);
+			this.passport.authenticate("local",	(err, user, info) => {
+				
+				this.auth(request, response, next, err, user, info);
+				
+			})(request, response, next);
 			
-		})(request, response, next);
-	});
+		});
+		
+		//With Facebook
+		this.passport.use(
+			new FacebookStrategy({
+				clientID					: this.config.FACEBOOK_APP_ID,
+				clientSecret				: this.config.FACEBOOK_APP_SECRET,
+				callbackURL					: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH
+			},
+			(accessToken, refreshToken, profile, done) => {
+				
+				this.User.findOrCreateUserByPassportProfile(profile, {
+					facebookAccessToken		: accessToken,
+					facebookRefreshToken	: refreshToken
+				}, done);
+				
+			})
+		);
+		
+		this.app.get("/v1/auth/facebook",		this.passport.authenticate("facebook"));
+		
+		this.app.get(this.config.FACEBOOK_CALLBACK_PATH, this.passport.authenticate("facebook", {
+			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+			failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
+		}));
+		
+		//With Twitter
+		this.passport.use(
+			new TwitterStrategy({
+				consumerKey					: this.config.TWITTER_CONSUMER_KEY,
+				consumerSecret				: this.config.TWITTER_CONSUMER_SECRET,
+				callbackURL					: this.config.HOST + this.config.TWITTER_CALLBACK_PATH
+			},
+			(token, tokenSecret, profile, done) => {
+				
+				this.User.findOrCreateUserByPassportProfile(profile, {
+					twitterToken		: token,
+					twitterTokenSecret	: tokenSecret
+				}, done);
+				
+			})
+		);
+		
+		this.app.get("/v1/auth/twitter",		this.passport.authenticate("twitter"));
+		
+		this.app.get(this.config.TWITTER_CALLBACK_PATH, this.passport.authenticate("twitter", {
+			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+			failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
+		}));
+		
+		//With Google
+		this.passport.use(
+			new GoogleStrategy({
+				clientID					: this.config.GOOGLE_CLIENT_ID,
+				clientSecret				: this.config.GOOGLE_CLIENT_SECRET,
+				callbackURL					: this.config.HOST + this.config.GOOGLE_CALLBACK_PATH
+			},
+			(accessToken, refreshToken, profile, done) => {
+				
+				this.User.findOrCreateUserByPassportProfile(profile, {
+					googleAccessToken		: accessToken,
+					googleRefreshToken		: refreshToken
+				}, done);
+				
+			})
+		);
+		
+		this.app.get("/v1/auth/google", this.passport.authenticate("google",{
+			scope: ["https://www.googleapis.com/auth/plus.login"]
+		}));
+		
+		this.app.get(this.config.GOOGLE_CALLBACK_PATH, this.passport.authenticate("google", {
+			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
+			failureRedirect					: this.config.FAILURE_SUCCESS_REDIRECT
+		}));
+		
+	}
 	
-	//With Facebook
-	self.passport.use(
-		new FacebookStrategy({
-			clientID					: self.config.FACEBOOK_APP_ID,
-			clientSecret				: self.config.FACEBOOK_APP_SECRET,
-			callbackURL					: self.config.HOST + self.config.FACEBOOK_CALLBACK_PATH
-		},
-		function(accessToken, refreshToken, profile, done){
-			self.User.findOrCreateUserByPassportProfile(profile, {
-				facebookAccessToken		: accessToken,
-				facebookRefreshToken	: refreshToken
-			}, done);
-		})
-	);
-	
-	self.app.get("/auth/facebook",		self.passport.authenticate("facebook"));
-	
-	self.app.get(self.config.FACEBOOK_CALLBACK_PATH, self.passport.authenticate("facebook", {
-		successRedirect					: self.config.LOGIN_SUCCESS_REDIRECT,
-		failureRedirect					: self.config.FAILURE_SUCCESS_REDIRECT
-	}));
-	
-	//With Twitter
-	self.passport.use(
-		new TwitterStrategy({
-			consumerKey					: self.config.TWITTER_CONSUMER_KEY,
-			consumerSecret				: self.config.TWITTER_CONSUMER_SECRET,
-			callbackURL					: self.config.HOST + self.config.TWITTER_CALLBACK_PATH
-		},
-		function(token, tokenSecret, profile, done) {
-			self.User.findOrCreateUserByPassportProfile(profile, {
-				twitterToken		: token,
-				twitterTokenSecret	: tokenSecret
-			}, done);
-		})
-	);
-	
-	self.app.get("/auth/twitter",		self.passport.authenticate("twitter"));
-	
-	self.app.get(self.config.TWITTER_CALLBACK_PATH, self.passport.authenticate("twitter", {
-		successRedirect					: self.config.LOGIN_SUCCESS_REDIRECT,
-		failureRedirect					: self.config.FAILURE_SUCCESS_REDIRECT
-	}));
-	
-	//With Google
-	self.passport.use(
-		new GoogleStrategy({
-			clientID					: self.config.GOOGLE_CLIENT_ID,
-			clientSecret				: self.config.GOOGLE_CLIENT_SECRET,
-			callbackURL					: self.config.HOST + self.config.GOOGLE_CALLBACK_PATH
-		},
-		function(accessToken, refreshToken, profile, done) {
-			self.User.findOrCreateUserByPassportProfile(profile, {
-				googleAccessToken		: accessToken,
-				googleRefreshToken		: refreshToken
-			}, done);
-		})
-	);
-	
-	self.app.get("/auth/google", self.passport.authenticate("google",{
-		scope: ["https://www.googleapis.com/auth/plus.login"]
-	}));
-	
-	self.app.get(self.config.GOOGLE_CALLBACK_PATH, self.passport.authenticate("google", {
-		successRedirect					: self.config.LOGIN_SUCCESS_REDIRECT,
-		failureRedirect					: self.config.FAILURE_SUCCESS_REDIRECT
-	}));
-	
-	
-	function auth(request, response, next, error, user, info){
+	auth(request, response, next, error, user, info){
 		
 		if(error){
-			return self.errorController.expressErrorResponse(request, response, error);
+			return this.errorController.expressErrorResponse(request, response, error);
 		}
 		
 		if(!user){
 			
-			return self.errorController.expressErrorResponse(request, response, 
-					new self.errorController.errors.AuthenticationError()
+			return this.errorController.expressErrorResponse(request, response, 
+				new this.errorController.errors.AuthenticationError()
 			);
 		}
 		
@@ -139,7 +136,6 @@ var AuthController = function(app, i18n, errorController, User){
 			return response.end("auth successful")
 		});
 	}
-	
 };
 
 module.exports = AuthController;

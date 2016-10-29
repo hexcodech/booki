@@ -1,86 +1,91 @@
 /**
  * The main class of this project
- * @constructor
  */
 
-var Booki = function(){
-	var self			= this;
+class Booki {
 	
-	//Require modules
-	self.mongoose		= require("mongoose");
-	self.apicache		= require("apicache");
-	self.passport		= require("passport");
-	self.bodyParser		= require("body-parser");
-	self.cookieParser	= require("cookie-parser");
-	self.express		= require("express");
-	self.events			= require("events");
-	self.i18n			= require("i18n");
-	self.validate		= require("express-validation");
-	
-	//Store some values
-	self.apicacheMiddle	= self.apicache.middleware;
-	self.eventEmitter	= new self.events.EventEmitter();
-	
-	//Configure i18n
-	self.i18n.configure({
-		locales			:["en", "de"],
-		defaultLocale	: "en",
-		directory		: __dirname + "/../locales",
-		autoReload		: true,
-		extension		: ".json",
-		prefix			: "booki-",
-	});
-	
-	//Load error messages
-	self.ErrorController	= require("./controllers/ErrorController");
-	self.errorController	= new self.ErrorController(self.i18n);
-	
-	//Register mongoose schemaTypes
-	self.mongoose.Schema.Types.Email	= require("./schemaTypes/Email");
-	self.mongoose.Schema.Types.URL		= require("./schemaTypes/URL");
-	
-	//Load config
-	self.config							= require("../config.json");
-	
-	//Connect to to the database
-	self.mongoose.connect("mongodb://" + self.config.DB_HOST + "/" + self.config.DB_NAME);
-	
-	//Start the server
-	self.app			= new self.express();
-	
-	self.server = self.app.listen(self.config.HTTP_PORT, function(){
-		self.eventEmitter.emit("Booki::server::init", self.server.address().address, self.server.address().port);
-	});
-	
-	//Configure the server
-	self.app.use("/static/", self.express.static("../static"));
-	self.app.use(self.bodyParser.json());
-	self.app.use(self.bodyParser.urlencoded({
-		extended: true
-	}));
-	self.app.use(self.i18n.init);
-	self.app.use(self.cookieParser());
-	self.app.use(self.passport.initialize());
-	
-	self.app.use(function(request, response, next) {
-		//UTF 8 JSON all the way EXCEPT /static/
-		if(!request.url.startsWith("/static/")){
-			response.header("Content-Type", "application/json; charset=utf-8");
-		}else{
-			res.setHeader("charset", "utf-8");
-		}
-	  next();
-	});
-	
-	self.app.use(self.errorHandler);
-	
-	//Do the routing
-	self.Routing		= require("./Routing")(self);
+	constructor(){
+		
+		//Reference to oneself because of http://es6-features.org/#ParameterContextMatching
+		this.booki			= this;
+		
+		//Require modules
+		this.mongoose			= require("mongoose");
+		this.apicache			= require("apicache");
+		this.passport			= require("passport");
+		this.bodyParser			= require("body-parser");
+		this.cookieParser		= require("cookie-parser");
+		this.express			= require("express");
+		this.events				= require("events");
+		this.i18n				= require("i18n");
+		this.validate			= require("express-validation");
+		this.Joi				= require("joi");
+		this.crypto				= require("crypto");
+		this.nodemailer			= require("nodemailer");
+		this.passport			= require("passport");
+		this.errors				= require("errors");
+		this.LocalStrategy		= require("passport-local").Strategy;
+		this.FacebookStrategy	= require("passport-facebook").Strategy;
+		this.TwitterStrategy	= require("passport-twitter").Strategy;
+		this.GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
+		
+		//Store some values
+		this.apicacheMiddle	= this.apicache.middleware;
+		this.eventEmitter	= new this.events.EventEmitter();
+		
+		//Load config
+		this.config							= require("../config.json");
+		
+		//Configure i18n
+		this.i18n.configure({
+			locales			: this.config.LOCALES,
+			defaultLocale	: this.config.LOCALES[0],
+			directory		: __dirname + "/../locales",
+			autoReload		: true,
+			extension		: ".json",
+			prefix			: "booki-",
+		});
+		
+		//Load error messages
+		let ErrorController		= require("./controllers/ErrorController");
+		this.errorController	= new ErrorController(this.booki);
+		
+		//Connect to to the database
+		this.mongoose.connect("mongodb://" + this.config.DB_HOST + "/" + this.config.DB_NAME);
+		
+		//Start the server
+		this.app			= new this.express();
+		
+		this.server = this.app.listen(this.config.HTTP_PORT, () => {
+			this.eventEmitter.emit("Booki::server::init", this.server.address().address, this.server.address().port);
+		});
+		
+		//Configure the server
+		this.app.use("/static/", this.express.static("../static"));
+		this.app.use(this.bodyParser.json());
+		this.app.use(this.bodyParser.urlencoded({
+			extended: true
+		}));
+		this.app.use(this.i18n.init);
+		this.app.use(this.passport.initialize());
+		
+		this.app.use(
+			(request, response, next) => {
+			//UTF 8 JSON all the way EXCEPT /static/
+			if(!request.url.startsWith("/static/")){
+				response.header("Content-Type", "application/json; charset=utf-8");
+			}else{
+				res.setHeader("charset", "utf-8");
+			}
+			
+			next();
+		});
+		
+		//Do the routing
+		let Routing			= require("./Routing");
+		
+		this.routing		= new Routing(this.booki);
+	}
 };
-
-Booki.prototype.errorHandler = function(err, req, res, next) {
-	console.log("#-#");
-	next(err, req, res, next);
-}
 
 module.exports = Booki;

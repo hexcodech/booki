@@ -1,73 +1,61 @@
 /**
  * Manages the REST routing
- * @constructor
- * @param	{Booki}	booki - The main class of this project
  */
 
-var Routing = function(booki){
+class Routing {
 	
-	var self			= this;
+	constructor({booki, app, i18n, errorController, mongoose}){
 	
-	//Store passed variables
-	self.booki			= booki;
+		//Store passed variables
+		this.app				= app;
+		this.i18n				= i18n;
+		this.errorController	= errorController;
+		this.mongoose			= mongoose;
+		
+		
+		//Models first
+		let UserClass			= require("./models/User");
+		this.User				= new UserClass(booki);
+		
+		//Then the controllers
+		let AuthController		= require("./controllers/AuthController");
+		this.authController		= new AuthController(booki, this.User);
+		
+		
+		let BookController		= require("./controllers/BookController");
+		this.bookController	 	= new BookController(booki);
+		
+		
+		let UserController		= require("./controllers/UserController");
+		this.userController		= new UserController(booki, this.User);
 	
-	//Models first
-	self.User			= new require("./models/User")(
-			self.booki.i18n,
-			self.booki.errorController,
-			self.booki.mongoose
-	);
+		this.book_isbn13_id		= require("./validation/book_isbn13_id");
+		this.book_post			= require("./validation/book_post");
+		
+		//Start routing
 	
-	//Then the controllers
-	self.AuthController	= require("./controllers/AuthController");
+		//Book
 	
-	self.authController	= new self.AuthController(
-			self.booki.app,
-			self.booki.i18n,
-			self.booki.errorController,
-			self.User
-	);
+			//GET
 	
-	self.BookController	= require("./controllers/BookController");
+				//Get from database
+				/*this.app.get("/book/isbn13/:id", this.booki.validate(this.book_isbn13_id), (request, response) => {
+					
+				});
 	
-	self.bookController = new self.BookController(
-			self.booki.mongoose
-	);
+				//Get from Google API, cache this for 12 hours.
+				this.app.get("/book/google/isbn13/:id", this.booki.validate(this.book_isbn13_id), booki.apicacheMiddle('12 hours'), (request, response) => {
+					request.apicacheGroup	= "googleBooks";
+				});*/
 	
-	self.UserController	= require("./controllers/UserController");
+			//POST
+		
+				//Add new book to database
+				/*this.app.post("/book", this.booki.validate(this.book_post), (request, response) => {
+					
+				});*/
+	}
 	
-	self.userController	= new self.UserController(
-			self.booki.app,
-			self.booki.i18n,
-			self.booki.errorController,
-			self.User
-	);
-
-	self.book_isbn13_id	= require("./validation/book_isbn13_id");
-	self.book_post		= require("./validation/book_post");
-	
-	//Start routing
-
-	//Book
-
-		//GET
-
-			//Get from database
-			self.booki.app.get("/book/isbn13/:id", self.booki.validate(self.book_isbn13_id), function(request, response){
-				
-			});
-
-			//Get from Google API, cache this for 12 hours.
-			self.booki.app.get("/book/google/isbn13/:id", self.booki.validate(self.book_isbn13_id), booki.apicacheMiddle('12 hours'), function (request, response) {
-				request.apicacheGroup	= "googleBooks";
-			});
-
-		//POST
-	
-			//Add new book to database
-			self.booki.app.post("/book", self.booki.validate(self.book_post), function(request, response)	{
-				
-			});
 };
 
 module.exports = Routing;
