@@ -25,7 +25,7 @@ class User{
 		var userSchema = new this.mongoose.Schema({
 			displayName					: {type: String, required: true},
 			firstName					: {type: String, required: true},
-			lastName					: {type: String, required: true},
+			lastName					: {type: String, required: false},
 			
 			email						: {type: String, unique: true, required: true},
 			passwordHash				: {type: String, "default": "", required: false},
@@ -123,11 +123,10 @@ class User{
 		 * @param {Function} callback - The function to execute when this function found a user
 		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
-		userSchema.statics.register = function(firstName, lastName, email, preferredLocale, callback){
+		userSchema.statics.register = function(firstName, email, preferredLocale, callback){
 			var userData = {
-				displayName					: firstName + " " + lastName,
+				displayName					: firstName,
 				firstName					: firstName,
-				lastName					: lastName,
 				
 				email						: email,
 				
@@ -361,7 +360,7 @@ class User{
 		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
 		userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
-			this.constructor.mailController.sendMail(['"' + this.firstName + " " + this.lastName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
+			this.constructor.mailController.sendMail(['"' + this.firstName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
 		}
 		
 		/**

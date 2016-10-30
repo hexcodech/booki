@@ -22,7 +22,6 @@ class UserController {
 		this.app.post("/v1/register", booki.validate(this.LocalRegistrationValidation), (request, response) => {
 			
 		    var firstName		= request.body.firstName,
-		        lastName		= request.body.lastName,
 		        email			= request.body.email
 		        preferredLocale	= request.body.preferredLocale;
 		    
