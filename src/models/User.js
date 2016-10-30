@@ -46,6 +46,10 @@ class User{
 				//https://de.gravatar.com/site/implement/images/
 			},
 			
+			placeOfResidence			: {type: String, required: false},
+			
+			facebookFriends				: {type: Array, required: false},
+			
 			
 			facebookAccessToken			: {type: String, "default": "", required: false},
 			facebookRefreshToken		: {type: String, "default": "", required: false},
@@ -79,7 +83,7 @@ class User{
 			var user	= null;
 			
 			for(var i=0;i<profile.emails.length;i++){
-				this.findOne({email: profile.emails[i]}, function(err, _user){
+				this.findOne({email: profile.emails[i].value}, (err, _user) => {
 					
 					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
@@ -167,7 +171,7 @@ class User{
 			
 			this.getUserByPassportProfile(profile, (errorObj, user) => {
 				
-				if(err1){
+				if(errorObj){
 					return callback(errorObj, null);
 				}
 				
@@ -179,7 +183,7 @@ class User{
 					user = this.createFromPassportProfile(profile, customKeysAndVals);
 				}
 				
-				user.save(function(err){
+				user.save((err) => {
 					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
@@ -207,7 +211,7 @@ class User{
 				
 				//email					: profile.emails[0].value, shouldn't be updated without the user wanting it
 				
-				profilePictureURL		: photos[0].value
+				profilePictureURL		: profile.photos[0].value
 			};
 		}
 		
@@ -218,13 +222,8 @@ class User{
 		 * @param {Object} customKeysAndVals The custom keys and values to add to the user
 		 * @returns {Object} The user object
 		 */
-		userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals){
-			if(!customKeysAndVals){customKeysAndVals = {};}
-			
-			return new this(Object.assign(this.getPassportUserMappings(profile), Object.assign(
-				customKeysAndVals,
-				{email : profile.emails[0].value}
-			)));
+		userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals = {}){
+			return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : profile.emails[0].value}));
 		}
 		
 		/**

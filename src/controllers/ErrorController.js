@@ -171,7 +171,7 @@ class ErrorController {
 		
 	}
 	
-	expressErrorResponse(request, response, error){
+	expressErrorResponse(request, response, error, locale){
 	
 		//Try to translate the properties into the requested locale if the error type is supported
 		
@@ -179,15 +179,15 @@ class ErrorController {
 			var msg, resp, exp; //"response" is already defined!
 			
 			if(error.message){
-				msg = request.__(error.message);
+				msg = __({phrase: error.message, locale: locale});
 			}
 			
 			if(error.response){
-				resp = request.__(error.response);
+				resp = __({phrase: error.response, locale: locale});
 			}
 			
 			if(error.explanation){
-				exp = request.__(error.explanation);
+				exp = __({phrase: error.explanation, locale: locale});
 			}
 			
 			error = new this.errors[error.name]({

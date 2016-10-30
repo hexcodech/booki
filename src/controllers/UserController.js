@@ -4,13 +4,16 @@
 
 class UserController {
 	
-	constructor({booki, config, app, i18n, errorController}, User){
+	constructor({booki, config, app, i18n, errorController, getLocale}, User){
 	
 		//store passed parameters
 		this.config							= config;
 		this.app							= app;
 		this.i18n							= i18n;
 		this.errorController				= errorController;
+		
+		this.getLocale						= getLocale;
+		
 		this.User							= User;
 		
 		this.LocalRegistrationValidation	= require("../validation/LocalRegistrationValidation")(booki);
@@ -47,9 +50,9 @@ class UserController {
 					
 					this.errorController.expressErrorResponse(request, response, new this.errorController.errors.DatabaseError({
 						message: err.message
-					}));
+					}), this.getLocale(user, request));
 					
-		    	}else{
+		    	}else if(user){
 		    		
 		    		if(user.mailConfirmationCode === mailConfirmationCode){
 		    			
@@ -62,6 +65,8 @@ class UserController {
 		    		}else{
 		    			//TODO throw error
 		    		}
+		    	}else{
+			    	//no user was found
 		    	}
 		    });
 		   

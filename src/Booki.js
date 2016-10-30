@@ -86,6 +86,17 @@ class Booki {
 		
 		this.routing		= new Routing(this.booki);
 	}
+	
+	getLocale(user = null, request = null){
+		if(user !== null){
+			return user.preferedLocale;
+		}else if(request !== null){
+			return this.i18n.getLocale(request);
+		}else{
+			return this.config.LOCALES[0]
+		}
+	}
+	
 };
 
 module.exports = Booki;
