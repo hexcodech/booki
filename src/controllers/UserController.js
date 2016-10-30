@@ -25,7 +25,7 @@ class UserController {
 		        email			= request.body.email
 		        preferredLocale	= request.body.preferredLocale;
 		    
-		    this.User.register(firstName, lastName, email, preferredLocale, (error, user) => {
+		    this.User.register(firstName, email, preferredLocale, (error, user) => {
 			    
 		    	if(error){
 		    		errorController.expressErrorResponse(request, response, error);
