@@ -24,6 +24,10 @@ class UserController {
 		    var firstName		= request.body.firstName,
 		        email			= request.body.email
 		        preferredLocale	= request.body.preferredLocale;
+		        
+		        if(!preferredLocale){
+			        preferredLocale = this.getLocale(null, request);
+		        }
 		    
 		    this.User.register(firstName, email, preferredLocale, (error, user) => {
 			    
