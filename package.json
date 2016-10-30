@@ -9,22 +9,60 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hexcodech/booki.git"
+    "url": "https://github.com/hexcodech/booki.git"
   },
   "keywords": [
     "booki"
   ],
-  "author": "hexcode",
-  "license": "All rights reserved",
+  "author": "booki.me",
+  "contributors": [
+    {
+      "name": "Marc Berchtold",
+      "email": "marc.berchtold@hotmail.de",
+      "url": ""
+    },
+    {
+      "name": "Dario Breitenstein",
+      "email": "",
+      "url": ""
+    },
+    {
+      "name": "Nico Hauser",
+      "email": "me@tyratox.ch",
+      "url": "https://tyratox.ch"
+    },
+    {
+      "name": "David Schmid",
+      "email": "",
+      "url": ""
+    }
+  ],
+  "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/hexcodech/booki/issues"
   },
   "homepage": "http://booki.me",
   "dependencies": {
+    "apicache": "0.0.14",
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
     "crypto": "0.0.3",
+    "ejs": "^2.5.2",
+    "email-templates": "^2.4.1",
+    "errors": "^0.3.0",
     "events": "^1.1.1",
     "express": "^4.14.0",
+    "express-validation": "^1.0.0",
+    "google-books-search": "^0.3.0",
     "i18n": "^0.8.3",
-    "mysql": "^2.11.1"
+    "joi": "^8.0.5",
+    "mongoose": "^4.5.9",
+    "nodemailer": "^2.6.0",
+    "passport": "^0.3.2",
+    "passport-facebook": "^2.1.1",
+    "passport-google-oauth": "^1.0.0",
+    "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.4",
+    "valid-url": "^1.0.9"
   }
 }

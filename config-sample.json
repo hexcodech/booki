@@ -1,7 +1,39 @@
 /* has to be renamed to config.json and this comment has to be removed*/
 {
-	"host"			: "localhost",
-	"user"			: "bookiUser",
-	"password"		: "toor",
-	"database"		: "booki"
+	"DB_HOST"					: "localhost",
+	"DB_NAME"					: "booki",
+	
+	"HTTP_PORT"					: 8101,
+	
+	"HASH_ALGORITHM"			: "sha512",
+	"SALT_LENGTH"				: 30,
+	
+	"TOKEN_LENGTH"				: 6,
+	
+	"HOST"						: "booki.me",
+	"LOCALES"					: ["en"],
+	
+	"MAIL_HOST"					: "",
+	"MAIL_PORT"					: 465,
+	"MAIL_USER"					: "",
+	"MAIL_PASSWORD"				: "",
+	
+	"MAIL_FROM_NAME"			: "Booki",
+	
+	"LOGIN_SUCCESS_REDIRECT"	: "/logged-in",
+	"FAILURE_SUCCESS_REDIRECT"	: "/login",
+	
+	"FACEBOOK_APP_ID"			: "",
+	"FACEBOOK_APP_SECRET"		: "",
+	"FACEBOOK_CALLBACK_PATH"	: "/auth/facebook/callback",
+	
+	"TWITTER_CONSUMER_KEY"		: "",
+	"TWITTER_CONSUMER_SECRET"	: "",
+	"TWITTER_CALLBACK_PATH"		: "/auth/twitter/callback",
+	
+	"GOOGLE_CLIENT_ID"			: "",
+	"GOOGLE_CLIENT_SECRET"		: "",
+	"GOOGLE_CALLBACK_PATH"		: "/auth/google/callback",
+
+	"GOOGLEBOOKS_API_KEY"		: ""
 }
