@@ -21,7 +21,7 @@ class AuthController {
 		//With username(email)/password
 		this.passport.use(new LocalStrategy(
 			function(email, password, done){
-				User.findOne({email: email}, function(err, user){
+				User.findOne({email: email}, (err, user) => {
 					
 					if(err || user.passwordHash.length > 0 || !user || !user.verifyPassword(password)) {
 						return done(null, false, new errors.LoginError());
@@ -68,12 +68,15 @@ class AuthController {
 			scope : ['user_friends', 'user_location']
 		}));
 		
-		this.app.get(this.config.FACEBOOK_CALLBACK_PATH, this.passport.authenticate("facebook", {
-			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
-			failureRedirect					: this.config.LOGIN_FAILURE_REDIRECT,
-			failureFlash					: false,
-			session							: false
-		}), this.catchInternalError);
+		this.app.get(this.config.FACEBOOK_CALLBACK_PATH, (request, response, next) => {
+			
+			this.passport.authenticate("facebook", (error, user, info) => {
+				
+				this.auth(request, response, next, error, user, info);
+				
+			})(request, response, next);
+			
+		}, this.catchInternalError);
 		
 		//With Twitter
 		this.passport.use(
@@ -96,12 +99,15 @@ class AuthController {
 		
 		this.app.get("/v1/auth/twitter/login",		this.passport.authenticate("twitter"));
 		
-		this.app.get(this.config.TWITTER_CALLBACK_PATH, this.passport.authenticate("twitter", {
-			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
-			failureRedirect					: this.config.LOGIN_FAILURE_REDIRECT,
-			failureFlash					: false,
-			session							: false
-		}), this.catchInternalError);
+		this.app.get(this.config.TWITTER_CALLBACK_PATH, (request, response, next) => {
+			
+			this.passport.authenticate("twitter", (error, user, info) => {
+				
+				this.auth(request, response, next, error, user, info);
+				
+			})(request, response, next);
+			
+		}, this.catchInternalError);
 		
 		//With Google
 		this.passport.use(
@@ -125,12 +131,15 @@ class AuthController {
 			scope: ["openid profile email"]
 		}));
 		
-		this.app.get(this.config.GOOGLE_CALLBACK_PATH, this.passport.authenticate("google", {
-			successRedirect					: this.config.LOGIN_SUCCESS_REDIRECT,
-			failureRedirect					: this.config.LOGIN_FAILURE_REDIRECT,
-			failureFlash					: false,
-			session							: false
-		}), this.catchInternalError);
+		this.app.get(this.config.GOOGLE_CALLBACK_PATH, (request, response, next) => {
+			
+			this.passport.authenticate("google", (error, user, info) => {
+				
+				this.auth(request, response, next, error, user, info);
+				
+			})(request, response, next);
+			
+		}, this.catchInternalError);
 		
 	}
 	
@@ -144,9 +153,10 @@ class AuthController {
 			return this.errorController.expressErrorResponse(request, response, 
 				new this.errorController.errors.AuthenticationError()
 			);
+			
 		}
 		
-		request.login(user, function(err) {
+		request.logIn(user, {session: false}, function(err) {
 			if (err) { return next(err); }
 			
 			//TODO correct json format

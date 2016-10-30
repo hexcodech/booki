@@ -179,15 +179,15 @@ class ErrorController {
 			var msg, resp, exp; //"response" is already defined!
 			
 			if(error.message){
-				msg = __({phrase: error.message, locale: locale});
+				msg = this.i18n.__({phrase: error.message, locale: locale});
 			}
 			
 			if(error.response){
-				resp = __({phrase: error.response, locale: locale});
+				resp = this.i18n.__({phrase: error.response, locale: locale});
 			}
 			
 			if(error.explanation){
-				exp = __({phrase: error.explanation, locale: locale});
+				exp = this.i18n.__({phrase: error.explanation, locale: locale});
 			}
 			
 			error = new this.errors[error.name]({
