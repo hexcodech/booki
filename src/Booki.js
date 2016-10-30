@@ -72,7 +72,7 @@ class Booki {
 		this.app.use(
 			(request, response, next) => {
 			//UTF 8 JSON all the way EXCEPT /static/
-			if(!request.url.startsWith("/static/") && !request.url.includes("/auth/")){
+			if(!request.url.startsWith("/static/")){
 				response.header("Content-Type", "application/json; charset=utf-8");
 			}else{
 				response.setHeader("charset", "utf-8");

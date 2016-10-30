@@ -17,7 +17,7 @@ class UserController {
 		this.User							= User;
 		
 		this.LocalRegistrationValidation	= require("../validation/LocalRegistrationValidation")(booki);
-		this.ConfirmMailValidation			= require("../validation/ConfirmMailValidation")(booki);
+		this.VerifyMailValidation			= require("../validation/VerifyMailValidation")(booki);
 		
 		this.app.post("/v1/register", booki.validate(this.LocalRegistrationValidation), (request, response) => {
 			
@@ -25,26 +25,26 @@ class UserController {
 		        email			= request.body.email
 		        preferredLocale	= request.body.preferredLocale;
 		        
-		        if(!preferredLocale){
-			        preferredLocale = this.getLocale(null, request);
-		        }
+	        if(!preferredLocale){
+		        preferredLocale = this.getLocale(null, request);
+	        }
 		    
 		    this.User.register(firstName, email, preferredLocale, (error, user) => {
 			    
 		    	if(error){
 		    		errorController.expressErrorResponse(request, response, error);
 		    	}else{
-		    		console.log(user);
+			    	response.json(user.toJSON());
 		    	}
 		    	
 		    	response.end();
 		    });
 		});
 		
-		this.app.post("/v1/confirm-email", booki.validate(this.ConfirmMailValidation), (request, response) => {
+		this.app.get("/v1/verify-email", booki.validate(this.VerifyMailValidation), (request, response) => {
 			
 		    var	email					= request.body.email,
-		    	mailConfirmationCode	= request.body.mailConfirmationCode,
+		    	mailVerificationCode	= request.body.mailVerificationCode,
 		        password				= request.body.password;
 		   
 		    this.User.findOne({email: email}, (err, user) => {
@@ -57,11 +57,11 @@ class UserController {
 					
 		    	}else if(user){
 		    		
-		    		if(user.mailConfirmationCode === mailConfirmationCode){
+		    		if(user.mailVerificationCode === mailVerificationCode){
 		    			
-		    			//If it's the registration process, the passwordResetCode is equal to the mailConfirmation code
+		    			//If it's the registration process, the passwordResetCode is equal to the verification code
 		    			if(password){
-		    				if(!user.updatePassword(password, mailConfirmationCode)){
+		    				if(!user.updatePassword(password, mailVerificationCode)){
 			    				//TODO throw error
 			    			}
 		    			}

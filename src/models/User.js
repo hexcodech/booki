@@ -38,7 +38,7 @@ class User{
 			preferredLocale				: {type: String, required: true},
 			
 			passwordResetCode			: {type: String, "default": "", required: false},
-			mailConfirmationCode		: {type: String, "default": "", required: false},
+			mailVerificationCode		: {type: String, "default": "", required: false},
 			
 			dateCreated					: {type: Date, "default": Date.now, required: true},
 			
@@ -133,7 +133,7 @@ class User{
 				preferredLocale				: preferredLocale,
 				
 				passwordResetCode			: "",
-				mailConfirmationCode		: "",
+				mailVerificationCode		: "",
 			};
 			
 			var user = new this(userData);
@@ -397,13 +397,13 @@ class User{
 		 */
 		userSchema.methods.initEmailConfirmation = function(callback, registration){
 			
-			var mailConfirmationCode	= this.constructor.generateRandomString(this.constructor.confirmTokenLength);
+			var mailVerificationCode	= this.constructor.generateRandomString(this.constructor.confirmTokenLength);
 			var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
 			
 			confirmationMail.render(
 			{
 				displayName				: this.displayName,
-				mailConfirmationCode	: mailConfirmationCode
+				mailVerificationCode	: mailVerificationCode
 				
 			},
 			
@@ -418,10 +418,10 @@ class User{
 				this.sendMail([], [], result.subject, result.html, null, function(error, success){
 					
 					if(success){
-						this.mailConfirmationCode	= mailConfirmationCode;
+						this.mailVerificationCode	= mailVerificationCode;
 						
 						if(registration){
-							this.passwordResetCode	= mailConfirmationCode;
+							this.passwordResetCode	= mailVerificationCode;
 						}
 					}
 					
