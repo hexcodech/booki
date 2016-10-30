@@ -176,9 +176,7 @@ class AuthController {
 				json.success	= true;
 			}
 			
-			response.json(json);
-			
-			return response.end();
+			return response.end("<script>window.opener.booki_login(" + JSON.stringify(json) + ");</script>");
 		});
 	}
 	
