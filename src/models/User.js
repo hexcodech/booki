@@ -32,7 +32,10 @@ class User{
 			passwordHashAlgorithm		: {type: String, "default": "", required: false},
 			passwordSalt				: {type: String, "default": "", required: false},
 			
-			preferedLocale				: {type: String, required: true},
+			authToken					: {type: String, unique: true, required: false},
+			authTokenGenerationDate		: {type: Date, required: false},
+			
+			preferredLocale				: {type: String, required: true},
 			
 			passwordResetCode			: {type: String, "default": "", required: false},
 			mailConfirmationCode		: {type: String, "default": "", required: false},
@@ -63,45 +66,54 @@ class User{
 		
 		//Define constants and pass some modules
 		
-		userSchema.statics.crypto			= this.crypto;
-		userSchema.statics.errorController	= this.errorController;
-		userSchema.statics.mailController	= this.mailController;
-		userSchema.statics.EmailTemplate	= this.EmailTemplate;
+		userSchema.statics.crypto				= this.crypto;
+		userSchema.statics.errorController		= this.errorController;
+		userSchema.statics.mailController		= this.mailController;
+		userSchema.statics.EmailTemplate		= this.EmailTemplate;
 		
-		userSchema.statics.hashAlgorithm	= this.config.HASH_ALGORITHM;
-		userSchema.statics.saltLength		= this.config.SALT_LENGTH;
-		userSchema.statics.tokenLength		= this.config.TOKEN_LENGTH;
+		userSchema.statics.hashAlgorithm		= this.config.HASH_ALGORITHM;
+		userSchema.statics.saltLength			= this.config.SALT_LENGTH;
+		userSchema.statics.tokenLength			= this.config.TOKEN_LENGTH;
+		userSchema.statics.confirmTokenLength	= this.config.CONFIRM_TOKEN_LENGTH;
 		
 		/**
 		 * Finds a matching user to the passed passport profile
 		 * @function getUserByPassportProfile
 		 * @param {Object} profile - The passport profile to base the new user on
 		 * @param {Function} callback - The function to execute when this function found a user
-		 * @returns {undefined} The data is returned with the callback parameter
+		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
 		userSchema.statics.getUserByPassportProfile = function(profile, callback){
-			var user	= null;
 			
-			for(var i=0;i<profile.emails.length;i++){
-				this.findOne({email: profile.emails[i].value}, (err, _user) => {
+			var self = this;
+			
+			function iterateMails(emails, index){
+				
+				self.findOne({email: emails[index].value}, (err, user) => {
 					
 					if(err){
-						return callback(new this.errorController.errors.DatabaseError({
+						return callback(new self.errorController.errors.DatabaseError({
 							message: err.message
 						}), null);
 					}
 					
-					if(_user){
-						//User exists
-						user	= _user;
-						
-						i		= profile.emails.length;//breaks the loop
+					if(user){
+						return callback(null, user);
+					}
+					
+					index++;
+					
+					if(index < emails.length){
+						iterateMails(emails, index);
+					}else{
+						callback(null, null);
 					}
 					
 				});
+				
 			}
 			
-			return callback(null, user);
+			iterateMails(profile.emails, 0);
 		}
 		
 		/**
@@ -109,9 +121,9 @@ class User{
 		 * @function register
 		 * @param {Object} profile - The passport profile to base the new user on
 		 * @param {Function} callback - The function to execute when this function found a user
-		 * @returns {undefined} The data is returned with the callback parameter
+		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
-		userSchema.statics.register = function(firstName, lastName, email, preferedLocale, callback){
+		userSchema.statics.register = function(firstName, lastName, email, preferredLocale, callback){
 			var userData = {
 				displayName					: firstName + " " + lastName,
 				firstName					: firstName,
@@ -119,7 +131,7 @@ class User{
 				
 				email						: email,
 				
-				preferedLocale				: preferedLocale,
+				preferredLocale				: preferredLocale,
 				
 				passwordResetCode			: "",
 				mailConfirmationCode		: "",
@@ -165,7 +177,7 @@ class User{
 		 * @param {Object} profile - The passport profile to base the new user on
 		 * @param {Object} customKeysAndVals The custom keys and values used to find or create the user
 		 * @param {Function} callback - The function to execute when this function found a user
-		 * @returns {undefined} The data is returned with the callback parameter
+		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
 		userSchema.statics.findOrCreateUserByPassportProfile = function(profile, customKeysAndVals, callback){
 			
@@ -200,7 +212,7 @@ class User{
 		 * create a new user based on the passed passport object
 		 * @function getPassportUserMappings
 		 * @param {Object} profile - The passport profile to base the new user on
-		 * @returns {Object} The user keys and values that can be used to create a user
+		 * @returns {Object} - The user keys and values that can be used to create a user
 		 */
 		userSchema.statics.getPassportUserMappings = function(profile){
 			
@@ -220,7 +232,7 @@ class User{
 		 * @function createFromPassportProfile
 		 * @param {Object} profile - The passport profile to base the new user on
 		 * @param {Object} customKeysAndVals The custom keys and values to add to the user
-		 * @returns {Object} The user object
+		 * @returns {Object} - The user object
 		 */
 		userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals = {}){
 			return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : profile.emails[0].value}));
@@ -244,7 +256,7 @@ class User{
 		 * @param {string} password - The password to be hashed
 		 * @param {string} salt - The salt to be used while hashing
 		 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that should be used
-		 * @returns {string} The hashed password
+		 * @returns {string} - The hashed password
 		 */
 		userSchema.statics.hash = function(password, salt, algorithm){
 			if(!algorithm){
@@ -273,7 +285,7 @@ class User{
 			if(!customKeysAndVals){customKeysAndVals = {};}
 			
 			var obj = Object.assign(this.constructor.getPassportUserMappings(profile), customKeysAndVals);
-			for(key in obj){
+			for(var key in obj){
 				if(obj.hasOwnProperty(key)){
 					this[key] = obj[key];
 				}
@@ -286,7 +298,7 @@ class User{
 		 * Verifies the password for a specific user
 		 * @function verifyPassword
 		 * @param {string} password - The password to verify
-		 * @returns {Boolean} Whether the password could be verified or not
+		 * @returns {Boolean} - Whether the password could be verified or not
 		 */
 		userSchema.methods.verifyPassword = function(password){
 			
@@ -314,7 +326,7 @@ class User{
 		 * @function updatePassword
 		 * @param {string} password - The new password
 		 * @param {string} passwordResetCode - The received reset code that verifies this operation
-		 * @returns {Boolean} If the update succeeds
+		 * @returns {Boolean} - Whether the update succeeds
 		 */
 		userSchema.methods.updatePassword = function(password, passwordResetCode){
 			if(
@@ -346,7 +358,7 @@ class User{
 		 * @param {String} replyTo - A mail address to who the recipients should reply
 		 * @param {Function} callback - A callback function that will be called after
 		 * sending the mail or encountering an error
-		 * @returns {undefined} The data is returned with the callback parameter
+		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
 		userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
 			this.constructor.mailController.sendMail(['"' + this.firstName + " " + this.lastName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
@@ -362,7 +374,7 @@ class User{
 			var passwordResetCode	= this.constructor.generateRandomString(this.constructor.tokenLength);
 			var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
 			
-			resetMail.render(this, this.preferedLocale, (err, result) => {
+			resetMail.render(this, this.preferredLocale, (err, result) => {
 				if(err){
 					return callback(new this.constructor.errorController.errors.RenderError({
 						message: err.message
@@ -386,7 +398,7 @@ class User{
 		 */
 		userSchema.methods.initEmailConfirmation = function(callback, registration){
 			
-			var mailConfirmationCode	= this.constructor.generateRandomString(this.constructor.tokenLength);
+			var mailConfirmationCode	= this.constructor.generateRandomString(this.constructor.confirmTokenLength);
 			var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
 			
 			confirmationMail.render(
@@ -396,7 +408,7 @@ class User{
 				
 			},
 			
-			this.preferedLocale, (err, result) => {
+			this.preferredLocale, (err, result) => {
 				
 				if(err){
 					return callback(new this.constructor.errorController.errors.RenderError({
@@ -418,6 +430,20 @@ class User{
 				});
 			});
 		};
+		
+		/**
+		 * Generates and returns a new authentication token in order to do api calls
+		 * @function generateAuthToken
+		 * @returns {String} - The new token
+		*/
+		userSchema.methods.generateAuthToken = function(){
+			var token						= this.constructor.generateRandomString(this.constructor.tokenLength);
+			
+			this.authToken					= token;
+			this.authTokenGenerationDate	= Date.now();
+			
+			return token;
+		}
 		
 		
 		userSchema.set("toJSON", {

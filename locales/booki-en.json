@@ -46,5 +46,6 @@
 	"The data could not be rendered": "The data could not be rendered",
 	"UserAlreadyExistsError": "UserAlreadyExistsError",
 	"This email was already registered": "This email was already registered",
-	"Verify that you still own this email address": "Verify that you still own this email address"
+	"Verify that you still own this email address": "Verify that you still own this email address",
+	"GenericError": "GenericError"
 }

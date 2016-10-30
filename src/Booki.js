@@ -89,7 +89,7 @@ class Booki {
 	
 	getLocale(user = null, request = null){
 		if(user !== null){
-			return user.preferedLocale;
+			return user.preferredLocale;
 		}else if(request !== null){
 			return this.i18n.getLocale(request);
 		}else{

@@ -54,7 +54,7 @@ class AuthController {
 			(request, accessToken, refreshToken, profile, done) => {
 				
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferedLocale		: this.getLocale(null, request),
+					preferredLocale		: this.getLocale(null, request),
 					facebookFriends			: profile.user_friends,
 					placeOfResidence		: profile.user_location.name,
 					facebookAccessToken		: accessToken,
@@ -89,7 +89,7 @@ class AuthController {
 			(request, token, tokenSecret, profile, done) => {
 				
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferedLocale		: this.getLocale(null, request),
+					preferredLocale		: this.getLocale(null, request),
 					twitterToken		: token,
 					twitterTokenSecret	: tokenSecret
 				}, done);
@@ -119,7 +119,7 @@ class AuthController {
 			},
 			(request, accessToken, refreshToken, profile, done) => {
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferedLocale			: this.getLocale(null, request),
+					preferredLocale			: this.getLocale(null, request),
 					googleAccessToken		: accessToken,
 					googleRefreshToken		: refreshToken
 				}, done);
@@ -144,23 +144,41 @@ class AuthController {
 	}
 	
 	auth(request, response, next, error, user, info){
+		
+		let json = {success: false, authToken: "", error: null};
+		
 		if(error){
-			return this.errorController.expressErrorResponse(request, response, error, this.getLocale(user, request));
+			json.error = this.errorController.translateError(error, this.getLocale(user, request));
 		}
 		
-		if(!user){
+		if(!user && json.error === null){
 			
-			return this.errorController.expressErrorResponse(request, response, 
-				new this.errorController.errors.AuthenticationError()
+			json.error = this.errorController.translateError( 
+				new this.errorController.errors.AuthenticationError(),
+				this.getLocale(user, request)
 			);
 			
 		}
 		
-		request.logIn(user, {session: false}, function(err) {
-			if (err) { return next(err); }
+		return request.logIn(user, {session: false}, function(err) {
+			if(err && json.err === null){
+				
+				json.error = this.errorController.translateError( 
+					new this.errorController.errors.AuthenticationError({
+						message: err.message
+					}),
+					this.getLocale(user, request)
+				);
+			}
 			
-			//TODO correct json format
-			return response.end("auth successful")
+			if(user){
+				json.authToken	= user.generateAuthToken();
+				json.success	= true;
+			}
+			
+			response.json(json);
+			
+			return response.end();
 		});
 	}
 	

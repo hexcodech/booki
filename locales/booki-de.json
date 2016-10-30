@@ -3,5 +3,7 @@
 	"This email was already registered": "Diee mail esch scho registiert worde!",
 	"Verify that you still own this email address": "Öberprüef öb die mail emmer no der ghört!",
 	"E11000 duplicate key error collection: booki.users index: email_1 dup key: { : \"tyratox@gmail.com\" }": "E11000 duplicate key error collection: booki.users index: email_1 dup key: { : \"tyratox@gmail.com\" }",
-	"This is probably our fault. Please contact the support.": "This is probably our fault. Please contact the support."
+	"This is probably our fault. Please contact the support.": "This is probably our fault. Please contact the support.",
+	"Code was already redeemed.": "Code was already redeemed.",
+	"Cannot read property 'findOne' of undefined": "Cannot read property 'findOne' of undefined"
 }

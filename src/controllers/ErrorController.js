@@ -121,6 +121,13 @@ class ErrorController {
 			},
 			
 			
+			GenericError : {
+				name				: i18n.__("GenericError"),
+				code				: 600,
+				defaultMessage		: "",
+				defaultResponse		: "",
+			},
+			
 			
 			DatabaseError : {
 				name				: i18n.__("DatabaseError"),
@@ -171,33 +178,43 @@ class ErrorController {
 		
 	}
 	
-	expressErrorResponse(request, response, error, locale){
-	
-		//Try to translate the properties into the requested locale if the error type is supported
+	translateError(error, locale){
+		var message, response, explanation;
+		
+		if(error.message){
+			message = this.i18n.__({phrase: error.message, locale: locale});
+		}
+		
+		if(error.response){
+			response = this.i18n.__({phrase: error.response, locale: locale});
+		}
+		
+		if(error.explanation){
+			explanation = this.i18n.__({phrase: error.explanation, locale: locale});
+		}
 		
 		if(error.name in this.errors){
-			var msg, resp, exp; //"response" is already defined!
-			
-			if(error.message){
-				msg = this.i18n.__({phrase: error.message, locale: locale});
-			}
-			
-			if(error.response){
-				resp = this.i18n.__({phrase: error.response, locale: locale});
-			}
-			
-			if(error.explanation){
-				exp = this.i18n.__({phrase: error.explanation, locale: locale});
-			}
 			
 			error = new this.errors[error.name]({
-				message			: msg,
-				response		: resp,
-				explanation		: exp
+				message			: message,
+				response		: response,
+				explanation		: explanation
+			});
+			
+		}else{
+			
+			error = new this.errors.GenericError({
+				message			: message,
+				response		: response,
+				explanation		: explanation
 			});
 		}
 		
-		return response.end(JSON.stringify(error.toJSON()));
+		return error;
+	}
+	
+	expressErrorResponse(request, response, error, locale){
+		return response.end(JSON.stringify(this.translateError(error, locale).toJSON()));
 	}
 	
 };
