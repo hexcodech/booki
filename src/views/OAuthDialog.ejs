@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title><%= __("Booki") %> - <%= __("OAuth Dialog") %></title>
+		
+		<meta charset="utf-8">
+		
+		<link href="/static/res/css/booki.min.css" rel="stylesheet" type="text/css">
+	</head>
+	
+	<body>
+		<p><%= __("Hi") %> <%= user.name.first %>!</p>
+		<p><b><%= client.name %></b> <%= __("is requesting <b>full access</b> to your account") %>.</p>
+		<p><%= __("Do you approve?") %></p>
+		
+		<form action="/api/oauth2/authorize" method="post">
+			<input name="transaction_id" type="hidden" value="<%= transactionID %>">
+			
+			<div>
+				<input type="submit" value='<%= __("Allow") %>' id="allow">
+				<input type="submit" value='<%= __("Deny") %>' id="deny" name="cancel">
+			</div>
+		</form>
+	</body>
+</html>

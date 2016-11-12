@@ -4,44 +4,432 @@
 
 class AuthController {
 	
-	constructor({booki, config, app, i18n, errorController, crypto, passport, getLocale, LocalStrategy, FacebookStrategy, TwitterStrategy, GoogleStrategy}, User){
+	constructor(
+		{
+			booki,				config,				app,				i18n,
+			mongoose,			ejs,				errorController,	crypto,
+			passport,			oauth2orize,		oauth2Server,		getLocale,
+			BasicStrategy,		LocalStrategy,		BearerStrategy,		FacebookStrategy,
+			GoogleStrategy
+		}
+		){
 		
 		//Store passed parameters
 		this.config				= config;
 		this.app				= app;
 		this.i18n				= i18n;
+		this.mongoose			= mongoose;
+		this.ejs				= ejs;
 		this.errorController	= errorController;
+		
 		this.crypto				= crypto;
 		this.passport			= passport;
 		
+		this.oauth2Server		= oauth2Server;
+		this.oauth2orize		= oauth2orize;
+		
 		this.getLocale			= getLocale;
 		
-		this.User				= User;
+		this.User				= this.mongoose.model("User");
+		
+		this.OAuthClient		= this.mongoose.model("OAuthClient");
+		this.OAuthAccessToken	= this.mongoose.model("OAuthAccessToken");
+		this.OAuthCode			= this.mongoose.model("OAuthCode");
+		
+		booki.bindAll(this, ["loginView", "mailVerificationView", "auth", "authFacebookCallback", "authGoogleCallback", "catchInternalError", "catchInternalErrorView"]);
+		
+		this.passport.serializeUser(function(user, done) {
+			done(null, user._id);
+		});
+		
+		this.passport.deserializeUser(function(userId, done) {
+			
+			this.User.findById(userId, (err, user) => {
+				if(err){
+					done(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}, null));
+				}
+				
+				done(null, user);
+				
+			});
+		});
+		
+		//Local registration
+		this.registration = (request, response, next) => {
+			
+		    let firstName		= request.body.firstName,
+		        email			= request.body.email,
+		        locale			= request.body.locale;
+		        
+	        if(!locale){
+		        locale = this.getLocale(null, request);
+	        }
+		    
+		    this.User.register(firstName, email, locale, (error, user) => {
+			    
+		    	if(error){
+		    		next(error);
+		    	}else{
+			    	return response.redirect("/views/verify-email?register=true&email=" + email);
+		    	}
+		    	
+		    	response.end();
+		    });
+		};
+		
+		this.verifyEmail = (request, response, next) => {
+			
+		    let	email					= request.body.email,
+		    	emailVerificationCode	= request.body.emailVerificationCode,
+		        password				= request.body.password;
+		   
+		    this.User.findOne({email: email}, (err, user) => {
+			    
+		    	if(err){
+					
+					return next(this.errorController.translateError(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}, this.getLocale(user, request))));
+					
+		    	}else if(user){
+		    		
+		    		if(user.emailVerificationCode && user.emailVerificationCode === emailVerificationCode){
+		    			
+		    			//If it's the registration process, the passwordResetCode is equal to the verification code
+		    			if(password){
+			    			
+			    			user.updatePassword(password, emailVerificationCode, (error, success) => {
+				    			if(success){
+					    			response.redirect("/views/login");
+				    			}else{
+					    			return next(this.errorController.translateError(error, this.getLocale(user, request)));
+				    			}
+			    			});
+			    			
+		    			}
+		    		}else{
+			    		return next(this.errorController.translateError(new this.errorController.errors.EmailVerificationCodeInvalidError(),
+			    			this.getLocale(user, request)));
+		    		}
+		    	}else{
+			    	//it's safer to display the same error as above because this doesn't hint who's registered and who not
+			    	return next(this.errorController.translateError(new this.errorController.errors.EmailVerificationCodeInvalidError(),
+			    		this.getLocale(user, request)));
+		    	}
+		    }); 
+		};
+		
+		
+		this.passport.use("client-basic", new BasicStrategy(
+			(username, password, callback) => {
+				
+				Client.findOne({id: username}, (err, client) => {
+					if(err){
+						return callback(new self.errorController.errors.DatabaseError({
+							message: err.message
+						}), null);
+					}
+					
+					// No client found with that id or bad password
+					if (!client || !client.verifySecret(password)){
+						return callback(null, false);
+					}
+					
+					// Success
+					return callback(null, client);
+				});
+				
+			}
+		));
+		
+		this.isClientAuthenticated = passport.authenticate("client-basic", {session : false});
+		
+		
+		
+		//Setup the oath 2 server
+		this.oauth2Server.serializeClient((client, callback) => {
+			return callback(null, client._id);
+		});
+		
+		this.oauth2Server.deserializeClient((id, callback) => {
+			this.OAuthClient.findById(id, (err, client) => {
+				if(err){
+					return callback(new self.errorController.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
+				
+				return callback(null, client);
+			});
+		});
+		
+		this.oauth2Server.grant(this.oauth2orize.grant.code((client, redirectUri, user, ares, callback) => {
+			// Create a new authorization code
+			
+			if(client.verifyRedirectUri(redirectUri)){
+				return callback(new self.errorController.errors.InvalidRedirectUriError(), null);
+			}
+			
+			let codeValue			= this.OAuthCode.generateCode();
+			
+			let expirationDate		= new Date();
+			expirationDate.setSeconds(expirationDate.getSeconds() + this.config.AUTH_CODE_LIFETIME);
+			
+			let code = new this.OAuthCode({
+				value			: this.OAuthCode.hashCode(codeVal),
+				clientId		: client._id,
+				userId			: user._id,
+				expires			: expirationDate
+			});
+			
+			// Save the auth code and check for errors
+			code.save((err) => {
+				if(err){
+					return callback(new self.errorController.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
+				
+				callback(null, codeValue);
+			});
+		}));
+		
+		this.oauth2Server.exchange(this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
+			
+			Code.findByCode(code, (err, authCode) => {
+				
+				if(err){
+					return callback(new self.errorController.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
+				
+				if (!authCode || client._id.toString() !== authCode.clientId || client.verifyRedirectUri(redirectUri)){
+					return callback(new self.errorController.errors.AuthCodeInvalidError(), null);
+				}
+				
+				let now = new Date();
+				
+				if(now >= authCode.expires){
+					
+					authCode.remove((err2) => {
+						
+						if(err2){
+							return callback(new self.errorController.errors.DatabaseError({
+								message: err2.message
+							}), null);
+						}
+						
+						return callback(new self.errorController.errors.AuthCodeExpiredError(), null);
+						
+					});
+				}
+				
+				//Delete auth code now that it has been used
+				authCode.remove((err2) => {
+					
+					if(err2){
+						return callback(new self.errorController.errors.DatabaseError({
+							message: err2.message
+						}), null);
+					}
+					
+					let expirationDate = new Date();
+					expirationDate.setSeconds(expirationDate.getSeconds() + this.config.ACCESS_TOKEN_LIFETIME);
+					
+					// Create an access token
+					let token = new this.OAuthAccessToken({
+						hash			: this.OAuthAccessToken.generateToken(),
+						clientId		: authCode.clientId,
+						userId			: authCode.userId,
+						expires			: expirationDate
+					});
+					
+					// Save the access token and check for errors
+					token.save((err3) => {
+						
+						if(err3){
+							return callback(new self.errorController.errors.DatabaseError({
+								message: err3.message
+							}), null);
+						}
+						
+						callback(null, token);
+					});
+				});
+			});
+		}));
+		
+		
+		
+		//Setup some accessible middlewares
+		
+		this.authorization = [
+			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
+			
+				Client.findById(clientId, (err, client) => {
+					if(err){
+						return callback(new self.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					if(client.verifyRedirectUri(redirectUri)){
+						return callback(null, client, redirectUri);
+					}else{
+						return callback(new self.errorController.errors.InvalidRedirectUriError(), false);
+					}
+					
+				});
+				
+			}),
+			(client, user, done) => {
+				//Check whether request qualifies for immediate approval
+				
+				//If the client is trusted
+				if(client.trusted === true){
+					return done(null, true);
+				}
+				
+				//Or the user already approved to this client
+				this.OAuthAccessToken.findOne({id: client.id}, (err, token) => {
+					
+					if(err){
+						return done(new self.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					if(token){
+						return done(null, true);
+					}else{
+						//ask user
+						done(null, false);
+					}
+					
+				})
+				
+			},
+			(error, request, response, next) => {
+				
+				this.ejs.renderFile(__dirname + "/../views/OAuthDialog.ejs", {
+					__					: (string) => {
+						return this.i18n.__({phrase: string, locale: this.getLocale(request.user, request)});
+					},
+					
+					transactionID		: request.oauth2.transactionID,
+					user				: request.user,
+					client				: request.oauth2.client
+					
+				}, {}, (err, str) => {
+					
+					if(err){
+						return next(new this.constructor.errorController.errors.RenderError({
+							message: err.message
+						}));
+					}
+					
+				    response.setHeader("Content-Type", "text/html");
+				    response.end(str);
+				});
+				
+			}
+		];
+		
+		this.decision	= [this.oauth2Server.decision()];
+		this.token		= [this.oauth2Server.token(), this.oauth2Server.errorHandler()];
+		
 		
 		//With username(email)/password
 		this.passport.use(new LocalStrategy(
-			function(email, password, done){
-				User.findOne({email: email}, (err, user) => {
+			(email, password, done) => {
+				
+				this.User.findOne({email: email}, (err, user) => {
 					
-					if(err || user.passwordHash.length > 0 || !user || !user.verifyPassword(password)) {
-						return done(null, false, new errors.LoginError());
+					if(err || user.password.hash.length === 0 || !user) {
+						return done(new this.errorController.errors.LoginError(), null);
 					}
 					
-					return done(null, user);
+					if(user.verifyPassword(password, (error, success) => {
+						
+						if(error){
+							done(error, null);
+						}
+						
+						if(success){
+							return done(null, user);
+						}else{
+							return done(new this.errorController.errors.LoginError(), null);
+						}
+					}));
+					
 				});
 			}
 		));
 		
-		this.app.post("/v1/auth/local/login", (request, response, next) => {
+		this.authLocal = [
+			(request, response, next) => {
 			
-			this.passport.authenticate("local",	(err, user, info) => {
+				this.passport.authenticate("local", (err, user, info) => {
+					
+					this.auth(request, response, next, err, user, info);
+					
+				})(request, response, next);
 				
-				this.auth(request, response, next, err, user, info);
-				
-			})(request, response, next);
-			
-		});
+			}
+		];
 		
+		//With OAuth
+		passport.use(new BearerStrategy(
+			
+			(accessToken, callback) => {
+				
+				this.OAuthAccessToken.findByToken(accessToken, (err, token) => {
+					if(err){
+						return callback(new self.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					// No token found
+					if (!token){
+						return callback(new self.errorController.errors.TokenInvalidError(), false);
+					}
+					
+					this.User.findById(token.userId, (err2, user) => {
+						if(err2){
+							return callback(new self.errorController.errors.DatabaseError({
+								message: err2.message
+							}), false);
+						}
+						
+						// No user was found, so the token is invalid
+						if(!user){
+							token.remove((err3) => {
+								
+								if(err3){
+									return callback(new self.errorController.errors.DatabaseError({
+										message: err3.message
+									}), false);
+								}
+								
+								return callback(new self.errorController.errors.TokenInvalidError(), false);
+							});
+						}
+						
+						//no scopes yet
+						return callback(null, user, { scope: "*" });
+					});
+				});	
+			}
+		));
+		
+		this.isBearerAuthenticated = this.passport.authenticate("bearer", {session: false});
+		
+		
+				
 		//With Facebook
 		this.passport.use(
 			new FacebookStrategy({
@@ -54,60 +442,25 @@ class AuthController {
 			(request, accessToken, refreshToken, profile, done) => {
 				
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferredLocale		: this.getLocale(null, request),
-					facebookFriends			: profile.user_friends,
+					locale					: this.getLocale(null, request),
 					placeOfResidence		: profile.user_location.name,
-					facebookAccessToken		: accessToken,
-					facebookRefreshToken	: refreshToken,
+					
+					facebook				: {
+						friends					: profile.user_friends,
+						accessToken				: accessToken,
+						refreshToken			: refreshToken
+					}
 				}, done);
 				
 			})
 		);
 		
-		this.app.get("/v1/auth/facebook/login",		this.passport.authenticate("facebook", {
-			scope : ['user_friends', 'user_location']
-		}));
-		
-		this.app.get(this.config.FACEBOOK_CALLBACK_PATH, (request, response, next) => {
-			
-			this.passport.authenticate("facebook", (error, user, info) => {
-				
-				this.auth(request, response, next, error, user, info);
-				
-			})(request, response, next);
-			
-		}, this.catchInternalError);
-		
-		//With Twitter
-		this.passport.use(
-			new TwitterStrategy({
-				consumerKey					: this.config.TWITTER_CONSUMER_KEY,
-				consumerSecret				: this.config.TWITTER_CONSUMER_SECRET,
-				callbackURL					: this.config.HOST + this.config.TWITTER_CALLBACK_PATH,
-				passReqToCallback			: true
-			},
-			(request, token, tokenSecret, profile, done) => {
-				
-				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferredLocale		: this.getLocale(null, request),
-					twitterToken		: token,
-					twitterTokenSecret	: tokenSecret
-				}, done);
-				
+		this.authFacebook = [
+			this.passport.authenticate("facebook", {
+				scope : ['user_friends', 'user_location']
 			})
-		);
-		
-		this.app.get("/v1/auth/twitter/login",		this.passport.authenticate("twitter"));
-		
-		this.app.get(this.config.TWITTER_CALLBACK_PATH, (request, response, next) => {
-			
-			this.passport.authenticate("twitter", (error, user, info) => {
+		];
 				
-				this.auth(request, response, next, error, user, info);
-				
-			})(request, response, next);
-			
-		}, this.catchInternalError);
 		
 		//With Google
 		this.passport.use(
@@ -118,77 +471,165 @@ class AuthController {
 				passReqToCallback			: true
 			},
 			(request, accessToken, refreshToken, profile, done) => {
+				
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					preferredLocale			: this.getLocale(null, request),
-					googleAccessToken		: accessToken,
-					googleRefreshToken		: refreshToken
+					locale					: this.getLocale(null, request),
+					google					: {
+						accessToken				: accessToken,
+						refreshToken			: refreshToken
+					}
 				}, done);
 				
 			})
 		);
 		
-		this.app.get("/v1/auth/google/login", this.passport.authenticate("google", {
-			scope: ["openid profile email"]
-		}));
+		this.authGoogle = [
+			this.passport.authenticate("google", {
+				scope: ["openid profile email"]
+			})
+		];
 		
-		this.app.get(this.config.GOOGLE_CALLBACK_PATH, (request, response, next) => {
-			
-			this.passport.authenticate("google", (error, user, info) => {
-				
-				this.auth(request, response, next, error, user, info);
-				
-			})(request, response, next);
-			
-		}, this.catchInternalError);
+		
+		this.isAuthenticated = passport.authenticate(["bearer"], {session : false});
 		
 	}
 	
-	auth(request, response, next, error, user, info){
-		
-		let json = {success: false, authToken: "", error: null};
-		
-		if(error){
-			json.error = this.errorController.translateError(error, this.getLocale(user, request));
-		}
-		
-		if(!user && json.error === null){
+	loginView(request, response, next){
+		this.ejs.renderFile(__dirname + "/../views/Login.ejs", {
+			__					: (string) => {
+				return this.i18n.__({phrase: string, locale: this.getLocale(request.user, request)});
+			},
 			
-			json.error = this.errorController.translateError( 
-				new this.errorController.errors.AuthenticationError(),
-				this.getLocale(user, request)
-			);
+		}, {}, (err, str) => {
 			
-		}
-		
-		return request.logIn(user, {session: false}, function(err) {
-			if(err && json.err === null){
-				
-				json.error = this.errorController.translateError( 
-					new this.errorController.errors.AuthenticationError({
-						message: err.message
-					}),
-					this.getLocale(user, request)
-				);
+			if(err){
+				return next(new this.constructor.errorController.errors.RenderError({
+					message: err.message
+				}));
 			}
 			
-			if(user){
-				json.authToken	= user.generateAuthToken();
-				json.success	= true;
-			}
-			
-			response.json(json);
-			response.end();
+		    response.setHeader("Content-Type", "text/html");
+		    response.end(str);
 		});
 	}
 	
+	mailVerificationView(request, response, next){
+		this.ejs.renderFile(__dirname + "/../views/VerifyEmail.ejs", {
+			
+			__					: (string) => {
+				return this.i18n.__({phrase: string, locale: this.getLocale(request.user, request)});
+			},
+			register			: (request.query.register === "true" ? true : false),
+			email				: request.query.email,
+			code				: request.query.code
+			
+		}, {}, (err, str) => {
+			
+			if(err){
+				return next(new this.constructor.errorController.errors.RenderError({
+					message: err.message
+				}));
+			}
+			
+		    response.setHeader("Content-Type", "text/html");
+		    response.end(str);
+		});
+	}
+	
+	auth(request, response, next, err, user, info){
+		
+		if(err){
+			return next(this.errorController.translateError(
+				new this.errorController.errors.AuthenticationError({
+					message: err.message
+				}), this.getLocale(user, request)
+			));
+		}
+		
+		if(!user){
+			return next(this.errorController.translateError(
+				new this.errorController.errors.AuthenticationError(), this.getLocale(null, request)
+			));
+		}
+		
+		request.logIn(user, {session: true}, (error) => {
+			if(error){
+				return next(this.errorController.translateError(
+					error, this.getLocale(user, request)
+				));
+			}
+			
+			if(user){
+				
+				//user is logged in
+				response.end("lel");
+				
+			}else{
+				return next(this.errorController.translateError(
+					new this.errorController.errors.AuthenticationError(), this.getLocale(null, request)
+				));
+			}
+		});
+	}
+	
+	authFacebookCallback(request, response, next){
+		
+		this.passport.authenticate("facebook", (err, user, info) => {
+			
+			this.auth(request, response, next, err, user, info);
+			
+		})(request, response, next);
+		
+	}
+	
+	authGoogleCallback(request, response, next){
+		
+		this.passport.authenticate("google", (err, user, info) => {
+			
+			this.auth(request, response, next, err, user, info);
+			
+		})(request, response, next);
+		
+	}
+	
 	catchInternalError(error, request, response, next){
+		
 		if(error){
 			console.log(error);
-			return response.redirect(this.config.LOGIN_FAILURE_REDIRECT);
+			return response.redirect(this.config.LOGIN_PATH);
 		}else{
 			next();
 		}
 	}
+	
+	catchInternalErrorView(error, request, response, next){
+		
+		if(error){
+			
+			this.ejs.renderFile(__dirname + "/../views/Error.ejs", {
+				
+				__					: (string) => {
+					return this.i18n.__({phrase: string, locale: this.getLocale(request.user, request)});
+				},
+				error				: error
+				
+			}, {}, (err, str) => {
+				
+				if(err){
+					
+					console.log(err);
+					
+					response.end("Internal Server Error");
+				}
+				
+			    response.setHeader("Content-Type", "text/html");
+			    response.end(str);
+			});
+		}else{
+			next();
+		}
+	}
+	
 };
 
 module.exports = AuthController;

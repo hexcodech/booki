@@ -5,12 +5,14 @@
 
 class MailController {
 	
-	constructor({config, nodemailer, errorController}){
+	constructor({booki, config, nodemailer, errorController}){
 	
 		//store the passed parameters
 		this.config				= config;
 		this.errorController	= errorController;
 		this.nodemailer			= nodemailer;
+		
+		booki.bindAll(this, ["sendMail"]);
 		
 		this.transporter		= this.nodemailer.createTransport({
 			host				: this.config.MAIL_HOST,

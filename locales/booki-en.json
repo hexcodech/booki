@@ -47,5 +47,22 @@
 	"UserAlreadyExistsError": "UserAlreadyExistsError",
 	"This email was already registered": "This email was already registered",
 	"Verify that you still own this email address": "Verify that you still own this email address",
-	"GenericError": "GenericError"
+	"GenericError": "GenericError",
+	"AuthCodeInvalidError": "AuthCodeInvalidError",
+	"Your authentication code is invalid": "Your authentication code is invalid",
+	"Check your API calls": "Check your API calls",
+	"AuthCodeExpiredError": "AuthCodeExpiredError",
+	"Your authentication code has expired": "Your authentication code has expired",
+	"TokenInvalidError": "TokenInvalidError",
+	"Your authentication token is invalid": "Your authentication token is invalid",
+	"Try to logout and login again": "Try to logout and login again",
+	"You probably haven't used this application for a while so you're token expired": "You probably haven't used this application for a while so you're token expired",
+	"InvalidRedirectUriError": "InvalidRedirectUriError",
+	"The passed redirect uri doesn't match with the ones saved!": "The passed redirect uri doesn't match with the ones saved!",
+	"The verification code is invalid!": "The verification code is invalid!",
+	"PasswordResetCodeInvalidError": "PasswordResetCodeInvalidError",
+	"The entered password reset code is invalid": "The entered password reset code is invalid",
+	"Check if you copied the whole code": "Check if you copied the whole code",
+	"EmailVerificationCodeInvalidError": "EmailVerificationCodeInvalidError",
+	"The entered email verification code is invalid": "The entered email verification code is invalid"
 }

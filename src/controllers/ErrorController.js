@@ -5,10 +5,12 @@
 
 class ErrorController {
 	
-	constructor({errors, i18n}){
+	constructor({booki, errors, i18n}){
 		
 		this.errors					= errors;
 		this.i18n					= i18n;
+		
+		booki.bindAll(this, ["translateError", "expressErrorResponse"]);
 		
 		//Create errors
 		
@@ -55,14 +57,54 @@ class ErrorController {
 			    parent				: "AuthenticationError"
 			},
 			
-			TokenExpiredError : {
-				name				: i18n.__("TokenExpiredError"),
-				defaultMessage		: i18n.__("Your authentication token has expired"),
-			    defaultExplanation	: i18n.__("You haven't used this application for a while so you're token expired"),
-			    defaultResponse		: i18n.__("Return to the login page and enter your credentials"),
+			PasswordResetCodeInvalidError : {
+				name				: i18n.__("PasswordResetCodeInvalidError"),
+				defaultMessage		: i18n.__("The entered password reset code is invalid"),
+			    defaultResponse		: i18n.__("Check if you copied the whole code"),
 			    parent				: "AuthenticationError"
 			},
 			
+			EmailVerificationCodeInvalidError : {
+				name				: i18n.__("EmailVerificationCodeInvalidError"),
+				defaultMessage		: i18n.__("The entered email verification code is invalid"),
+			    defaultResponse		: i18n.__("Check if you copied the whole code"),
+			    parent				: "AuthenticationError"
+			},
+			
+			AuthCodeInvalidError : {
+				name				: i18n.__("AuthCodeInvalidError"),
+				defaultMessage		: i18n.__("Your authentication code is invalid"),
+			    defaultResponse		: i18n.__("Check your API calls"),
+			    parent				: "AuthenticationError"
+			},
+			
+			AuthCodeExpiredError : {
+				name				: i18n.__("AuthCodeExpiredError"),
+				defaultMessage		: i18n.__("Your authentication code has expired"),
+			    defaultResponse		: i18n.__("Check your API calls"),
+			    parent				: "AuthenticationError"
+			},
+			
+			TokenInvalidError : {
+				name				: i18n.__("TokenInvalidError"),
+				defaultMessage		: i18n.__("Your authentication token is invalid"),
+			    defaultResponse		: i18n.__("Try to logout and login again"),
+			    parent				: "AuthenticationError"
+			},
+			
+			TokenExpiredError : {
+				name				: i18n.__("TokenExpiredError"),
+				defaultMessage		: i18n.__("Your authentication token has expired"),
+			    defaultExplanation	: i18n.__("You probably haven't used this application for a while so you're token expired"),
+			    defaultResponse		: i18n.__("Try to logout and login again"),
+			    parent				: "AuthenticationError"
+			},
+			
+			InvalidRedirectUriError : {
+				name				: i18n.__("InvalidRedirectUriError"),
+				defaultMessage		: i18n.__("The passed redirect uri doesn't match with the ones saved!"),
+			    parent				: "AuthenticationError"
+			},
 			
 			
 			ForbiddenError : {
@@ -164,7 +206,7 @@ class ErrorController {
 			
 		};
 		
-		var errorKey;
+		let errorKey;
 		
 		for(errorKey in this.errorMessages){
 			if(!this.errorMessages.hasOwnProperty(errorKey)){continue;}
@@ -193,21 +235,18 @@ class ErrorController {
 			explanation = this.i18n.__({phrase: error.explanation, locale: locale});
 		}
 		
+		let obj = {};
+		if(message){obj.message = message};
+		if(response){obj.response = response};
+		if(explanation){obj.explanation = explanation};
+		
 		if(error.name in this.errors){
 			
-			error = new this.errors[error.name]({
-				message			: message,
-				response		: response,
-				explanation		: explanation
-			});
+			error = new this.errors[error.name](obj);
 			
 		}else{
 			
-			error = new this.errors.GenericError({
-				message			: message,
-				response		: response,
-				explanation		: explanation
-			});
+			error = new this.errors.GenericError(obj);
 		}
 		
 		return error;

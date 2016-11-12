@@ -4,25 +4,29 @@
 	"DB_NAME"					: "booki",
 	
 	"HTTP_PORT"					: 8101,
+	"SESSION_SECRET"			: "",
 	
 	"HASH_ALGORITHM"			: "sha512",
 	"SALT_LENGTH"				: 30,
 	
+	"CLIENT_ID_LENGTH"			: 30,
+	"CLIENT_SECRET_LENGTH"		: 30,
+	
 	"TOKEN_LENGTH"				: 30,
 	"CONFIRM_TOKEN_LENGTH"		: 6,
 	
-	"HOST"						: "booki.me",
+	"AUTH_CODE_LIFETIME"		: 600,
+	"ACCESS_TOKEN_LIFETIME"		: 172800,
+	
+	"HOST"						: "http://localhost:8101",
 	"LOCALES"					: ["en"],
 	
-	"MAIL_HOST"					: "",
+	"MAIL_HOST"					: "smtp.domain.tld",
 	"MAIL_PORT"					: 465,
 	"MAIL_USER"					: "",
 	"MAIL_PASSWORD"				: "",
 	
 	"MAIL_FROM_NAME"			: "Booki",
-	
-	"LOGIN_SUCCESS_REDIRECT"	: "/logged-in",
-	"FAILURE_SUCCESS_REDIRECT"	: "/login",
 	
 	"FACEBOOK_APP_ID"			: "",
 	"FACEBOOK_APP_SECRET"		: "",

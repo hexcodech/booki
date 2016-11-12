@@ -4,16 +4,14 @@
  
 class User{
 	
-	constructor({booki, config, i18n, errorController, mongoose}){
+	constructor({booki, config, i18n, errorController, mongoose, crypto}){
 	
 		//store the passed parameters
+		this.config					= config;
 		this.i18n					= i18n;
 		this.errorController		= errorController;
 		this.mongoose				= mongoose;
-		this.config					= config;
-		
-		//include required modules
-		this.crypto					= require("crypto");
+		this.crypto					= crypto;
 		
 		let MailController			= require("../controllers/MailController");
 		this.mailController			= new MailController(booki);
@@ -23,24 +21,27 @@ class User{
 		
 		//setup some values
 		var userSchema = new this.mongoose.Schema({
-			displayName					: {type: String, required: true},
-			firstName					: {type: String, required: true},
-			lastName					: {type: String, required: false},
+			name						: {
+				display						: {type: String, required: true},
+				first						: {type: String, required: true},
+				last						: {type: String, required: false},
+			},
 			
 			email						: {type: String, unique: true, required: true},
-			passwordHash				: {type: String, "default": "", required: false},
-			passwordHashAlgorithm		: {type: String, "default": "", required: false},
-			passwordSalt				: {type: String, "default": "", required: false},
+			emailVerificationCode		: {type: String, "default": "", required: false},
 			
-			authToken					: {type: String, unique: true, required: false},
-			authTokenGenerationDate		: {type: Date, required: false},
+			password					: {
+				hash						: {type: String, "default": "", required: false},
+				salt						: {type: String, "default": "", required: false},
+				algorithm					: {type: String, "default": "", required: false},
+				
+				resetCode					: {type: String, "default": "", required: false},
+			},
 			
-			preferredLocale				: {type: String, required: true},
+			locale						: {type: String, required: true},
+			placeOfResidence			: {type: String, required: false},
 			
-			passwordResetCode			: {type: String, "default": "", required: false},
-			mailVerificationCode		: {type: String, "default": "", required: false},
-			
-			dateCreated					: {type: Date, "default": Date.now, required: true},
+			created						: {type: Date, "default": Date.now, required: true},
 			
 			profilePictureURL			: {
 				type: String,
@@ -49,19 +50,17 @@ class User{
 				//https://de.gravatar.com/site/implement/images/
 			},
 			
-			placeOfResidence			: {type: String, required: false},
+			facebook					: {
+				friends						: {type: Array, required: false},
+				
+				accessToken					: {type: String, "default": "", required: false},
+				refreshToken				: {type: String, "default": "", required: false},
+			},
 			
-			facebookFriends				: {type: Array, required: false},
-			
-			
-			facebookAccessToken			: {type: String, "default": "", required: false},
-			facebookRefreshToken		: {type: String, "default": "", required: false},
-			
-			twitterToken				: {type: String, "default": "", required: false},
-			twitterTokenSecret			: {type: String, "default": "", required: false},
-			
-			googleAccessToken			: {type: String, "default": "", required: false},
-			googleRefreshToken			: {type: String, "default": "", required: false},
+			google						: {
+				accessToken					: {type: String, "default": "", required: false},
+				refreshToken				: {type: String, "default": "", required: false},
+			},
 		});
 		
 		//Define constants and pass some modules
@@ -71,10 +70,13 @@ class User{
 		userSchema.statics.mailController		= this.mailController;
 		userSchema.statics.EmailTemplate		= this.EmailTemplate;
 		
-		userSchema.statics.hashAlgorithm		= this.config.HASH_ALGORITHM;
+		userSchema.statics.generateRandomString	= booki.generateRandomString;
+		userSchema.statics.hash					= booki.hash;
+		
 		userSchema.statics.saltLength			= this.config.SALT_LENGTH;
 		userSchema.statics.tokenLength			= this.config.TOKEN_LENGTH;
 		userSchema.statics.confirmTokenLength	= this.config.CONFIRM_TOKEN_LENGTH;
+		userSchema.statics.host					= this.config.HOST;
 		
 		/**
 		 * Finds a matching user to the passed passport profile
@@ -123,34 +125,35 @@ class User{
 		 * @param {Function} callback - The function to execute when this function found a user
 		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
-		userSchema.statics.register = function(firstName, email, preferredLocale, callback){
+		userSchema.statics.register = function(firstName, email, locale, callback){
 			var userData = {
-				displayName					: firstName,
-				firstName					: firstName,
+				name						: {
+					display						: firstName,
+					first						: firstName
+				},
 				
 				email						: email,
+				emailVerificationCode		: "",
 				
-				preferredLocale				: preferredLocale,
+				locale						: locale,
 				
-				passwordResetCode			: "",
-				mailVerificationCode		: "",
 			};
 			
 			var user = new this(userData);
 			
-			this.find({email: email}, function(err, users){
+			this.find({email: email}, (err, users) => {
 				if(err){
 					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
 				
-				if(users){
+				if(users && users.length > 0){
 					
 					return callback(new this.errorController.errors.UserAlreadyExistsError(), null);
 					
 				}else{
-					user.save(function(err2){
+					user.save((err2) => {
 						
 						if(err2){
 							return callback(new this.errorController.errors.DatabaseError({
@@ -158,7 +161,7 @@ class User{
 							}), null);
 						}
 						
-						user.initEmailConfirmation(function(error, success){
+						user.initEmailConfirmation((error, success) => {
 							if(error){
 								return callback(error, false);
 							}
@@ -216,9 +219,11 @@ class User{
 		userSchema.statics.getPassportUserMappings = function(profile){
 			
 			return {
-				displayName				: profile.displayName,
-				firstName				: profile.name.givenName,
-				lastName				: profile.name.familyName,
+				name					: {
+					display					: profile.displayName,
+					first					: profile.name.givenName,
+					last					: profile.name.familyName
+				},
 				
 				//email					: profile.emails[0].value, shouldn't be updated without the user wanting it
 				
@@ -236,39 +241,6 @@ class User{
 		userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals = {}){
 			return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : profile.emails[0].value}));
 		}
-		
-		/**
-		 * Generates random string of characters
-		 * @function generateRandomString
-		 * @param {number} length - Length of the random string.
-		 * @returns {String} A random string of a given length
-		 */
-		userSchema.statics.generateRandomString = function(length){
-			return this.crypto.randomBytes(Math.ceil(length/2))
-	        	.toString("hex") //convert to hexadecimal format
-	        	.slice(0, length);
-		}
-		
-		/**
-		 * Hash password using this.HASH_ALGORITHM or the passed algorithm
-		 * @function hash
-		 * @param {string} password - The password to be hashed
-		 * @param {string} salt - The salt to be used while hashing
-		 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that should be used
-		 * @returns {string} - The hashed password
-		 */
-		userSchema.statics.hash = function(password, salt, algorithm){
-			if(!algorithm){
-				algorithm = this.hashAlgorithm;
-			}
-			
-		    var hash = this.crypto.createHmac(algorithm, salt);
-		    hash.update(password);
-		    
-		    return hash.digest("hex");
-		};
-		
-		
 		
 		//User methods
 		
@@ -297,27 +269,37 @@ class User{
 		 * Verifies the password for a specific user
 		 * @function verifyPassword
 		 * @param {string} password - The password to verify
+		 * @param {Function} callback - The function called after verifying the password
 		 * @returns {Boolean} - Whether the password could be verified or not
 		 */
-		userSchema.methods.verifyPassword = function(password){
+		userSchema.methods.verifyPassword = function(password, callback){
 			
-			if(this.constructor.hash(password, this.passwordSalt, this.passwordHashAlgorithm) == this.passwordHash){
+			let {hash, salt}							= this.constructor.hash(password, this.password.salt,  this.password.algorithm);
+			let {hash : newHash, newAlgorithm}			= this.constructor.hash(password, this.password.salt);
+			
+			if(hash == this.password.hash){
 				//password is correct, check if the hash algorithm changed
 				
-				var hashAlgorithm = this.constructor.hashAlgorithm;
-				
-				if(this.passwordHashAlgorithm !== hashAlgorithm){
+				if(this.password.algorithm !== newAlgorithm){
 					//yes it did, hash and store the password with the new algorithm one
-					this.passwordHash		= "";
-					this.passwordResetCode	= "";
-					
-					this.updatePassword(password);
+					this.password.hash			= newHash;
+					this.password.algorithm		= newAlgorithm;
 				}
 				
-				return true;
+				return this.save((err, user) => {
+					
+					if(err){
+						return callback(new this.constructor.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					return callback(null, true);
+					
+				});
 			}
 			
-			return false;
+			return callback(null, false);
 		};
 		
 		/**
@@ -325,26 +307,35 @@ class User{
 		 * @function updatePassword
 		 * @param {string} password - The new password
 		 * @param {string} passwordResetCode - The received reset code that verifies this operation
+		 * @param {Function} callback - The function called after updating the password
 		 * @returns {Boolean} - Whether the update succeeds
 		 */
-		userSchema.methods.updatePassword = function(password, passwordResetCode){
-			if(
-					( !passwordResetCode && !this.passwordHash &&	!this.passwordResetCode ) ||
-					( this.passwordResetCode  && this.passwordResetCode === passwordResetCode ) )
-			{
+		userSchema.methods.updatePassword = function(password, passwordResetCode = null, callback){
+			
+			if((this.password.resetCode && this.password.resetCode === passwordResetCode)){
 				
-				var salt					= this.constructor.generateRandomString(this.constructor.saltLength);
+				this.password.resetCode		= "";
 				
-				this.passwordResetCode		= "";
+				let {hash, salt, algorithm} = this.constructor.hash(password);
 				
-				this.passwordHash			= this.constructor.hash(password, salt);
-				this.passwordHashAlgorithm	= this.constructor.hashAlgorithm;
-				this.passwordSalt			= salt;
+				this.password.hash			= hash;
+				this.password.algorithm	= algorithm;
+				this.password.salt			= salt;
 				
-				return true;
+				return this.save((err, user) => {
+					
+					if(err){
+						return callback(new this.constructor.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					return callback(null, true);
+					
+				});
 			}
 			
-			return false;
+			return callback(new this.constructor.errorController.errors.PasswordResetCodeInvalidError(), false);
 		};
 		
 		/**
@@ -360,7 +351,7 @@ class User{
 		 * @returns {undefined} - The data is returned with the callback parameter
 		 */
 		userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
-			this.constructor.mailController.sendMail(['"' + this.firstName + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
+			this.constructor.mailController.sendMail(['"' + this.name.first + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
 		}
 		
 		/**
@@ -373,7 +364,7 @@ class User{
 			var passwordResetCode	= this.constructor.generateRandomString(this.constructor.tokenLength);
 			var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
 			
-			resetMail.render(this, this.preferredLocale, (err, result) => {
+			resetMail.render(this, this.locale, (err, result) => {
 				if(err){
 					return callback(new this.constructor.errorController.errors.RenderError({
 						message: err.message
@@ -381,8 +372,24 @@ class User{
 				}
 				this.sendMail([], [], result.subject, result.html, null, function(error, success){
 					if(success){
-						this.passwordResetCode = passwordResetCode;
+						this.password.resetCode = passwordResetCode;
 					}
+					
+					if(error){
+						return callback(error, success);
+					}
+					
+					this.save((err, user) => {
+						if(err){
+							return callback(new this.constructor.errorController.errors.DatabaseError({
+								message: err.message
+							}), false);
+						}
+						
+						return callback(null, success);
+						
+					});
+					
 					return callback(error, success);
 				});
 			});
@@ -397,17 +404,17 @@ class User{
 		 */
 		userSchema.methods.initEmailConfirmation = function(callback, registration){
 			
-			var mailVerificationCode	= this.constructor.generateRandomString(this.constructor.confirmTokenLength);
+			var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.confirmTokenLength);
 			var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
 			
 			confirmationMail.render(
 			{
-				displayName				: this.displayName,
-				mailVerificationCode	: mailVerificationCode
+				user					: Object.assign(this, {emailVerificationCode: emailVerificationCode}),
+				host					: this.constructor.host
 				
 			},
 			
-			this.preferredLocale, (err, result) => {
+			this.locale, (err, result) => {
 				
 				if(err){
 					return callback(new this.constructor.errorController.errors.RenderError({
@@ -415,14 +422,30 @@ class User{
 					}), false);
 				}
 				
-				this.sendMail([], [], result.subject, result.html, null, function(error, success){
+				this.sendMail([], [], result.subject, result.html, null, (error, success) => {
+					
+					if(error){
+						return callback(error, success);
+					}
 					
 					if(success){
-						this.mailVerificationCode	= mailVerificationCode;
+						
+						this.emailVerificationCode	= emailVerificationCode;
 						
 						if(registration){
-							this.passwordResetCode	= mailVerificationCode;
+							this.password.resetCode	= emailVerificationCode;
 						}
+						
+						return this.save((err) => {
+							if(err){
+								return callback(new this.constructor.errorController.errors.DatabaseError({
+									message: err.message
+								}), false);
+							}
+							
+							return callback(null, success);
+							
+						});
 					}
 					
 					return callback(error, success);
@@ -430,23 +453,9 @@ class User{
 			});
 		};
 		
-		/**
-		 * Generates and returns a new authentication token in order to do api calls
-		 * @function generateAuthToken
-		 * @returns {String} - The new token
-		*/
-		userSchema.methods.generateAuthToken = function(){
-			var token						= this.constructor.generateRandomString(this.constructor.tokenLength);
-			
-			this.authToken					= token;
-			this.authTokenGenerationDate	= Date.now();
-			
-			return token;
-		}
-		
 		
 		userSchema.set("toJSON", {
-		    transform: function(doc, ret, options) {
+		    transform: (doc, ret, options) => {
 		        return {
 		        	id				: ret._id,
 		        	displayName		: ret.displayName,
