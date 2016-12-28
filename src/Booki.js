@@ -166,17 +166,14 @@ class Booki {
 			algorithm = this.config.HASH_ALGORITHM;
 		}
 		
-		if(!salt && salt === false){
+		if(!salt){
 			salt = this.generateRandomString(this.config.SALT_LENGTH);
 		}
 		
 	    let hmac;
 	    
-	    if(salt && salt !== false){
-		    hmac = this.crypto.createHmac(algorithm, salt);  
-		}else{
-			hmac = this.crypto.createHmac(algorithm);
-		}
+	    hmac = this.crypto.createHmac(algorithm, salt);  
+	    
 	    hmac.update(string);
 	    
 	    return {hash: hmac.digest("hex"), salt: salt, algorithm: algorithm};

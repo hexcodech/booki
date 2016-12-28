@@ -18,7 +18,6 @@ class OAuthCode {
 		});
 		
 		OAuthCodeSchema.statics.tokenLength				= this.config.TOKEN_LENGTH;
-		OAuthCodeSchema.statics.algorithm				= this.config.HASH_ALGORITHM;
 		
 		OAuthCodeSchema.statics.generateRandomString	= generateRandomString;
 		OAuthCodeSchema.statics.hash					= hash;
@@ -27,12 +26,8 @@ class OAuthCode {
 			return this.generateRandomString(this.tokenLength);
 		}
 		
-		OAuthCodeSchema.statics.hashCode = function(code){
-			return this.hash(code, false, this.algorithm);
-		}
-		
 		OAuthCodeSchema.statics.findByCode = function(code, callback){
-			this.find({hash: this.hashCode(code)}, callback);
+			this.find({hash: this.hash(code).hash}, callback);
 		}
 		
 		OAuthCodeSchema.set("toJSON", {

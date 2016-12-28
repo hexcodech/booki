@@ -185,7 +185,7 @@ class AuthController {
 			expirationDate.setSeconds(expirationDate.getSeconds() + this.config.AUTH_CODE_LIFETIME);
 			
 			let code = new this.OAuthCode({
-				hash			: this.OAuthCode.hashCode(codeValue).hash,
+				hash			: this.OAuthCode.hash(codeValue).hash,
 				clientId		: client._id,
 				userId			: user._id,
 				expires			: expirationDate

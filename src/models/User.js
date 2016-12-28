@@ -73,7 +73,6 @@ class User{
 		userSchema.statics.generateRandomString	= booki.generateRandomString;
 		userSchema.statics.hash					= booki.hash;
 		
-		userSchema.statics.saltLength			= this.config.SALT_LENGTH;
 		userSchema.statics.tokenLength			= this.config.TOKEN_LENGTH;
 		userSchema.statics.confirmTokenLength	= this.config.CONFIRM_TOKEN_LENGTH;
 		userSchema.statics.host					= this.config.HOST;
@@ -319,7 +318,7 @@ class User{
 				let {hash, salt, algorithm} = this.constructor.hash(password);
 				
 				this.password.hash			= hash;
-				this.password.algorithm	= algorithm;
+				this.password.algorithm		= algorithm;
 				this.password.salt			= salt;
 				
 				return this.save((err, user) => {
