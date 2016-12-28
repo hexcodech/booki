@@ -27,33 +27,69 @@ class Routing {
 		this.LocalRegistrationValidation					= require("./validation/LocalRegistrationValidation")(booki);
 		this.VerifyMailValidation							= require("./validation/VerifyMailValidation")(booki);
 		
-		this.app.get("/views/login",						this.authController.loginView,						this.authController.catchInternalErrorView);
-		this.app.get("/views/verify-email",					this.authController.mailVerificationView,			this.authController.catchInternalErrorView);
+		this.app.get("/views/login",						this.authController.loginView,
+															this.authController.catchInternalErrorView
+		);
+		this.app.get("/views/verify-email",					this.authController.mailVerificationView,
+															this.authController.catchInternalErrorView
+		);
 		
-		this.app.post("/v1/auth/local/login",				this.validate(this.LocalLoginValidation),			this.authController.authLocal, this.authController.catchInternalErrorView);
-		this.app.post("/v1/auth/local/register",			this.validate(this.LocalRegistrationValidation),	this.authController.registration, this.authController.authLocal, this.authController.catchInternalErrorView);
-		this.app.post("/v1/auth/local/verify-email",		this.validate(this.VerifyMailValidation),			this.authController.verifyEmail, this.authController.authLocal, this.authController.catchInternalErrorView);
+		this.app.post("/v1/auth/local/login",				this.validate(this.LocalLoginValidation),
+															this.authController.authLocal,
+															this.authController.catchInternalErrorView
+		);
 		
-		this.app.get("/v1/auth/facebook/login/",			this.authController.authFacebook,					this.authController.catchInternalError);
-		this.app.get(this.config.FACEBOOK_CALLBACK_PATH,	this.authController.authFacebookCallback,			this.authController.catchInternalError);
+		this.app.post("/v1/auth/local/register",			this.validate(this.LocalRegistrationValidation),
+															this.authController.registration,
+															this.authController.catchInternalErrorView
+		);
+		this.app.post("/v1/auth/local/verify-email",		this.validate(this.VerifyMailValidation),
+															this.authController.verifyEmail,
+															this.authController.isAuthenticated,
+															this.authController.catchInternalErrorView
+		);
+		this.app.get("/v1/auth/facebook/login/",			this.authController.authFacebook,
+															this.authController.catchInternalError
+		);
+		this.app.get(this.config.FACEBOOK_CALLBACK_PATH,	this.authController.authFacebookCallback,
+															this.authController.catchInternalError
+		);
 		
-		this.app.get("/v1/auth/google/login/",				this.authController.authGoogle,						this.authController.catchInternalError);
-		this.app.get(this.config.GOOGLE_CALLBACK_PATH,		this.authController.authGoogleCallback,				this.authController.catchInternalError);
+		this.app.get("/v1/auth/google/login/",				this.authController.authGoogle,
+															this.authController.catchInternalError
+		);
+		this.app.get(this.config.GOOGLE_CALLBACK_PATH,		this.authController.authGoogleCallback,
+															this.authController.catchInternalError
+		);
 		
-		this.app.get("/oauth2/authorize",					this.authController.isAuthenticated,				this.authController.authorization);
-		this.app.post("/oauth2/authorize",					this.authController.isAuthenticated,				this.authController.decision);
+		this.app.get("/oauth2/authorize",					this.authController.isAuthenticated,
+															this.authController.authorization,
+															this.authController.catchInternalErrorView
+		);
+		this.app.post("/oauth2/authorize",					this.authController.isAuthenticated,
+															this.authController.decision,
+															this.authController.catchInternalErrorView
+		);
 		
-		this.app.post("/oauth2/token",						this.authController.isClientAuthenticated,			this.authController.token);
+		this.app.post("/oauth2/token",						this.authController.isClientAuthenticated,
+															this.authController.token,
+															this.authController.catchInternalError
+		);
 		
 		//OAuth Client
 		
-		let OAuthClientController		= require("./controllers/OAuthClientController");
-		this.oauthClientController		= new OAuthClientController(booki);
+		let OAuthClientController			= require("./controllers/OAuthClientController");
+		this.oauthClientController			= new OAuthClientController(booki);
 		
-		this.PostOAuthClientsValidation	= require("./validation/PostOAuthClientsValidation")(booki);
+		this.PostOAuthClientsValidation		= require("./validation/PostOAuthClientsValidation")(booki);
 		
-		this.app.post("/oauth2/clients",	this.validate(this.PostOAuthClientsValidation),	this.oauthClientController.postOAuthClients);
-		this.app.get("/oauth2/clients",		this.oauthClientController.getOAuthClients);
+		this.app.post("/oauth2/clients",					this.authController.isAuthenticated,
+															this.validate(this.PostOAuthClientsValidation),
+															this.oauthClientController.postOAuthClients
+		);
+		this.app.get("/oauth2/clients",						this.authController.isAuthenticated,
+															this.oauthClientController.getOAuthClients
+		);
 		
 		//Books
 		

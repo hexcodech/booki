@@ -10,7 +10,7 @@ class ErrorController {
 		this.errors					= errors;
 		this.i18n					= i18n;
 		
-		booki.bindAll(this, ["translateError", "expressErrorResponse"]);
+		//booki.bindAll(this, ["translateError", "expressErrorResponse"]);
 		
 		//Create errors
 		
@@ -220,7 +220,7 @@ class ErrorController {
 		
 	}
 	
-	translateError(error, locale){
+	/*translateError(error, locale){
 		var message, response, explanation;
 		
 		if(error.message){
@@ -250,11 +250,11 @@ class ErrorController {
 		}
 		
 		return error;
-	}
+	}*/
 	
-	expressErrorResponse(request, response, error, locale){
+	/*expressErrorResponse(request, response, error, locale){
 		return response.end(JSON.stringify(this.translateError(error, locale).toJSON()));
-	}
+	}*/
 	
 };
 

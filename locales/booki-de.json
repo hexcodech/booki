@@ -48,5 +48,15 @@
 	"Check if you copied the whole code": "Check if you copied the whole code",
 	"User is not defined": "User is not defined",
 	"Your login attempt with the provided credentials failed": "Your login attempt with the provided credentials failed",
-	"Failed to serialize user into session": "Failed to serialize user into session"
+	"Failed to serialize user into session": "Failed to serialize user into session",
+	"Dashboard": "Dashboard",
+	"The entered email verification code is invalid": "The entered email verification code is invalid",
+	"OAuth Dialog": "OAuth Dialog",
+	"Hi": "Hi",
+	"is requesting <b>full access</b> to your account": "is requesting <b>full access</b> to your account",
+	"Do you approve?": "Do you approve?",
+	"Allow": "Allow",
+	"Deny": "Deny",
+	"is requesting full access to your account": "is requesting full access to your account",
+	"Continue": "Continue"
 }

@@ -38,11 +38,11 @@ class AuthController {
 		
 		booki.bindAll(this, ["loginView", "mailVerificationView", "auth", "authFacebookCallback", "authGoogleCallback", "catchInternalError", "catchInternalErrorView"]);
 		
-		this.passport.serializeUser(function(user, done) {
+		this.passport.serializeUser((user, done) => {
 			done(null, user._id);
 		});
 		
-		this.passport.deserializeUser(function(userId, done) {
+		this.passport.deserializeUser((userId, done) => {
 			
 			this.User.findById(userId, (err, user) => {
 				if(err){
@@ -89,9 +89,9 @@ class AuthController {
 			    
 		    	if(err){
 					
-					return next(this.errorController.translateError(new this.errorController.errors.DatabaseError({
+					return next(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}, this.getLocale(user, request))));
+					}));
 					
 		    	}else if(user){
 		    		
@@ -104,19 +104,17 @@ class AuthController {
 				    			if(success){
 					    			response.redirect("/views/login");
 				    			}else{
-					    			return next(this.errorController.translateError(error, this.getLocale(user, request)));
+					    			return next(error);
 				    			}
 			    			});
 			    			
 		    			}
 		    		}else{
-			    		return next(this.errorController.translateError(new this.errorController.errors.EmailVerificationCodeInvalidError(),
-			    			this.getLocale(user, request)));
+			    		return next(new this.errorController.errors.EmailVerificationCodeInvalidError());
 		    		}
 		    	}else{
 			    	//it's safer to display the same error as above because this doesn't hint who's registered and who not
-			    	return next(this.errorController.translateError(new this.errorController.errors.EmailVerificationCodeInvalidError(),
-			    		this.getLocale(user, request)));
+			    	return next(new this.errorController.errors.EmailVerificationCodeInvalidError());
 		    	}
 		    }); 
 		};
@@ -124,23 +122,32 @@ class AuthController {
 		
 		this.passport.use("client-basic", new BasicStrategy(
 			(username, password, callback) => {
-				
-				Client.findOne({id: username}, (err, client) => {
+				this.OAuthClient.findOne({id: username}, (err, client) => {
 					if(err){
-						return callback(new self.errorController.errors.DatabaseError({
+						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), null);
 					}
 					
 					// No client found with that id or bad password
-					if (!client || !client.verifySecret(password)){
+					if (!client){
 						return callback(null, false);
 					}
 					
-					// Success
-					return callback(null, client);
+					client.verifySecret(password, (error, success) => {
+						
+						if(error){
+							done(error, null);
+						}
+						
+						if(success){
+							return done(null, client);
+						}else{
+							return done(new this.errorController.errors.LoginError(), null);
+						}
+						
+					});
 				});
-				
 			}
 		));
 		
@@ -156,7 +163,7 @@ class AuthController {
 		this.oauth2Server.deserializeClient((id, callback) => {
 			this.OAuthClient.findById(id, (err, client) => {
 				if(err){
-					return callback(new self.errorController.errors.DatabaseError({
+					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
@@ -168,8 +175,8 @@ class AuthController {
 		this.oauth2Server.grant(this.oauth2orize.grant.code((client, redirectUri, user, ares, callback) => {
 			// Create a new authorization code
 			
-			if(client.verifyRedirectUri(redirectUri)){
-				return callback(new self.errorController.errors.InvalidRedirectUriError(), null);
+			if(!client.verifyRedirectUri(redirectUri)){
+				return callback(new this.errorController.errors.InvalidRedirectUriError(), null);
 			}
 			
 			let codeValue			= this.OAuthCode.generateCode();
@@ -178,7 +185,7 @@ class AuthController {
 			expirationDate.setSeconds(expirationDate.getSeconds() + this.config.AUTH_CODE_LIFETIME);
 			
 			let code = new this.OAuthCode({
-				value			: this.OAuthCode.hashCode(codeVal),
+				hash			: this.OAuthCode.hashCode(codeValue).hash,
 				clientId		: client._id,
 				userId			: user._id,
 				expires			: expirationDate
@@ -187,7 +194,7 @@ class AuthController {
 			// Save the auth code and check for errors
 			code.save((err) => {
 				if(err){
-					return callback(new self.errorController.errors.DatabaseError({
+					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
@@ -201,13 +208,13 @@ class AuthController {
 			Code.findByCode(code, (err, authCode) => {
 				
 				if(err){
-					return callback(new self.errorController.errors.DatabaseError({
+					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				}
 				
 				if (!authCode || client._id.toString() !== authCode.clientId || client.verifyRedirectUri(redirectUri)){
-					return callback(new self.errorController.errors.AuthCodeInvalidError(), null);
+					return callback(new this.errorController.errors.AuthCodeInvalidError(), null);
 				}
 				
 				let now = new Date();
@@ -217,12 +224,12 @@ class AuthController {
 					authCode.remove((err2) => {
 						
 						if(err2){
-							return callback(new self.errorController.errors.DatabaseError({
+							return callback(new this.errorController.errors.DatabaseError({
 								message: err2.message
 							}), null);
 						}
 						
-						return callback(new self.errorController.errors.AuthCodeExpiredError(), null);
+						return callback(new this.errorController.errors.AuthCodeExpiredError(), null);
 						
 					});
 				}
@@ -231,7 +238,7 @@ class AuthController {
 				authCode.remove((err2) => {
 					
 					if(err2){
-						return callback(new self.errorController.errors.DatabaseError({
+						return callback(new this.errorController.errors.DatabaseError({
 							message: err2.message
 						}), null);
 					}
@@ -251,7 +258,7 @@ class AuthController {
 					token.save((err3) => {
 						
 						if(err3){
-							return callback(new self.errorController.errors.DatabaseError({
+							return callback(new this.errorController.errors.DatabaseError({
 								message: err3.message
 							}), null);
 						}
@@ -268,10 +275,10 @@ class AuthController {
 		
 		this.authorization = [
 			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
-			
-				Client.findById(clientId, (err, client) => {
+				this.OAuthClient.findById(clientId, (err, client) => {
+					
 					if(err){
-						return callback(new self.errorController.errors.DatabaseError({
+						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), false);
 					}
@@ -279,40 +286,40 @@ class AuthController {
 					if(client.verifyRedirectUri(redirectUri)){
 						return callback(null, client, redirectUri);
 					}else{
-						return callback(new self.errorController.errors.InvalidRedirectUriError(), false);
+						return callback(new this.errorController.errors.InvalidRedirectUriError(), false);
 					}
 					
 				});
 				
 			}),
-			(client, user, done) => {
+			(request, response, done) => {
 				//Check whether request qualifies for immediate approval
 				
-				//If the client is trusted
-				if(client.trusted === true){
-					return done(null, true);
-				}
+				let {client} = request.oauth2;
 				
 				//Or the user already approved to this client
 				this.OAuthAccessToken.findOne({id: client.id}, (err, token) => {
 					
 					if(err){
-						return done(new self.errorController.errors.DatabaseError({
+						return done(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), false);
 					}
 					
-					if(token){
-						return done(null, true);
+					//If the client is trusted
+					if(client.trusted === true || token){
+						//pass it
+						request.trusted = true;
 					}else{
-						//ask user
-						done(null, false);
+						request.trusted = false;
 					}
+					
+					return done(null, false);
 					
 				})
 				
 			},
-			(error, request, response, next) => {
+			(request, response) => {
 				
 				this.ejs.renderFile(__dirname + "/../views/OAuthDialog.ejs", {
 					__					: (string) => {
@@ -321,7 +328,8 @@ class AuthController {
 					
 					transactionID		: request.oauth2.transactionID,
 					user				: request.user,
-					client				: request.oauth2.client
+					client				: request.oauth2.client,
+					trusted				: request.trusted
 					
 				}, {}, (err, str) => {
 					
@@ -342,17 +350,21 @@ class AuthController {
 		this.token		= [this.oauth2Server.token(), this.oauth2Server.errorHandler()];
 		
 		
-		//With username(email)/password
-		this.passport.use(new LocalStrategy(
+		this.passport.use("local", new LocalStrategy(
 			(email, password, done) => {
 				
 				this.User.findOne({email: email}, (err, user) => {
+					if(err){
+						return callback(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}), null);
+					}
 					
-					if(err || user.password.hash.length === 0 || !user) {
+					if(user.password.hash.length === 0 || !user) {
 						return done(new this.errorController.errors.LoginError(), null);
 					}
 					
-					if(user.verifyPassword(password, (error, success) => {
+					user.verifyPassword(password, (error, success) => {
 						
 						if(error){
 							done(error, null);
@@ -363,23 +375,30 @@ class AuthController {
 						}else{
 							return done(new this.errorController.errors.LoginError(), null);
 						}
-					}));
+					});
 					
 				});
 			}
 		));
 		
-		this.authLocal = [
+		this.isAuthenticated = [
 			(request, response, next) => {
-			
-				this.passport.authenticate("local", (err, user, info) => {
-					
-					this.auth(request, response, next, err, user, info);
-					
-				})(request, response, next);
-				
+				if(request.user){
+					next();
+				}else{
+					request.session.requestedURL = request.url;
+					return response.redirect("/views/login");
+				}
 			}
 		];
+		
+		this.authLocal = (request, response, next) => {
+			this.passport.authenticate("local", (err, user, info) => {
+				
+				this.auth(request, response, next, err, user, info);
+				
+			})(request, response, next);
+		};
 		
 		//With OAuth
 		passport.use(new BearerStrategy(
@@ -388,19 +407,19 @@ class AuthController {
 				
 				this.OAuthAccessToken.findByToken(accessToken, (err, token) => {
 					if(err){
-						return callback(new self.errorController.errors.DatabaseError({
+						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), false);
 					}
 					
 					// No token found
 					if (!token){
-						return callback(new self.errorController.errors.TokenInvalidError(), false);
+						return callback(new this.errorController.errors.TokenInvalidError(), false);
 					}
 					
 					this.User.findById(token.userId, (err2, user) => {
 						if(err2){
-							return callback(new self.errorController.errors.DatabaseError({
+							return callback(new this.errorController.errors.DatabaseError({
 								message: err2.message
 							}), false);
 						}
@@ -410,12 +429,12 @@ class AuthController {
 							token.remove((err3) => {
 								
 								if(err3){
-									return callback(new self.errorController.errors.DatabaseError({
+									return callback(new this.errorController.errors.DatabaseError({
 										message: err3.message
 									}), false);
 								}
 								
-								return callback(new self.errorController.errors.TokenInvalidError(), false);
+								return callback(new this.errorController.errors.TokenInvalidError(), false);
 							});
 						}
 						
@@ -489,9 +508,6 @@ class AuthController {
 			})
 		];
 		
-		
-		this.isAuthenticated = passport.authenticate(["bearer"], {session : false});
-		
 	}
 	
 	loginView(request, response, next){
@@ -539,35 +555,32 @@ class AuthController {
 	auth(request, response, next, err, user, info){
 		
 		if(err){
-			return next(this.errorController.translateError(
-				new this.errorController.errors.AuthenticationError({
-					message: err.message
-				}), this.getLocale(user, request)
-			));
+			return next(new this.errorController.errors.AuthenticationError({
+				message: err.message
+			}));
 		}
 		
 		if(!user){
-			return next(this.errorController.translateError(
-				new this.errorController.errors.AuthenticationError(), this.getLocale(null, request)
-			));
+			return next(new this.errorController.errors.AuthenticationError({
+				message: err.message
+			}));
+			//return response.redirect("/views/login");
 		}
 		
-		request.logIn(user, {session: true}, (error) => {
+		request.logIn(user, (error) => {
 			if(error){
-				return next(this.errorController.translateError(
-					error, this.getLocale(user, request)
-				));
+				return next(error);
 			}
 			
 			if(user){
-				
-				//user is logged in
-				response.end("lel");
+				if(request.session.requestedURL){
+					response.redirect(request.session.requestedURL);
+				}else{
+					response.end("logged in: " + request.session.requestedURL + ", max age: " + request.session.cookie.maxAge);
+				}
 				
 			}else{
-				return next(this.errorController.translateError(
-					new this.errorController.errors.AuthenticationError(), this.getLocale(null, request)
-				));
+				return next(new this.errorController.errors.AuthenticationError());
 			}
 		});
 	}

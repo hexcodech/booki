@@ -1,17 +1,8 @@
 class OAuthClient {
 	
 	constructor({booki, config, mongoose}){
-	
-		//store the passed parameters
-		this.mongoose				= mongoose;
-		this.config					= config;
 		
-		this.generateRandomString	= booki.generateRandomString;
-		this.hash					= booki.hash;
-		
-		
-		var OAuthClientSchema = new this.mongoose.Schema({
-			id							: {type: String, unique: true, required: true},
+		var OAuthClientSchema = new mongoose.Schema({
 			name						: {type: String, unique: true, required: true},
 			secret						: {
 				
@@ -25,11 +16,11 @@ class OAuthClient {
 			userId						: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}
 		});
 		
-		OAuthClientSchema.statics.secretLength	= this.config.CLIENT_SECRET_LENGTH;
-		
-		OAuthClientSchema.statics.generateSecret = function(){
-			return this.generateRandomString(this.secretLength);
+		OAuthClientSchema.statics.generateSecret = function(){ //this reference this files class in this instance
+			return booki.generateRandomString(config.CLIENT_SECRET_LENGTH);
 		}
+		
+		OAuthClientSchema.statics.hash = booki.hash;
 		
 		OAuthClientSchema.methods.setSecret = function(secret){
 			let {hash, salt, algorithm} = this.constructor.hash(secret);
@@ -41,7 +32,7 @@ class OAuthClient {
 			return true;
 		}
 		
-		OAuthClientSchema.methods.verifySecret = function(secret){
+		OAuthClientSchema.methods.verifySecret = function(secret, callback){
 			let {hash}									= this.constructor.hash(secret, this.secret.salt, this.secret.algorithm);
 			let {hash : newHash, newAlgorithm}			= this.constructor.hash(secret, this.secret.salt);
 			
@@ -53,16 +44,25 @@ class OAuthClient {
 					this.secret.algorithm	= newAlgorithm;
 				}
 				
-				return true;
-				
+				return this.save((err, client) => {
+					
+					if(err){
+						return callback(new this.constructor.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					return callback(null, true);
+					
+				});
 			}
 			
-			return false;
+			return callback(null, false);
 		}
 		
 		OAuthClientSchema.methods.verifyRedirectUri = function(redirectUri){
-			for(var i=0;i<this.redirectUris;i++){
-				if(redirectUris[i] === redirectUri){
+			for(var i=0;i<this.redirectUris.length;i++){
+				if(this.redirectUris[i] === redirectUri){
 					return true;
 				}
 			}
@@ -73,7 +73,7 @@ class OAuthClient {
 		OAuthClientSchema.set("toJSON", {
 		    transform: function(doc, ret, options) {
 		        return {
-		        	id					: ret.id,
+		        	id					: ret._id,
 		        	name				: ret.name,
 		        	redirectUri			: ret.redirectUri,
 		        	userId				: ret.userId
@@ -82,7 +82,7 @@ class OAuthClient {
 		});
 					
 		
-		return this.mongoose.model("OAuthClient", OAuthClientSchema);
+		return mongoose.model("OAuthClient", OAuthClientSchema);
 		
 	}
 	

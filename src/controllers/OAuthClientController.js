@@ -15,7 +15,7 @@ class OAuthClientController{
 		
 	}
 	
-	postOAuthClients(request, response){
+	postOAuthClients(request, response, next){
 		
 		let secret = this.OAuthClient.generateSecret();
 		
@@ -31,11 +31,9 @@ class OAuthClientController{
 		client.save((err, client) => {
 			
 			if(err){
-				return this.errorController.expressErrorResponse(request, response,
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}));
 			}
 			
 			if(client){
@@ -45,23 +43,19 @@ class OAuthClientController{
 				
 			}
 			
-			return this.errorController.expressErrorResponse(request, response,
-				new this.errorController.errors.UnexpectedQueryResultError()
-			);
+			return next(new this.errorController.errors.UnexpectedQueryResultError());
 			
 		});
 		
 	}
 	
-	getOAuthClients(request, response){
+	getOAuthClients(request, response, next){
 		this.OAuthClient.find({userId: request.user._id}, (err, clients) => {
 			
 			if(err){
-				return this.errorController.expressErrorResponse(request, response,
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}));
 			}
 			
 			if(clients){
@@ -71,9 +65,7 @@ class OAuthClientController{
 				
 			}
 			
-			return this.errorController.expressErrorResponse(request, response,
-				new this.errorController.errors.UnexpectedQueryResultError()
-			);
+			return next(new this.errorController.errors.UnexpectedQueryResultError());
 			
 		});
 	}

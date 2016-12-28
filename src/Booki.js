@@ -11,6 +11,9 @@ class Booki {
 		
 		//Require modules
 		this.mongoose			= require("mongoose");
+		this.mongoose.Promise	= global.Promise; //Use ES6 promises
+		
+		
 		this.ejs				= require("ejs");
 		this.events				= require("events");
 		this.i18n				= require("i18n");
@@ -163,7 +166,7 @@ class Booki {
 			algorithm = this.config.HASH_ALGORITHM;
 		}
 		
-		if(!salt && salt !== false){
+		if(!salt && salt === false){
 			salt = this.generateRandomString(this.config.SALT_LENGTH);
 		}
 		
