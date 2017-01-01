@@ -1,6 +1,6 @@
 class OAuthClient {
 	
-	constructor({booki, config, mongoose}){
+	constructor({booki, config, mongoose, errorController, hash}){
 		
 		var OAuthClientSchema = new mongoose.Schema({
 			name						: {type: String, unique: true, required: true},
@@ -20,7 +20,8 @@ class OAuthClient {
 			return booki.generateRandomString(config.CLIENT_SECRET_LENGTH);
 		}
 		
-		OAuthClientSchema.statics.hash = booki.hash;
+		OAuthClientSchema.statics.hash				= hash;
+		OAuthClientSchema.statics.errorController	= errorController;
 		
 		OAuthClientSchema.methods.setSecret = function(secret){
 			let {hash, salt, algorithm} = this.constructor.hash(secret);
@@ -33,28 +34,33 @@ class OAuthClient {
 		}
 		
 		OAuthClientSchema.methods.verifySecret = function(secret, callback){
-			let {hash}									= this.constructor.hash(secret, this.secret.salt, this.secret.algorithm);
-			let {hash : newHash, newAlgorithm}			= this.constructor.hash(secret, this.secret.salt);
+			let {hash}										= this.constructor.hash(secret, this.secret.salt, this.secret.algorithm);
+			let {hash : newHash, algorithm: newAlgorithm}	= this.constructor.hash(secret, this.secret.salt);
 			
 			if(this.secret.hash && hash === this.secret.hash){
 				
-				if(this.secret.algorithm !== algorithm){
+				if(this.secret.algorithm !== newAlgorithm){
+					
 					//if the algorithm changed, update the hash
 					this.secret.hash		= newHash;
 					this.secret.algorithm	= newAlgorithm;
+					
+					return this.save((err, client) => {
+					
+						if(err){
+							
+							return callback(this.constructor.errorController.errors.DatabaseError({
+								message: err.message
+							}), false);
+						}
+						
+						return callback(null, true);
+						
+					});
 				}
 				
-				return this.save((err, client) => {
-					
-					if(err){
-						return callback(new this.constructor.errorController.errors.DatabaseError({
-							message: err.message
-						}), false);
-					}
-					
-					return callback(null, true);
-					
-				});
+				return callback(null, true);
+				
 			}
 			
 			return callback(null, false);

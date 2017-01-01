@@ -10,6 +10,8 @@ class Booki {
 		this.booki				= this;
 		
 		//Require modules
+		this.fs					= require("fs");
+		
 		this.mongoose			= require("mongoose");
 		this.mongoose.Promise	= global.Promise; //Use ES6 promises
 		
@@ -72,7 +74,7 @@ class Booki {
 		});
 		
 		//Configure the server
-		this.app.use("/static/", this.express.static("../static"));
+		this.app.use("/static/", this.express.static(__dirname + "/../static"));
 		this.app.use(this.bodyParser.json());
 		this.app.use(this.bodyParser.urlencoded({
 			extended: true
@@ -88,15 +90,20 @@ class Booki {
 		
 		this.app.use(
 			(request, response, next) => {
-			//UTF 8 JSON all the way EXCEPT /static/
-			if(!request.url.startsWith("/static/")){
-				response.header("Content-Type", "application/json; charset=utf-8");
-			}else{
-				response.setHeader("charset", "utf-8");
+				
+				response.header("Access-Control-Allow-Origin", "*");
+				response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+				
+				//UTF 8 JSON all the way EXCEPT /static/
+				if(!request.url.startsWith("/static/")){
+					response.header("Content-Type", "application/json; charset=utf-8");
+				}else{
+					response.setHeader("charset", "utf-8");
+				}
+				
+				next();
 			}
-			
-			next();
-		});
+		);
 		
 		
 		//Load all Models
@@ -166,17 +173,21 @@ class Booki {
 			algorithm = this.config.HASH_ALGORITHM;
 		}
 		
-		if(!salt){
+		if(!salt && salt !== false){
 			salt = this.generateRandomString(this.config.SALT_LENGTH);
 		}
 		
-	    let hmac;
+	    let hmacOrHash;
 	    
-	    hmac = this.crypto.createHmac(algorithm, salt);  
+	    if(salt){
+		    hmacOrHash = this.crypto.createHmac(algorithm, salt);    
+	    }else{
+		    hmacOrHash = this.crypto.createHash(algorithm);
+	    }
 	    
-	    hmac.update(string);
+	    hmacOrHash.update(string);
 	    
-	    return {hash: hmac.digest("hex"), salt: salt, algorithm: algorithm};
+	    return {hash: hmacOrHash.digest("hex"), salt: salt, algorithm: algorithm};
 	};
 	
 };

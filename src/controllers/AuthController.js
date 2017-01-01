@@ -9,8 +9,7 @@ class AuthController {
 			booki,				config,				app,				i18n,
 			mongoose,			ejs,				errorController,	crypto,
 			passport,			oauth2orize,		oauth2Server,		getLocale,
-			BasicStrategy,		LocalStrategy,		BearerStrategy,		FacebookStrategy,
-			GoogleStrategy
+			LocalStrategy,		BearerStrategy,		FacebookStrategy,	GoogleStrategy
 		}
 		){
 		
@@ -120,9 +119,11 @@ class AuthController {
 		};
 		
 		
-		this.passport.use("client-basic", new BasicStrategy(
-			(username, password, callback) => {
-				this.OAuthClient.findOne({id: username}, (err, client) => {
+		this.passport.use("client-local", new LocalStrategy(
+			(clientId, clientSecret, callback) => {
+				
+				this.OAuthClient.findById(clientId, (err, client) => {
+					
 					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
@@ -134,16 +135,16 @@ class AuthController {
 						return callback(null, false);
 					}
 					
-					client.verifySecret(password, (error, success) => {
+					client.verifySecret(clientSecret, (error, success) => {
 						
 						if(error){
-							done(error, null);
+							callback(error, null);
 						}
 						
 						if(success){
-							return done(null, client);
+							return callback(null, client);
 						}else{
-							return done(new this.errorController.errors.LoginError(), null);
+							return callback(new this.errorController.errors.LoginError(), null);
 						}
 						
 					});
@@ -151,7 +152,7 @@ class AuthController {
 			}
 		));
 		
-		this.isClientAuthenticated = passport.authenticate("client-basic", {session : false});
+		this.isClientAuthenticated = passport.authenticate("client-local", {session : false});
 		
 		
 		
@@ -185,7 +186,7 @@ class AuthController {
 			expirationDate.setSeconds(expirationDate.getSeconds() + this.config.AUTH_CODE_LIFETIME);
 			
 			let code = new this.OAuthCode({
-				hash			: this.OAuthCode.hash(codeValue).hash,
+				hash			: this.OAuthCode.hashCode(codeValue),
 				clientId		: client._id,
 				userId			: user._id,
 				expires			: expirationDate
@@ -205,7 +206,7 @@ class AuthController {
 		
 		this.oauth2Server.exchange(this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
 			
-			Code.findByCode(code, (err, authCode) => {
+			this.OAuthCode.findByCode(code, (err, authCode) => {
 				
 				if(err){
 					return callback(new this.errorController.errors.DatabaseError({
@@ -213,7 +214,7 @@ class AuthController {
 					}), null);
 				}
 				
-				if (!authCode || client._id.toString() !== authCode.clientId || client.verifyRedirectUri(redirectUri)){
+				if(!authCode || client._id.toString() !== authCode.clientId.toString()/* || client.verifyRedirectUri(redirectUri)*/){
 					return callback(new this.errorController.errors.AuthCodeInvalidError(), null);
 				}
 				
@@ -247,12 +248,14 @@ class AuthController {
 					expirationDate.setSeconds(expirationDate.getSeconds() + this.config.ACCESS_TOKEN_LIFETIME);
 					
 					// Create an access token
-					let token = new this.OAuthAccessToken({
+					let tokenObj = {
 						hash			: this.OAuthAccessToken.generateToken(),
 						clientId		: authCode.clientId,
 						userId			: authCode.userId,
 						expires			: expirationDate
-					});
+					};
+					
+					let token = new this.OAuthAccessToken(tokenObj);
 					
 					// Save the access token and check for errors
 					token.save((err3) => {
@@ -263,7 +266,7 @@ class AuthController {
 							}), null);
 						}
 						
-						callback(null, token);
+						callback(null, tokenObj);
 					});
 				});
 			});
@@ -283,7 +286,7 @@ class AuthController {
 						}), false);
 					}
 					
-					if(client.verifyRedirectUri(redirectUri)){
+					if(client && client.verifyRedirectUri(redirectUri)){
 						return callback(null, client, redirectUri);
 					}else{
 						return callback(new this.errorController.errors.InvalidRedirectUriError(), false);

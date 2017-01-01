@@ -17,6 +17,15 @@ class Routing {
 		
 		booki.bindAll(this, []);
 		
+		this.app.get("/", (response, request) => {
+			booki.fs.readFile(__dirname + "/../static/res/img/trollface.txt", 'utf8', function (err, data){
+				if(err){
+					return console.log(err);
+				}
+				request.end(data);
+			});
+		});
+		
 		//Autentication
 		
 		let AuthController									= require("./controllers/AuthController");
@@ -78,10 +87,10 @@ class Routing {
 		
 		//OAuth Client
 		
-		let OAuthClientController			= require("./controllers/OAuthClientController");
-		this.oauthClientController			= new OAuthClientController(booki);
+		let OAuthClientController							= require("./controllers/OAuthClientController");
+		this.oauthClientController							= new OAuthClientController(booki);
 		
-		this.PostOAuthClientsValidation		= require("./validation/PostOAuthClientsValidation")(booki);
+		this.PostOAuthClientsValidation						= require("./validation/PostOAuthClientsValidation")(booki);
 		
 		this.app.post("/oauth2/clients",					this.authController.isAuthenticated,
 															this.validate(this.PostOAuthClientsValidation),
@@ -93,15 +102,15 @@ class Routing {
 		
 		//Books
 		
-		let BookController				= require("./controllers/BookController");
-		this.bookController	 			= new BookController(booki);
-		
-		
-		let UserController				= require("./controllers/UserController");
-		this.userController				= new UserController(booki);
-	
-		this.book_isbn13_id				= require("./validation/book_isbn13_id");
-		this.book_post					= require("./validation/book_post");
+		let BookController									= require("./controllers/BookController");
+		this.bookController	 								= new BookController(booki);
+															
+															
+		let UserController									= require("./controllers/UserController");
+		this.userController									= new UserController(booki);
+															
+		this.book_isbn13_id									= require("./validation/book_isbn13_id");
+		this.book_post										= require("./validation/book_post");
 		
 		//Start routing
 	

@@ -26,8 +26,12 @@ class OAuthCode {
 			return this.generateRandomString(this.tokenLength);
 		}
 		
+		OAuthCodeSchema.statics.hashCode = function(code){
+			return this.hash(code, false).hash;
+		}
+		
 		OAuthCodeSchema.statics.findByCode = function(code, callback){
-			this.find({hash: this.hash(code).hash}, callback);
+			this.findOne({hash: this.hashCode(code)}, callback);
 		}
 		
 		OAuthCodeSchema.set("toJSON", {
