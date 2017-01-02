@@ -248,14 +248,20 @@ class AuthController {
 					expirationDate.setSeconds(expirationDate.getSeconds() + this.config.ACCESS_TOKEN_LIFETIME);
 					
 					// Create an access token
-					let tokenObj = {
-						hash			: this.OAuthAccessToken.generateToken(),
+					let tokenData = {
+						token			: this.OAuthAccessToken.generateToken(),
 						clientId		: authCode.clientId,
 						userId			: authCode.userId,
 						expires			: expirationDate
 					};
 					
-					let token = new this.OAuthAccessToken(tokenObj);
+					
+					let token = new this.OAuthAccessToken({
+						hash			: this.OAuthAccessToken.hashToken(tokenData.token), //the 'key' here is 'hash' and not 'token' as in 'tokenData'!
+						clientId		: authCode.clientId,
+						userId			: authCode.userId,
+						expires			: expirationDate
+					});
 					
 					// Save the access token and check for errors
 					token.save((err3) => {
@@ -266,7 +272,7 @@ class AuthController {
 							}), null);
 						}
 						
-						callback(null, tokenObj);
+						callback(null, tokenData);
 					});
 				});
 			});
@@ -429,7 +435,7 @@ class AuthController {
 						
 						// No user was found, so the token is invalid
 						if(!user){
-							token.remove((err3) => {
+							this.OAuthAccessToken.remove({hash: token.hash}, (err3) => {
 								
 								if(err3){
 									return callback(new this.errorController.errors.DatabaseError({

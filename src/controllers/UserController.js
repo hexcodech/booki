@@ -18,8 +18,11 @@ class UserController {
 		this.User							= this.mongoose.model("User");
 		
 		booki.bindAll(this, []);
+	}
 	
-		
+	getCurrentUser(request, response){
+		response.json(request.user.toJSON());
+		response.end();
 	}
 	
 };

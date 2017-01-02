@@ -456,13 +456,13 @@ class User{
 		userSchema.set("toJSON", {
 		    transform: (doc, ret, options) => {
 		        return {
-		        	id				: ret._id,
-		        	displayName		: ret.displayName,
-		        	firstName		: ret.firstName,
-		        	lastName		: ret.lastName,
+		        	id					: ret._id,
+		        	name				: ret.name,
 		        	
-		        	email			: ret.email,
-		        	dateCreated		: ret.dateCreated
+		        	profilePictureURL	: ret.profilePictureURL,
+		        	
+		        	email				: ret.email,
+		        	created				: ret.created
 		        };
 		    }
 		});

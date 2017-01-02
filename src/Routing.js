@@ -108,6 +108,11 @@ class Routing {
 															
 		let UserController									= require("./controllers/UserController");
 		this.userController									= new UserController(booki);
+		
+		this.app.get("/user/me",							this.authController.isBearerAuthenticated,
+															this.userController.getCurrentUser
+															//TODO add error handler
+		);
 															
 		this.book_isbn13_id									= require("./validation/book_isbn13_id");
 		this.book_post										= require("./validation/book_post");

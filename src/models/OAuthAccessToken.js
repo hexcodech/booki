@@ -10,7 +10,7 @@ class OAuthAccessToken {
 		var OAuthAccessTokenSchema = new this.mongoose.Schema({
 			hash						: {type: String, required: true},
 			/*salt						: {type: String, required: true}, //not required as the probability of two hashes being the same is extremely low
-			algorithm					: {type: String, required: true}, //not required because changing the algorithm only renders the current codes invalid */
+			algorithm					: {type: String, required: true}, //not required because changing the algorithm renders the current codes invalid */
 			
 			clientId					: {type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true},
 			userId						: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
@@ -18,7 +18,6 @@ class OAuthAccessToken {
 		});
 		
 		OAuthAccessTokenSchema.statics.tokenLength				= this.config.TOKEN_LENGTH;
-		OAuthAccessTokenSchema.statics.algorithm				= this.config.HASH_ALGORITHM;
 		
 		OAuthAccessTokenSchema.statics.generateRandomString		= generateRandomString;
 		OAuthAccessTokenSchema.statics.hash						= hash;
@@ -28,11 +27,11 @@ class OAuthAccessToken {
 		}
 		
 		OAuthAccessTokenSchema.statics.hashToken = function(token){
-			return this.hash(token, false, this.algorithm);
+			return this.hash(token, false).hash;
 		}
 		
 		OAuthAccessTokenSchema.statics.findByToken = function(token, callback){
-			this.find({hash: this.hashToken(token)}, callback);
+			this.findOne({hash: this.hashToken(token)}, callback);
 		}
 		
 		OAuthAccessTokenSchema.set("toJSON", {
