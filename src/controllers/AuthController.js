@@ -410,9 +410,10 @@ class AuthController {
 		};
 		
 		//With OAuth
-		passport.use(new BearerStrategy(
-			
-			(accessToken, callback) => {
+		passport.use(new BearerStrategy({
+				passReqToCallback: true
+			},
+			(request, accessToken, callback) => {
 				
 				this.OAuthAccessToken.findByToken(accessToken, (err, token) => {
 					if(err){
@@ -447,14 +448,28 @@ class AuthController {
 							});
 						}
 						
-						//no scopes yet
-						return callback(null, user, { scope: "*" });
+						//check whether the user has the required capabilities
+						if(request.requiredCapabilities && user.hasCapabilities(request.requiredCapabilities)){
+							//no scopes yet
+							return callback(null, user, { scope: "*" });
+						}
+						
+						return callback(new this.errorController.errors.ForbiddenError(), false);
+						
 					});
 				});	
 			}
 		));
 		
-		this.isBearerAuthenticated = this.passport.authenticate("bearer", {session: false});
+		this.isBearerAuthenticated = (capabilities = []) => {
+			
+			return (request, response, next) => {
+				request.requiredCapabilities = capabilities;
+				
+				this.passport.authenticate("bearer", {session: false})(request, response, next);
+			};
+			
+		};
 		
 		
 				

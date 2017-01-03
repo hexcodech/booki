@@ -15,9 +15,9 @@ class UserController {
 		
 		this.getLocale						= getLocale;
 		
-		this.User							= this.mongoose.model("User");
+		//this.User							= this.mongoose.model("User");
 		
-		booki.bindAll(this, []);
+		booki.bindAll(this, ["getCurrentUser"]);
 	}
 	
 	getCurrentUser(request, response){

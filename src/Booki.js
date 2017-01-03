@@ -11,10 +11,11 @@ class Booki {
 		
 		//Require modules
 		this.fs					= require("fs");
+		this.os					= require("os");
+		this.requestStats		= require("request-stats");
 		
 		this.mongoose			= require("mongoose");
 		this.mongoose.Promise	= global.Promise; //Use ES6 promises
-		
 		
 		this.ejs				= require("ejs");
 		this.events				= require("events");
@@ -47,7 +48,7 @@ class Booki {
 		this.eventEmitter		= new this.events.EventEmitter();
 		
 		//Load config
-		this.config							= require("../config.json");
+		this.config				= require("../config.json");
 		
 		//Configure i18n
 		this.i18n.configure({
@@ -60,8 +61,7 @@ class Booki {
 		});
 		
 		//Load error messages
-		let ErrorController		= require("./controllers/ErrorController");
-		this.errorController	= new ErrorController(this.booki);
+		this.errorController	= new (require("./controllers/ErrorController"))(this.booki);
 		
 		//Connect to to the database
 		this.mongoose.connect("mongodb://" + this.config.DB_HOST + "/" + this.config.DB_NAME);
@@ -105,17 +105,18 @@ class Booki {
 			}
 		);
 		
+		//add stats
+		this.statsHolder = new (require("./StatsHolder"))(this);
+		
+		this.requestStats(this.server, this.statsHolder.requestCompleted);
+		
 		
 		//Load all Models
-		let UserClass				= require("./models/User");
-		let OAuthClientClass		= require("./models/OAuthClient");
-		let OAuthAccessTokenClass	= require("./models/OAuthAccessToken");
-		let OAuthCodeClass			= require("./models/OAuthCode");
 		
-		this.User					= new UserClass(this.booki);
-		this.OAuthClient			= new OAuthClientClass(this.booki);
-		this.OAuthAccessToken		= new OAuthAccessTokenClass(this.booki);
-		this.OAuthCode				= new OAuthCodeClass(this.booki);
+		this.User					= require("./models/User")(this.booki);
+		this.OAuthClient			= require("./models/OAuthClient")(this.booki);
+		this.OAuthAccessToken		= require("./models/OAuthAccessToken")(this.booki);
+		this.OAuthCode				= require("./models/OAuthCode")(this.booki);
 		
 		//Setup the authorization server
 		this.oauth2Server			= this.oauth2orize.createServer();

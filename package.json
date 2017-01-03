@@ -67,6 +67,7 @@
     "passport-http": "^0.3.0",
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
+    "request-stats": "^2.0.1",
     "valid-url": "^1.0.9"
   }
 }

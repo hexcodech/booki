@@ -26,10 +26,20 @@ class Routing {
 			});
 		});
 		
+		const catchApiError = (error, request, response, next) => {
+			if(error){
+				
+				//TODO: translate the error
+				response.json(error);
+				response.end();
+			}
+			
+			next();
+		};
+		
 		//Autentication
 		
-		let AuthController									= require("./controllers/AuthController");
-		this.authController									= new AuthController(booki);
+		this.authController									= new (require("./controllers/AuthController"))(booki);
 		
 		
 		this.LocalLoginValidation							= require("./validation/LocalLoginValidation")(booki);
@@ -85,10 +95,27 @@ class Routing {
 															this.authController.catchInternalError
 		);
 		
+		//System
+		
+		this.systemController								= new (require("./controllers/SystemController"))(booki);
+		
+		this.app.get("/system/stats",						this.authController.isBearerAuthenticated(["system-stats"]),
+															this.systemController.getStats,
+															catchApiError
+		);
+		
+		//User
+		
+		this.userController									= new (require("./controllers/UserController"))(booki);
+		
+		this.app.get("/user/me",							this.authController.isBearerAuthenticated(),
+															this.userController.getCurrentUser,
+															catchApiError
+		);
+		
 		//OAuth Client
 		
-		let OAuthClientController							= require("./controllers/OAuthClientController");
-		this.oauthClientController							= new OAuthClientController(booki);
+		this.oauthClientController							= new (require("./controllers/OAuthClientController"))(booki);
 		
 		this.PostOAuthClientsValidation						= require("./validation/PostOAuthClientsValidation")(booki);
 		
@@ -102,17 +129,7 @@ class Routing {
 		
 		//Books
 		
-		let BookController									= require("./controllers/BookController");
-		this.bookController	 								= new BookController(booki);
-															
-															
-		let UserController									= require("./controllers/UserController");
-		this.userController									= new UserController(booki);
-		
-		this.app.get("/user/me",							this.authController.isBearerAuthenticated,
-															this.userController.getCurrentUser
-															//TODO add error handler
-		);
+		this.bookController	 								= new (require("./controllers/BookController"))(booki);						
 															
 		this.book_isbn13_id									= require("./validation/book_isbn13_id");
 		this.book_post										= require("./validation/book_post");
