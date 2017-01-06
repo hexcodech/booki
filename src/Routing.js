@@ -37,6 +37,8 @@ class Routing {
 			next();
 		};
 		
+		this.app.use(catchApiError); //add last error catch
+		
 		//Autentication
 		
 		this.authController									= new (require("./controllers/AuthController"))(booki);
@@ -64,7 +66,6 @@ class Routing {
 		);
 		this.app.post("/v1/auth/local/verify-email",		this.validate(this.VerifyMailValidation),
 															this.authController.verifyEmail,
-															this.authController.isAuthenticated,
 															this.authController.catchInternalErrorView
 		);
 		this.app.get("/v1/auth/facebook/login/",			this.authController.authFacebook,
@@ -100,27 +101,45 @@ class Routing {
 		this.systemController								= new (require("./controllers/SystemController"))(booki);
 		
 		this.app.get("/system/stats",						this.authController.isBearerAuthenticated(["system-stats"]),
-															this.systemController.getStats,
-															catchApiError
+															this.systemController.getStats
 		);
 		
 		//User
 		
 		this.userController									= new (require("./controllers/UserController"))(booki);
 		
+		this.UserValidation									= require("./validation/UserValidation.js")(booki);
+		
+		this.app.get("/user",								this.authController.isBearerAuthenticated(),
+															this.userController.getUser
+		);
+		
 		this.app.get("/user/me",							this.authController.isBearerAuthenticated(),
-															this.userController.getCurrentUser,
-															catchApiError
+															this.userController.getCurrentUser
+		);
+		
+		this.app.post("/user",								this.authController.isBearerAuthenticated(["create-user"]),
+															this.validate(this.UserValidation),
+															this.userController.postUser
+		);
+		
+		this.app.put("/user/:userId",						this.authController.isBearerAuthenticated(),
+															this.validate(this.UserValidation),
+															this.userController.putUser
+		);
+		
+		this.app.delete("/user/:userId",					this.authController.isBearerAuthenticated(["delete-user"]),
+															this.userController.deleteUser
 		);
 		
 		//OAuth Client
 		
 		this.oauthClientController							= new (require("./controllers/OAuthClientController"))(booki);
 		
-		this.PostOAuthClientsValidation						= require("./validation/PostOAuthClientsValidation")(booki);
+		this.PostOAuthClientValidation						= require("./validation/PostOAuthClientValidation")(booki);
 		
 		this.app.post("/oauth2/clients",					this.authController.isAuthenticated,
-															this.validate(this.PostOAuthClientsValidation),
+															this.validate(this.PostOAuthClientValidation),
 															this.oauthClientController.postOAuthClients
 		);
 		this.app.get("/oauth2/clients",						this.authController.isAuthenticated,
@@ -133,8 +152,6 @@ class Routing {
 															
 		this.book_isbn13_id									= require("./validation/book_isbn13_id");
 		this.book_post										= require("./validation/book_post");
-		
-		//Start routing
 	
 		//Book
 	

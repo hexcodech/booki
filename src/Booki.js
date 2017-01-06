@@ -101,6 +101,10 @@ class Booki {
 					response.setHeader("charset", "utf-8");
 				}
 				
+				if(!request.body.filter){
+					request.body.filter = {};
+				}
+				
 				next();
 			}
 		);

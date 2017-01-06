@@ -51,6 +51,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		},
 	});
 	
+	userSchema.statics.config				= config;
 	userSchema.statics.errorController		= errorController;
 	userSchema.statics.generateRandomString	= generateRandomString;
 	userSchema.statics.hash					= hash;
@@ -342,7 +343,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
 	userSchema.methods.initPasswordReset = function(callback){
-		var passwordResetCode	= this.constructor.generateRandomString(config.TOKEN_LENGTH);
+		var passwordResetCode	= this.constructor.generateRandomString(this.constructor.config.TOKEN_LENGTH);
 		var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
 		
 		resetMail.render(this, this.locale, (err, result) => {
@@ -377,43 +378,61 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	};
 	
 	/**
-	 * Inits a password reset for the current user by generating a reset code and sending it by mail
-	 * @function initPasswordReset
-	 * @param {Function} callback - The function that will be called if the render succeeds or an error occurs
+	 * Inits a email confirmation for the current user by generating a code and sending it by mail
+	 * @function initEmailConfirmation
+	 * @param {Function} callback - The function that will be called if the
+	 * mail was sent successfully or an error occurs
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.methods.initPasswordReset = function(callback){
-		var passwordResetCode	= this.constructor.generateRandomString(config.TOKEN_LENGTH);
-		var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
+	userSchema.methods.initEmailConfirmation = function(callback, registration){
 		
-		resetMail.render(this, this.locale, (err, result) => {
+		var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.config.TOKEN_LENGTH);
+		var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
+		
+		confirmationMail.render(
+		{
+			user					: Object.assign(this, {emailVerificationCode: emailVerificationCode})
+			
+		},
+		
+		this.locale, (err, result) => {
+		
 			if(err){
 				return callback(new this.constructor.errorController.errors.RenderError({
 					message: err.message
 				}), false);
 			}
-			this.sendMail([], [], result.subject, result.html, null, function(error, success){
-				if(success){
-					this.password.resetCode = passwordResetCode;
-				}
+			
+			this.sendMail([], [], result.subject, result.html, null, (error, success) => {
 				
 				if(error){
 					return callback(error, success);
 				}
 				
-				this.save((err, user) => {
-					if(err){
-						return callback(new this.constructor.errorController.errors.DatabaseError({
-							message: err.message
-						}), false);
+				if(success){
+					
+					this.emailVerificationCode	= emailVerificationCode;
+					
+					if(registration){
+						this.password.resetCode	= emailVerificationCode;
 					}
 					
-					return callback(null, success);
-					
-				});
+					return this.save((err) => {
+						if(err){
+							return callback(new this.constructor.errorController.errors.DatabaseError({
+								message: err.message
+							}), false);
+						}
+						
+						return callback(null, success);
+						
+					});
+				}
 				
 				return callback(error, success);
 			});
+			
+			return callback(error, success);
 		});
 	};
 	
@@ -434,9 +453,24 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		return true;
 	};
 	
+	/**
+	 * Checks whether the current user has said capability
+	 * @function hasCapability
+	 * @param {String} capability - The capability to check
+	 * @returns {boolean} Whether the user has the given capability
+	 */
+	userSchema.methods.hasCapability = function(capability){
+		return this.hasCapabilities([capability]);
+	};
+	
 	
 	userSchema.set("toJSON", {
 	    transform: (doc, ret, options) => {
+		    
+		    if(options.rawData === true){
+			    return ret;
+		    }
+		    
 	        return {
 	        	id					: ret._id,
 	        	name				: ret.name,
@@ -445,7 +479,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	        	
 	        	profilePictureURL	: ret.profilePictureURL,
 	        	
-	        	email				: ret.email,
+	        	/*email				: ret.email,*/
 	        	created				: ret.created
 	        };
 	    }
