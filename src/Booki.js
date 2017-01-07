@@ -71,6 +71,7 @@ class Booki {
 		
 		this.server = this.app.listen(this.config.HTTP_PORT, () => {
 			this.eventEmitter.emit("Booki::server::init", this.server.address().address, this.server.address().port);
+			console.log("Server running on", this.server.address().address + ":" + this.server.address().port);
 		});
 		
 		//Configure the server

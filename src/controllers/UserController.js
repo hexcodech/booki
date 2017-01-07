@@ -119,7 +119,7 @@ class UserController {
 			
 			//email and password are handled seperately
 			
-			this.User.findByIdAndUpdate(request.user._id, user, {new: true}, (err, user){
+			this.User.findByIdAndUpdate(request.user._id, user, {new: true}, (err, user) => {
 				
 				if(err){
 					return next(new this.errorController.errors.DatabaseError({

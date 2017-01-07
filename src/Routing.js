@@ -100,7 +100,7 @@ class Routing {
 		
 		this.systemController								= new (require("./controllers/SystemController"))(booki);
 		
-		this.app.get("/system/stats",						this.authController.isBearerAuthenticated(["system-stats"]),
+		this.app.get("/v1/system/stats",					this.authController.isBearerAuthenticated(["system-stats"]),
 															this.systemController.getStats
 		);
 		
@@ -110,25 +110,25 @@ class Routing {
 		
 		this.UserValidation									= require("./validation/UserValidation.js")(booki);
 		
-		this.app.get("/user",								this.authController.isBearerAuthenticated(),
+		this.app.get("/v1/user",							this.authController.isBearerAuthenticated(),
 															this.userController.getUser
 		);
 		
-		this.app.get("/user/me",							this.authController.isBearerAuthenticated(),
+		this.app.get("/v1/user/me",							this.authController.isBearerAuthenticated(),
 															this.userController.getCurrentUser
 		);
 		
-		this.app.post("/user",								this.authController.isBearerAuthenticated(["create-user"]),
+		this.app.post("/v1/user",							this.authController.isBearerAuthenticated(["create-user"]),
 															this.validate(this.UserValidation),
 															this.userController.postUser
 		);
 		
-		this.app.put("/user/:userId",						this.authController.isBearerAuthenticated(),
+		this.app.put("/v1/user/:userId",					this.authController.isBearerAuthenticated(),
 															this.validate(this.UserValidation),
 															this.userController.putUser
 		);
 		
-		this.app.delete("/user/:userId",					this.authController.isBearerAuthenticated(["delete-user"]),
+		this.app.delete("/v1/user/:userId",					this.authController.isBearerAuthenticated(["delete-user"]),
 															this.userController.deleteUser
 		);
 		
@@ -138,11 +138,11 @@ class Routing {
 		
 		this.PostOAuthClientValidation						= require("./validation/PostOAuthClientValidation")(booki);
 		
-		this.app.post("/oauth2/clients",					this.authController.isAuthenticated,
+		this.app.post("/v1/oauth2/clients",					this.authController.isAuthenticated,
 															this.validate(this.PostOAuthClientValidation),
 															this.oauthClientController.postOAuthClients
 		);
-		this.app.get("/oauth2/clients",						this.authController.isAuthenticated,
+		this.app.get("/v1/oauth2/clients",						this.authController.isAuthenticated,
 															this.oauthClientController.getOAuthClients
 		);
 		

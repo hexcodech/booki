@@ -13,8 +13,11 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 			last						: {type: String, required: false},
 		},
 		
-		email						: {type: String, unique: true, required: true},
-		emailVerificationCode		: {type: String, "default": "", required: false},
+		email						: {
+			verified					: {type: String, unique: true, required: false},
+			unverified					: {type: String, unique: true, required: false},
+			verificationCode			: {type: String, "default": "", required: false},
+		},
 		
 		password					: {
 			hash						: {type: String, "default": "", required: false},
@@ -24,9 +27,9 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 			resetCode					: {type: String, "default": "", required: false},
 		},
 		
-		capabilities				: {type: Array, "default": [], required: true},
+		capabilities				: {type: Array, "default": [], required: false},
 		
-		locale						: {type: String, required: true},
+		locale						: {type: String, "default": "en", required: true},
 		placeOfResidence			: {type: String, required: false},
 		
 		created						: {type: Date, "default": Date.now, required: true},
@@ -56,7 +59,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	userSchema.statics.generateRandomString	= generateRandomString;
 	userSchema.statics.hash					= hash;
 	
-	userSchema.statics.MailController		= require("../controllers/MailController");;
+	userSchema.statics.mailController		= new (require("../controllers/MailController"))(booki);
 	userSchema.statics.EmailTemplate		= require("email-templates").EmailTemplate;
 	
 	
@@ -71,7 +74,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		
 		const iterateMails = (emails, index) => {
 			
-			this.findOne({email: emails[index].value}, (err, user) => {
+			this.findOne({"email.verified": emails[index].value}, (err, user) => {
 				
 				if(err){
 					return callback(new this.errorController.errors.DatabaseError({
@@ -106,6 +109,15 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 * @returns {undefined} - The data is returned with the callback parameter
 	 */
 	userSchema.statics.register = function(firstName, email, locale, callback){
+		
+		let lastName = "";
+		let names = firstName.split(" ");
+		
+		if(names.length === 2){
+			firstName	= names[0];
+			lastName	= names[1];
+		}
+		
 		var userData = {
 			name						: {
 				display						: firstName,
@@ -114,8 +126,10 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 			
 			capabilities				: [],
 			
-			email						: email,
-			emailVerificationCode		: "",
+			email						: {
+				unverified					: email,
+				verificationCode			: ""
+			},
 			
 			locale						: locale,
 			
@@ -123,7 +137,8 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		
 		var user = new this(userData);
 		
-		this.find({email: email}, (err, users) => {
+		this.find({$or: [{"email.verified": email}, {"email.unverified": email}]}, (err, users) => {
+			
 			if(err){
 				return callback(new this.errorController.errors.DatabaseError({
 					message: err.message
@@ -132,18 +147,18 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 			
 			if(users && users.length > 0){
 				
-				return callback(new this.constructor.errorController.errors.UserAlreadyExistsError(), null);
+				return callback(new this.errorController.errors.UserAlreadyExistsError(), null);
 				
 			}else{
 				user.save((err2) => {
 					
 					if(err2){
-						return callback(new this.constructor.errorController.errors.DatabaseError({
+						return callback(new this.errorController.errors.DatabaseError({
 							message: err2.message
 						}), null);
 					}
 					
-					user.initEmailConfirmation((error, success) => {
+					user.initEmailVerification((error, success) => {
 						if(error){
 							return callback(error, false);
 						}
@@ -207,7 +222,9 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 				last					: profile.name.familyName
 			},
 			
-			//email					: profile.emails[0].value, shouldn't be updated without the user wanting it
+			/*email					: {
+				verified				: profile.emails[0].value // shouldn't be updated without the user wanting it
+			}*/
 			
 			profilePictureURL		: profile.photos[0].value
 		};
@@ -221,7 +238,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 * @returns {Object} - The user object
 	 */
 	userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals = {}){
-		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : profile.emails[0].value}));
+		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : {verified: profile.emails[0].value}}));
 	}
 	
 	//User methods
@@ -290,7 +307,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 * @param {string} password - The new password
 	 * @param {string} passwordResetCode - The received reset code that verifies this operation
 	 * @param {Function} callback - The function called after updating the password
-	 * @returns {Boolean} - Whether the update succeeds
+	 * @returns {Boolean} - Whether the update succeeded
 	 */
 	userSchema.methods.updatePassword = function(password, passwordResetCode = null, callback){
 		
@@ -323,17 +340,18 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	/**
 	 * Sends a mail to the current user with the correct name
 	 * @function sendMail
-	 * @param {Array} cc - An array of recipients who will appear in the cc field
-	 * @param {Array} bcc - An array of recipients who won't be displayed
+	 * @param {String} toEmail - the email of the recipient
 	 * @param {String} subject - The subject of the email
 	 * @param {String} html - The content of the email
+	 * @param {String} text - The text version of the email
+	 * @param {Function} callback - A callback function that will be called after sending the mail or encountering an error
+	 * @param {Array} cc - An array of recipients who will appear in the cc field
+	 * @param {Array} bcc - An array of recipients who won't be displayed
 	 * @param {String} replyTo - A mail address to who the recipients should reply
-	 * @param {Function} callback - A callback function that will be called after
-	 * sending the mail or encountering an error
 	 * @returns {undefined} - The data is returned with the callback parameter
 	 */
-	userSchema.methods.sendMail = function(cc, bcc, subject, html, replyTo, callback){
-		mailController.sendMail(['"' + this.name.first + '" <' + this.email + '>'], cc, bcc, subject, html, replyTo, callback);
+	userSchema.methods.sendMail = function(subject, html, text, callback, toEmail = this.email.verified, cc = [], bcc = [], replyTo = null){
+		this.constructor.mailController.sendMail(['"' + this.name.first + '" <' + toEmail + '>'], subject, html, text, callback, cc, bcc, replyTo);
 	}
 	
 	/**
@@ -352,25 +370,26 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 					message: err.message
 				}), false);
 			}
-			this.sendMail([], [], result.subject, result.html, null, function(error, success){
-				if(success){
-					this.password.resetCode = passwordResetCode;
-				}
+			this.sendMail(result.subject, result.html, result.text, (error, success) => {
 				
 				if(error){
 					return callback(error, success);
 				}
 				
-				this.save((err, user) => {
-					if(err){
-						return callback(new this.constructor.errorController.errors.DatabaseError({
-							message: err.message
-						}), false);
-					}
+				if(success){
+					this.password.resetCode = passwordResetCode;
 					
-					return callback(null, success);
-					
-				});
+					this.save((err, user) => {
+						if(err){
+							return callback(new this.constructor.errorController.errors.DatabaseError({
+								message: err.message
+							}), false);
+						}
+						
+						return callback(null, success);
+						
+					});
+				}
 				
 				return callback(error, success);
 			});
@@ -379,19 +398,21 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	
 	/**
 	 * Inits a email confirmation for the current user by generating a code and sending it by mail
-	 * @function initEmailConfirmation
+	 * @function initEmailVerification
 	 * @param {Function} callback - The function that will be called if the
 	 * mail was sent successfully or an error occurs
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.methods.initEmailConfirmation = function(callback, registration){
+	userSchema.methods.initEmailVerification = function(callback, registration){
 		
-		var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.config.TOKEN_LENGTH);
+		var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.config.CONFIRM_TOKEN_LENGTH);
 		var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
+		
+		this.email.verificationCode = emailVerificationCode;
 		
 		confirmationMail.render(
 		{
-			user					: Object.assign(this, {emailVerificationCode: emailVerificationCode})
+			user					: this
 			
 		},
 		
@@ -403,7 +424,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 				}), false);
 			}
 			
-			this.sendMail([], [], result.subject, result.html, null, (error, success) => {
+			this.sendMail(result.subject, result.html, result.text, (error, success) => {
 				
 				if(error){
 					return callback(error, success);
@@ -411,7 +432,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 				
 				if(success){
 					
-					this.emailVerificationCode	= emailVerificationCode;
+					this.email.verificationCode	= emailVerificationCode;
 					
 					if(registration){
 						this.password.resetCode	= emailVerificationCode;
@@ -430,11 +451,43 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 				}
 				
 				return callback(error, success);
-			});
+			}, this.email.unverified);
 			
-			return callback(error, success);
 		});
 	};
+	
+	/**
+	 * Verifies the users email
+	 * @function verifyEmail
+	 * @param {string} email - The email to verify
+	 * @param {string} emailVerificationCode - The received verification code that verifies this operation
+	 * @param {Function} callback - The function called after verifying the email
+	 * @returns {Boolean} - Whether the update succeeded
+	 */
+	userSchema.methods.verifyEmail = function(email, emailVerificationCode = null, callback){
+		
+		if(email && emailVerificationCode && this.email.verificationCode === emailVerificationCode && this.email.unverified === email){
+			
+			this.email.verified			= email;
+			this.email.verificationCode	= "";
+			this.email.unverified		= "";
+			
+			return this.save((err, user) => {
+				
+				if(err){
+					return callback(new this.constructor.errorController.errors.DatabaseError({
+						message: err.message
+					}), false);
+				}
+				
+				return callback(null, true);
+				
+			});
+			
+		}
+		
+		return callback(new this.constructor.errorController.errors.EmailVerificationCodeInvalidError(), false);
+	}
 	
 	/**
 	 * Checks whether the current user has said capabilities
@@ -479,7 +532,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	        	
 	        	profilePictureURL	: ret.profilePictureURL,
 	        	
-	        	/*email				: ret.email,*/
+	        	/*email				: ret.email.verified,*/
 	        	created				: ret.created
 	        };
 	    }
