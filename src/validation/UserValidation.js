@@ -10,8 +10,11 @@ module.exports      = function({Joi}){
 					last						: Joi.string().regex(/[A-z]+/).min(2).max(255).required(),
 				}),
 				
-				email						: Joi.string().email(),
-				emailVerificationCode		: Joi.string(),
+				email						: Joi.object().keys({
+					verified					: Joi.string().email(),
+					unverified					: Joi.string().email(),
+					verificationCode			: Joi.string(),
+				}),
 				
 				password					: Joi.object().keys({
 					hash						: Joi.string(),
@@ -44,8 +47,8 @@ module.exports      = function({Joi}){
 				
 				/* for updating self */
 				
-				newPassword					: Joi.string().min(8).max(255)
-				
+				newPassword					: Joi.string().min(8).max(255),
+				newEmail					: Joi.string().email(),
 			}
 			
 		}

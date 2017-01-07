@@ -403,7 +403,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 * mail was sent successfully or an error occurs
 	 * @returns {undefined} The data is returned with the callback parameter
 	 */
-	userSchema.methods.initEmailVerification = function(callback, registration){
+	userSchema.methods.initEmailVerification = function(callback, registration = false){
 		
 		var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.config.CONFIRM_TOKEN_LENGTH);
 		var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");

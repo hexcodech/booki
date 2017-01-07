@@ -100,7 +100,7 @@ class Routing {
 		
 		this.systemController								= new (require("./controllers/SystemController"))(booki);
 		
-		this.app.get("/v1/system/stats",					this.authController.isBearerAuthenticated(["system-stats"]),
+		this.app.get("/v1/system/stats",					this.authController.isBearerAuthenticated(["access-system-stats"]),
 															this.systemController.getStats
 		);
 		
@@ -118,7 +118,7 @@ class Routing {
 															this.userController.getCurrentUser
 		);
 		
-		this.app.post("/v1/user",							this.authController.isBearerAuthenticated(["create-user"]),
+		this.app.post("/v1/user",							this.authController.isBearerAuthenticated(["create-users"]),
 															this.validate(this.UserValidation),
 															this.userController.postUser
 		);
@@ -128,7 +128,7 @@ class Routing {
 															this.userController.putUser
 		);
 		
-		this.app.delete("/v1/user/:userId",					this.authController.isBearerAuthenticated(["delete-user"]),
+		this.app.delete("/v1/user/:userId",					this.authController.isBearerAuthenticated(["delete-users"]),
 															this.userController.deleteUser
 		);
 		

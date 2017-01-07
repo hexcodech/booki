@@ -108,7 +108,6 @@ class UserController {
 			});
 			
 		}else if(request.params.userId === request.user._id){
-			//pseudo update user
 			
 			let user = {
 				name				: request.body.user.name,
@@ -116,6 +115,10 @@ class UserController {
 				placeOfResidence	: request.body.user.placeOfResidence,
 				profilePictureURL	: request.body.user.profilePictureURL
 			};
+			
+			if(newEmail){
+				user.email.unverified = newEmail;
+			}
 			
 			//email and password are handled seperately
 			
@@ -127,16 +130,30 @@ class UserController {
 					}), null);
 				}
 				
+				let {newPassword, newEmail} = request.body.user;
+				
+				if(newPassword === true){
+					user.initPasswordReset((error, success) => { //async
+						if(error){
+							console.log(error);
+						}
+						
+					});
+				}
+				
+				if(newEmail && user.email.unverified !== ""){
+					user.initEmailVerification((error, success) => { //async
+						if(error){
+							console.log(error);
+						}
+						
+					});
+				}
+				
 				if(request.user.hasCapability("access-raw-data")){
 					response.json(user.toJSON({rawData: true}));
 				}else{
 					response.json(user.toJSON());
-				}
-				
-				let {newPassword, email} = request.body.user;
-				
-				if(newPassword === true){
-					user.initPasswordReset();
 				}
 				
 				response.end();
@@ -146,6 +163,7 @@ class UserController {
 			
 		}else{
 			//not allowed
+			next(new this.errorController.errors.ForbiddenError());
 		}
 	}
 	
