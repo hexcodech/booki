@@ -4,22 +4,22 @@ module.exports      = function({Joi}){
 		body: {
 			
 			user: {
-				name						: {
+				name						: Joi.object().keys({
 					display						: Joi.string().regex(/[A-z]+/).min(2).max(511).required(),
 					first						: Joi.string().regex(/[A-z]+/).min(2).max(255).required(),
 					last						: Joi.string().regex(/[A-z]+/).min(2).max(255).required(),
-				},
+				}),
 				
 				email						: Joi.string().email(),
 				emailVerificationCode		: Joi.string(),
 				
-				password					: {
+				password					: Joi.object().keys({
 					hash						: Joi.string(),
 					salt						: Joi.string(),
 					algorithm					: Joi.string(),
 					
 					resetCode					: Joi.string(),
-				},
+				}),
 				
 				capabilities				: Joi.array().items(Joi.string()),
 				
