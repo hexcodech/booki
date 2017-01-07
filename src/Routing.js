@@ -138,12 +138,12 @@ class Routing {
 		
 		this.PostOAuthClientValidation						= require("./validation/PostOAuthClientValidation")(booki);
 		
-		this.app.post("/v1/oauth2/clients",					this.authController.isAuthenticated,
+		this.app.post("/v1/oauth2/client",					this.authController.isAuthenticated,
 															this.validate(this.PostOAuthClientValidation),
-															this.oauthClientController.postOAuthClients
+															this.oauthClientController.postOAuthClient
 		);
-		this.app.get("/v1/oauth2/clients",						this.authController.isAuthenticated,
-															this.oauthClientController.getOAuthClients
+		this.app.get("/v1/oauth2/client",					this.authController.isAuthenticated,
+															this.oauthClientController.getOAuthClient
 		);
 		
 		//Books

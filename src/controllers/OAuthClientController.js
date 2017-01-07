@@ -15,7 +15,7 @@ class OAuthClientController{
 		
 	}
 	
-	postOAuthClients(request, response, next){
+	postOAuthClient(request, response, next){
 		
 		let secret = this.OAuthClient.generateSecret();
 		
@@ -49,7 +49,7 @@ class OAuthClientController{
 		
 	}
 	
-	getOAuthClients(request, response, next){
+	getOAuthClient(request, response, next){
 		this.OAuthClient.find({userId: request.user._id}, (err, clients) => {
 			
 			if(err){
