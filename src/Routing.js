@@ -30,7 +30,7 @@ class Routing {
 			if(error){
 				
 				//TODO: translate the error
-				response.json(error);
+				response.json(error.toJSON());
 				response.end();
 			}
 			
@@ -114,12 +114,12 @@ class Routing {
 															this.userController.getUser
 		);
 		
-		this.app.get("/v1/user/:userId",					this.authController.isBearerAuthenticated(),
-															this.userController.getUserById
-		);
-		
 		this.app.get("/v1/user/me",							this.authController.isBearerAuthenticated(),
 															this.userController.getCurrentUser
+		);
+		
+		this.app.get("/v1/user/:userId",					this.authController.isBearerAuthenticated(),
+															this.userController.getUserById
 		);
 		
 		this.app.post("/v1/user",							this.authController.isBearerAuthenticated(["create-users"]),

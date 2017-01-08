@@ -553,7 +553,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	        	
 	        	capabilities		: ret.capabilities,
 	        	
-	        	profilePictureURL	: ret.profilePictureURL,
+	        	profilePictureUrl	: ret.profilePictureUrl,
 	        	
 	        	/*email				: ret.email.verified,*/
 	        	created				: ret.created

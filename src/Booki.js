@@ -94,6 +94,7 @@ class Booki {
 				
 				response.header("Access-Control-Allow-Origin", "*");
 				response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+				response.header("Access-Control-Allow-Methods", "HEAD, OPTIONS, GET, POST, PUT, DELETE");
 				
 				//UTF 8 JSON all the way EXCEPT /static/
 				if(!request.url.startsWith("/static/")){

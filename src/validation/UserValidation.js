@@ -4,51 +4,53 @@ module.exports      = function({Joi}){
 		body: {
 			
 			user: {
+				_id							: Joi.string().allow(''),
+
 				name						: Joi.object().keys({
-					display						: Joi.string().regex(/[A-z]+/).min(2).max(511).required(),
-					first						: Joi.string().regex(/[A-z]+/).min(2).max(255).required(),
-					last						: Joi.string().regex(/[A-z]+/).min(2).max(255).required(),
+					display						: Joi.string().regex(/[A-z]+/).min(2).max(511).allow(''),
+					first						: Joi.string().regex(/[A-z]+/).min(2).max(255).allow(''),
+					last						: Joi.string().regex(/[A-z]+/).min(2).max(255).allow(''),
 				}),
 				
 				email						: Joi.object().keys({
-					verified					: Joi.string().email(),
-					unverified					: Joi.string().email(),
-					verificationCode			: Joi.string(),
+					verified					: Joi.string().email().allow(''),
+					unverified					: Joi.string().email().allow(''),
+					verificationCode			: Joi.string().allow(''),
 				}),
 				
 				password					: Joi.object().keys({
-					hash						: Joi.string(),
-					salt						: Joi.string(),
-					algorithm					: Joi.string(),
+					hash						: Joi.string().allow(''),
+					salt						: Joi.string().allow(''),
+					algorithm					: Joi.string().allow(''),
 					
-					resetCode					: Joi.string(),
+					resetCode					: Joi.string().allow(''),
 				}),
 				
 				capabilities				: Joi.array().items(Joi.string()),
 				
-				locale						: Joi.string(),
-				placeOfResidence			: Joi.string(),
+				locale						: Joi.string().allow(''),
+				placeOfResidence			: Joi.string().allow(''),
 				
-				created						: Joi.date(),
+				created						: Joi.date().allow(''),
 				
-				profilePictureUrl			: Joi.string().uri({scheme: ['http', 'https']}),
+				profilePictureUrl			: Joi.string().uri({scheme: ['http', 'https']}).allow(''),
 				
 				facebook					: {
 					friends						: Joi.array(), // maybe this should be described in more detail..
 					
-					accessToken					: Joi.string(),
-					refreshToken				: Joi.string(),
+					accessToken					: Joi.string().allow(''),
+					refreshToken				: Joi.string().allow(''),
 				},
 				
 				google						: {
-					accessToken					: Joi.string(),
-					refreshToken				: Joi.string(),
+					accessToken					: Joi.string().allow(''),
+					refreshToken				: Joi.string().allow(''),
 				},
 				
 				/* for updating self */
 				
-				newPassword					: Joi.string().min(8).max(255),
-				newEmail					: Joi.string().email(),
+				newPassword					: Joi.string().min(8).max(255).allow(''),
+				newEmail					: Joi.string().email().allow(''),
 			}
 			
 		}
