@@ -34,7 +34,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		
 		created						: {type: Date, "default": Date.now, required: true},
 		
-		profilePictureURL			: {
+		profilePictureUrl			: {
 			type: String,
 			"default": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
 			required: true
@@ -497,10 +497,33 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	 */
 	userSchema.methods.hasCapabilities = function(capabilities){
 		
+		//if we require move caps than we have it's already false
+		if(capabilities.length > this.capabilities.length){
+			return false;
+		}
+		
+		//indexOf is too slow, iterates through the whole array
+		this.capabilities.sort();
+		capabilities.sort();
+		
+		//for every element in capabilities we should find a corresponding one in this.capabilities
+		//and because they are sorted, we need to iterate only "once"
+		
+		let found;
+		
 		for(let i=0;i<capabilities.length;i++){
-			if(this.capabilities.indexOf(capabilities[i]) === -1){
-				return false;
+			
+			found = false;
+			
+			for(let j=i;j<this.capabilities.length;j++){
+				if(capabilities[i] === this.capabilities[j]){
+					i = j;//because the arrays are sorted we can now jump to the index where the corresponding element was found
+					found = true;
+					break;
+				}
 			}
+			
+			if(!found){return false;}
 		}
 		
 		return true;

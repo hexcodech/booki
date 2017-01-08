@@ -31,7 +31,7 @@ module.exports      = function({Joi}){
 				
 				created						: Joi.date(),
 				
-				profilePictureURL			: Joi.string().uri({scheme: ['http', 'https']}),
+				profilePictureUrl			: Joi.string().uri({scheme: ['http', 'https']}),
 				
 				facebook					: {
 					friends						: Joi.array(), // maybe this should be described in more detail..

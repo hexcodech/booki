@@ -4,12 +4,12 @@ function OAuthClient({booki, config, mongoose, errorController, generateRandomSt
 		name						: {type: String, unique: true, required: true},
 		secret						: {
 			
-			hash						: {type: String, "default": "", required: true},
-			salt						: {type: String, "default": "", required: true},
-			algorithm					: {type: String, "default": "", required: true}
+			hash						: {type: String, default: "", required: true},
+			salt						: {type: String, default: "", required: true},
+			algorithm					: {type: String, default: "", required: true}
 			
 		},
-		trusted						: {type: Boolean, "default": false, required: true},
+		trusted						: {type: Boolean, default: false, required: true},
 		redirectUris				: {type: Array, required: true},
 		userId						: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true}
 	});
@@ -75,6 +75,11 @@ function OAuthClient({booki, config, mongoose, errorController, generateRandomSt
 	
 	OAuthClientSchema.set("toJSON", {
 	    transform: function(doc, ret, options) {
+		    
+		    if(options.rawData === true){
+			    return ret;
+		    }
+		    
 	        return {
 	        	id					: ret._id,
 	        	name				: ret.name,

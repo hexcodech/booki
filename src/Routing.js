@@ -114,6 +114,10 @@ class Routing {
 															this.userController.getUser
 		);
 		
+		this.app.get("/v1/user/:userId",					this.authController.isBearerAuthenticated(),
+															this.userController.getUserById
+		);
+		
 		this.app.get("/v1/user/me",							this.authController.isBearerAuthenticated(),
 															this.userController.getCurrentUser
 		);
@@ -136,14 +140,30 @@ class Routing {
 		
 		this.oauthClientController							= new (require("./controllers/OAuthClientController"))(booki);
 		
-		this.PostOAuthClientValidation						= require("./validation/PostOAuthClientValidation")(booki);
+		this.postOAuthClientValidation						= require("./validation/postOAuthClientValidation")(booki);
+		this.putOAuthClientValidation						= require("./validation/putOAuthClientValidation")(booki);
 		
-		this.app.post("/v1/oauth2/client",					this.authController.isAuthenticated,
-															this.validate(this.PostOAuthClientValidation),
+		
+		this.app.get("/v1/oauth2/client",					this.authController.isBearerAuthenticated(),
+															this.oauthClientController.getOAuthClient
+		);
+		
+		this.app.get("/v1/oauth2/client/:clientId",			this.authController.isBearerAuthenticated(),
+															this.oauthClientController.getOAuthClientById
+		);
+		
+		this.app.post("/v1/oauth2/client",					this.authController.isBearerAuthenticated(),
+															this.validate(this.postOAuthClientValidation),
 															this.oauthClientController.postOAuthClient
 		);
-		this.app.get("/v1/oauth2/client",					this.authController.isAuthenticated,
-															this.oauthClientController.getOAuthClient
+		
+		this.app.put("/v1/oauth2/client/:clientId",			this.authController.isBearerAuthenticated(),
+															this.validate(this.putOAuthClientValidation),
+															this.oauthClientController.putOAuthClient
+		);
+		
+		this.app.delete("/v1/oauth2/client/:clientId",		this.authController.isBearerAuthenticated(),
+															this.oauthClientController.deleteOAuthClient
 		);
 		
 		//Books

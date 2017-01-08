@@ -194,7 +194,26 @@ class Booki {
 	    hmacOrHash.update(string);
 	    
 	    return {hash: hmacOrHash.digest("hex"), salt: salt, algorithm: algorithm};
-	};
+	}
+	
+	/**
+	 * Creates an object with all defined keys of the 'keys' param in the 'originalObject' param
+	 * @function createObjectWithOptionalKeys
+	 * @param {Object} originalObject - The object containing the data to be copied
+	 * @param {Array} keys - The keys thath should - if defined - be copied to the new object
+	 * @returns {Object} - The new object containing all defined keys
+	*/
+	createObjectWithOptionalKeys(originalObject = {}, keys = []){
+		let obj;
+		
+		for(let i=0;i<keys.length;i++){
+			if(typeof originalObject[keys[i]]){
+				obj[keys[i]] = originalObject[keys[i]];
+			}
+		}
+		
+		return Object.assign({}, obj);
+	}
 	
 };
 
