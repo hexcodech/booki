@@ -2,10 +2,10 @@ module.exports      = function({Joi}){
 	
 	return {
 		body: {
-			name					: Joi.string().allow(''),,
+			name					: Joi.string().allow(''),
 			secret					: Joi.object().keys({
-				hash						: Joi.string().allow(''),,
-				salt						: Joi.string().allow(''),,
+				hash						: Joi.string().allow(''),
+				salt						: Joi.string().allow(''),
 				algorithm					: Joi.string().allow(''),
 			}),
 			
