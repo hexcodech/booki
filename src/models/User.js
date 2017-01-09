@@ -15,7 +15,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		
 		email						: {
 			verified					: {type: String, unique: true, required: false},
-			unverified					: {type: String, unique: true, required: false},
+			unverified					: {type: String, unique: false, required: false},
 			verificationCode			: {type: String, "default": "", required: false},
 		},
 		
