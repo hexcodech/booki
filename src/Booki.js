@@ -71,6 +71,7 @@ class Booki {
 		
 		this.server = this.app.listen(this.config.HTTP_PORT, () => {
 			this.eventEmitter.emit("Booki::server::init", this.server.address().address, this.server.address().port);
+			console.log("Server running on", this.server.address().address + ":" + this.server.address().port);
 		});
 		
 		//Configure the server
@@ -93,12 +94,17 @@ class Booki {
 				
 				response.header("Access-Control-Allow-Origin", "*");
 				response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+				response.header("Access-Control-Allow-Methods", "HEAD, OPTIONS, GET, POST, PUT, DELETE");
 				
 				//UTF 8 JSON all the way EXCEPT /static/
 				if(!request.url.startsWith("/static/")){
 					response.header("Content-Type", "application/json; charset=utf-8");
 				}else{
 					response.setHeader("charset", "utf-8");
+				}
+				
+				if(!request.body.filter){
+					request.body.filter = {};
 				}
 				
 				next();
@@ -189,7 +195,26 @@ class Booki {
 	    hmacOrHash.update(string);
 	    
 	    return {hash: hmacOrHash.digest("hex"), salt: salt, algorithm: algorithm};
-	};
+	}
+	
+	/**
+	 * Creates an object with all defined keys of the 'keys' param in the 'originalObject' param
+	 * @function createObjectWithOptionalKeys
+	 * @param {Object} originalObject - The object containing the data to be copied
+	 * @param {Array} keys - The keys thath should - if defined - be copied to the new object
+	 * @returns {Object} - The new object containing all defined keys
+	*/
+	createObjectWithOptionalKeys(originalObject = {}, keys = []){
+		let obj;
+		
+		for(let i=0;i<keys.length;i++){
+			if(typeof originalObject[keys[i]]){
+				obj[keys[i]] = originalObject[keys[i]];
+			}
+		}
+		
+		return Object.assign({}, obj);
+	}
 	
 };
 

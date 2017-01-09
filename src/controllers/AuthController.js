@@ -84,7 +84,7 @@ class AuthController {
 		    	emailVerificationCode	= request.body.emailVerificationCode,
 		        password				= request.body.password;
 		   
-		    this.User.findOne({email: email}, (err, user) => {
+		    this.User.findOne({"email.unverified": email}, (err, user) => {
 			    
 		    	if(err){
 					
@@ -93,24 +93,31 @@ class AuthController {
 					}));
 					
 		    	}else if(user){
-		    		
-		    		if(user.emailVerificationCode && user.emailVerificationCode === emailVerificationCode){
-		    			
-		    			//If it's the registration process, the passwordResetCode is equal to the verification code
-		    			if(password){
-			    			
-			    			user.updatePassword(password, emailVerificationCode, (error, success) => {
-				    			if(success){
-					    			response.redirect("/views/login");
-				    			}else{
-					    			return next(error);
-				    			}
-			    			});
-			    			
-		    			}
-		    		}else{
-			    		return next(new this.errorController.errors.EmailVerificationCodeInvalidError());
-		    		}
+			    	
+			    	user.verifyEmail(email, emailVerificationCode, (error, success) => {
+				    	
+				    	if(success){
+					    	
+					    	if(password){
+				    			
+				    			user.updatePassword(password, emailVerificationCode, (error2, success2) => {
+					    			if(success2){
+						    			response.redirect("/views/login");
+					    			}else{
+						    			return next(error2);
+					    			}
+				    			});
+				    			
+			    			}else{
+				    			response.redirect("/views/login");
+			    			}
+					    	
+				    	}else{
+					    	return next(error);
+				    	}
+				    	
+			    	});
+			    	
 		    	}else{
 			    	//it's safer to display the same error as above because this doesn't hint who's registered and who not
 			    	return next(new this.errorController.errors.EmailVerificationCodeInvalidError());
@@ -120,6 +127,7 @@ class AuthController {
 		
 		
 		this.passport.use("client-local", new LocalStrategy(
+			{usernameField: 'clientId', passwordField: 'clientSecret'},
 			(clientId, clientSecret, callback) => {
 				
 				this.OAuthClient.findById(clientId, (err, client) => {
@@ -362,14 +370,15 @@ class AuthController {
 		this.passport.use("local", new LocalStrategy(
 			(email, password, done) => {
 				
-				this.User.findOne({email: email}, (err, user) => {
+				this.User.findOne({"email.verified": email}, (err, user) => {
+					
 					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), null);
 					}
 					
-					if(user.password.hash.length === 0 || !user) {
+					if(!user || user.password.hash.length === 0) {
 						return done(new this.errorController.errors.LoginError(), null);
 					}
 					
