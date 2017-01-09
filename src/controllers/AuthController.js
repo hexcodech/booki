@@ -127,6 +127,7 @@ class AuthController {
 		
 		
 		this.passport.use("client-local", new LocalStrategy(
+			{usernameField: 'clientId', passwordField: 'clientSecret'},
 			(clientId, clientSecret, callback) => {
 				
 				this.OAuthClient.findById(clientId, (err, client) => {
