@@ -110,7 +110,7 @@ class Routing {
 		
 		this.UserValidation									= require("./validation/UserValidation.js")(booki);
 		
-		this.app.get("/v1/user",							this.authController.isBearerAuthenticated(),
+		this.app.get("/v1/user",							this.authController.isBearerAuthenticated(["list-users"]),
 															this.userController.getUser
 		);
 		

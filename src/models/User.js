@@ -548,7 +548,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		    }
 		    
 	        return {
-	        	id					: ret._id,
+	        	_id					: ret._id,
 	        	name				: ret.name,
 	        	
 	        	capabilities		: ret.capabilities,
