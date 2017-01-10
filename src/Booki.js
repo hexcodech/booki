@@ -76,6 +76,7 @@ class Booki {
 		
 		//Configure the server
 		this.app.use("/static/", this.express.static(__dirname + "/../static"));
+		this.app.use("/.well-known/", this.express.static(__dirname + "/../.well-known"));
 		this.app.use(this.bodyParser.json());
 		this.app.use(this.bodyParser.urlencoded({
 			extended: true
