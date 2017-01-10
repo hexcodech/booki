@@ -64,7 +64,7 @@ class Booki {
 		this.errorController	= new (require("./controllers/ErrorController"))(this.booki);
 		
 		//Connect to to the database
-		this.mongoose.connect("mongodb://" + this.config.DB_HOST + "/" + this.config.DB_NAME);
+		this.mongoose.connect("mongodb://" + this.config.DB_USERNAME + ":" + this.config.DB_PASSWORD + "@" + this.config.DB_HOST + ":" + this.config.DB_PORT + "/" + this.config.DB_NAME);
 		
 		//Start the server
 		this.app			= new this.express();
@@ -76,6 +76,7 @@ class Booki {
 		
 		//Configure the server
 		this.app.use("/static/", this.express.static(__dirname + "/../static"));
+		this.app.use("/.well-known/", this.express.static(__dirname + "/../.well-known"));
 		this.app.use(this.bodyParser.json());
 		this.app.use(this.bodyParser.urlencoded({
 			extended: true
