@@ -7,60 +7,12 @@
 		"uuidString": "8FD20BD1-890E-45B3-8DCA-F384EB641ED2"
 		}
 	],
-"creatorBuild": "25444",
+"creatorBuild": "25504",
 "files": {
 	"\/.gitignore": {
 		"ft": 8192,
 		"oA": 2,
 		"oAP": "\/.gitignore",
-		"oF": 0
-		},
-	"\/.idea\/booki.iml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/booki.iml",
-		"oF": 0
-		},
-	"\/.idea\/codeStyleSettings.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/codeStyleSettings.xml",
-		"oF": 0
-		},
-	"\/.idea\/jsLibraryMappings.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/jsLibraryMappings.xml",
-		"oF": 0
-		},
-	"\/.idea\/misc.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/misc.xml",
-		"oF": 0
-		},
-	"\/.idea\/modules.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/modules.xml",
-		"oF": 0
-		},
-	"\/.idea\/vcs.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/vcs.xml",
-		"oF": 0
-		},
-	"\/.idea\/workspace.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/workspace.xml",
-		"oF": 0
-		},
-	"\/.project": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.project",
 		"oF": 0
 		},
 	"\/config-sample.json": {
@@ -107,6 +59,12 @@
 		"oAP": "\/build\/node_modules",
 		"oF": 0
 		},
+	"\/npm-debug.log": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/npm-debug.log",
+		"oF": 0
+		},
 	"\/package.json": {
 		"ft": 524288,
 		"oA": 1,
@@ -114,6 +72,24 @@
 		"oF": 0,
 		"oO": 0,
 		"oS": 1
+		},
+	"\/README.md": {
+		"cS": 0,
+		"eF": 1,
+		"eL": 1,
+		"eLB": 0,
+		"ema": 1,
+		"eSQ": 1,
+		"ft": 4096,
+		"oA": 1,
+		"oAP": "\/README.html",
+		"oF": 0,
+		"oFM": 0,
+		"oS": 0,
+		"pHT": 0,
+		"pME": 1,
+		"rFN": 0,
+		"uCM": 0
 		},
 	"\/src": {
 		"ft": 65536,
@@ -147,6 +123,12 @@
 		"plM": 3758088159,
 		"prP": 1
 		},
+	"\/static\/res\/img\/trollface.txt": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/img\/trollface.txt",
+		"oF": 0
+		},
 	"\/static\/res\/scss\/booki.scss": {
 		"aP": 1,
 		"bl": 0,
@@ -164,6 +146,12 @@
 		"ft": 8192,
 		"oA": 2,
 		"oAP": "\/static\/tests\/local-login.html",
+		"oF": 0
+		},
+	"\/static\/tests\/local-register-oauth-client.html": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/tests\/local-register-oauth-client.html",
 		"oF": 0
 		},
 	"\/static\/tests\/local-register.html": {
@@ -625,6 +613,10 @@
 			"active": 0,
 			"optionString": "{'properties': 'always'}"
 			},
+		"capitalized-comments": {
+			"active": 0,
+			"optionString": "'always', {'ignoreInlineComments': false, 'ignoreConsecutiveComments': false}"
+			},
 		"class-methods-use-this": {
 			"active": 0,
 			"optionString": "{'exceptMethods': []}"
@@ -789,6 +781,10 @@
 			"active": 0,
 			"optionString": "{'max': 10}, {'ignoreTopLevelFunctions': true}"
 			},
+		"max-statements-per-line": {
+			"active": 0,
+			"optionString": "{'max': 1}"
+			},
 		"multiline-ternary": {
 			"active": 0,
 			"optionString": "'always'"
@@ -818,6 +814,10 @@
 			"optionString": ""
 			},
 		"no-array-constructor": {
+			"active": 0,
+			"optionString": ""
+			},
+		"no-await-in-loop": {
 			"active": 0,
 			"optionString": ""
 			},
@@ -1153,6 +1153,10 @@
 			"active": 0,
 			"optionString": "'except-parens'"
 			},
+		"no-return-await": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-script-url": {
 			"active": 0,
 			"optionString": ""
@@ -1357,6 +1361,10 @@
 			"active": 0,
 			"optionString": "{'destructuring': 'any', 'ignoreReadBeforeAssign': false}"
 			},
+		"prefer-destructuring": {
+			"active": 0,
+			"optionString": "{'array': true, 'object': true}, {'enforceForRenamedProperties': false}"
+			},
 		"prefer-numeric-literals": {
 			"active": 0,
 			"optionString": ""
@@ -1384,6 +1392,10 @@
 		"radix": {
 			"active": 0,
 			"optionString": "'always'"
+			},
+		"require-await": {
+			"active": 0,
+			"optionString": ""
 			},
 		"require-jsdoc": {
 			"active": 0,
@@ -2217,6 +2229,10 @@
 			},
 		"space-colon": {
 			"active": 1,
+			"flagValue": -1
+			},
+		"support-ie8": {
+			"active": 0,
 			"flagValue": -1
 			},
 		"toplevel": {
