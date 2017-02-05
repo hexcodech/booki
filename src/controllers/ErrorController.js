@@ -64,6 +64,13 @@ class ErrorController {
 			    parent				: "AuthenticationError"
 			},
 			
+			PasswordResetCodeExpiredError : {
+				name				: i18n.__("PasswordResetCodeExpiredError"),
+				defaultMessage		: i18n.__("The entered password reset code has expired"),
+			    defaultResponse		: i18n.__("Start the reset process again"),
+			    parent				: "AuthenticationError"
+			},
+			
 			EmailVerificationCodeInvalidError : {
 				name				: i18n.__("EmailVerificationCodeInvalidError"),
 				defaultMessage		: i18n.__("The entered email verification code is invalid"),

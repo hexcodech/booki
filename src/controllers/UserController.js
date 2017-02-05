@@ -16,7 +16,7 @@ class UserController {
 		this.getLocale						= getLocale;
 		this.createObjectWithOptionalKeys	= createObjectWithOptionalKeys;
 		
-		this.User							= this.mongoose.model("User");
+		this.User							= mongoose.model("User");
 		
 		booki.bindAll(this, ["getCurrentUser", "getUser", "getUserById", "postUser", "putUser", "deleteUser"]);
 	}
@@ -89,7 +89,7 @@ class UserController {
 	}
 	
 	postUser(request, response, next){
-		let user = new this.User(request.user);
+		let user = new this.User(request.body.user);
 		
 		user.save((err, user) => {
 			if(err){
@@ -191,7 +191,7 @@ class UserController {
 				}), null);
 			}
 			
-			reponse.json({success: true});
+			response.json({success: true});
 			response.end();
 		});
 	}

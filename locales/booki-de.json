@@ -58,5 +58,6 @@
 	"Allow": "Allow",
 	"Deny": "Deny",
 	"is requesting full access to your account": "is requesting full access to your account",
-	"Continue": "Continue"
+	"Continue": "Continue",
+	"Password reset code": "Password reset code"
 }

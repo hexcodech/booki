@@ -7,9 +7,9 @@ module.exports      = function({Joi}){
 				_id							: Joi.string().allow(''),
 
 				name						: Joi.object().keys({
-					display						: Joi.string().regex(/[A-z]+/).min(2).max(511).allow(''),
-					first						: Joi.string().regex(/[A-z]+/).min(2).max(255).allow(''),
-					last						: Joi.string().regex(/[A-z]+/).min(2).max(255).allow(''),
+					display						: Joi.string().regex(/[A-z]+/).max(511).allow(''),
+					first						: Joi.string().regex(/[A-z]+/).max(255).allow(''),
+					last						: Joi.string().regex(/[A-z]+/).max(255).allow(''),
 				}),
 				
 				email						: Joi.object().keys({

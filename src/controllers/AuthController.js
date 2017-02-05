@@ -35,7 +35,12 @@ class AuthController {
 		this.OAuthAccessToken	= this.mongoose.model("OAuthAccessToken");
 		this.OAuthCode			= this.mongoose.model("OAuthCode");
 		
-		booki.bindAll(this, ["loginView", "mailVerificationView", "auth", "authFacebookCallback", "authGoogleCallback", "catchInternalError", "catchInternalErrorView"]);
+		booki.bindAll(this, [
+			"loginView",				"mailVerificationView",		"auth",
+			"authFacebookCallback", 	"authGoogleCallback",		"catchInternalError",
+			"catchInternalErrorView",	"passwordResetView",		"initPasswordReset",
+			"passwordReset"
+		]);
 		
 		this.passport.serializeUser((user, done) => {
 			done(null, user._id);
@@ -47,7 +52,7 @@ class AuthController {
 				if(err){
 					done(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}, null));
+					}), null);
 				}
 				
 				done(null, user);
@@ -226,9 +231,7 @@ class AuthController {
 					return callback(new this.errorController.errors.AuthCodeInvalidError(), null);
 				}
 				
-				let now = new Date();
-				
-				if(now >= authCode.expires){
+				if(new Date() >= authCode.expires){
 					
 					authCode.remove((err2) => {
 						
@@ -637,6 +640,88 @@ class AuthController {
 		})(request, response, next);
 		
 	}
+	
+	initPasswordReset(request, response, next){
+		this.User.findOne({"email.verified": request.body.email}, (err, user) => {
+			
+			if(err){
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}), null);
+			}
+			
+			if(user){
+				user.initPasswordReset((error, success) => {
+					
+					if(error){
+						return next(error, null);
+					}
+					
+					if(success){
+						return response.redirect("/views/password-reset?email=" + request.body.email);
+					}else{
+						response.end("Internal Server Error")
+					}
+					
+				});
+			}else{
+				//ALWAYS redirect to not leak whether this email is registered
+				return response.redirect("/views/password-reset?email=" + request.body.email);
+			}
+			
+		});	
+	}
+	
+	
+	passwordResetView(request, response, next){
+		this.ejs.renderFile(__dirname + "/../views/ResetPassword.ejs", {
+			
+			__					: (string) => {
+				return this.i18n.__({phrase: string, locale: this.getLocale(request.user, request)});
+			},
+			email				: request.query.email,
+			code				: request.query.code
+			
+		}, {}, (err, str) => {
+			
+			if(err){
+				return next(new this.errorController.errors.RenderError({
+					message: err.message
+				}), null);
+			}
+			
+		    response.setHeader("Content-Type", "text/html");
+		    response.end(str);
+		});
+	}
+	
+	passwordReset(request, response, next){
+		this.User.findOne({"email.verified": request.body.email}, (err, user) => {
+			if(err){
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}), null);
+			}
+			
+			if(user){
+				user.updatePassword(request.body.password, request.body.resetCode, (error, success) => {
+	    			if(success){
+		    			response.redirect("/views/login");
+	    			}else{
+		    			//return next(error);
+		    			
+		    			//Return always the same error to not leak whether this email is registered
+						return next(new this.errorController.errors.PasswordResetCodeInvalidError(), null);
+	    			}
+    			});
+			}else{
+				//Return always the same error to not leak whether this email is registered
+				return next(new this.errorController.errors.PasswordResetCodeInvalidError(), null);
+			}
+			
+		});
+	}
+	
 	
 	catchInternalError(error, request, response, next){
 		

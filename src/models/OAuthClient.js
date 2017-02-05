@@ -1,4 +1,4 @@
-function OAuthClient({booki, config, mongoose, errorController, generateRandomString, hash}){
+function OAuthClient({booki, config, mongoose, errorController, generateRandomString, i18n, hash}){
 	
 	var OAuthClientSchema = new mongoose.Schema({
 		name						: {type: String, unique: true, required: true},
@@ -17,7 +17,7 @@ function OAuthClient({booki, config, mongoose, errorController, generateRandomSt
 	OAuthClientSchema.statics.errorController		= errorController;
 	OAuthClientSchema.statics.generateRandomString	= generateRandomString;
 	OAuthClientSchema.statics.hash					= hash;
-	
+		
 	OAuthClientSchema.statics.generateSecret = function(){
 		return this.generateRandomString(config.CLIENT_SECRET_LENGTH);
 	}

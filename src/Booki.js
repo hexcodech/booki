@@ -42,7 +42,7 @@ class Booki {
 		this.FacebookStrategy	= require("passport-facebook").Strategy;
 		this.GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
 		
-		this.bindAll(this, ["bindAll", "getLocale", "generateRandomString", "hash"]);
+		this.bindAll(this, ["bindAll", "getLocale", "generateRandomString", "hash", "isObject", "mergeDeep"]);
 		
 		//Store some values
 		this.eventEmitter		= new this.events.EventEmitter();
@@ -129,9 +129,7 @@ class Booki {
 		this.oauth2Server			= this.oauth2orize.createServer();
 		
 		//Do the routing
-		let Routing			= require("./Routing");
-		
-		this.routing		= new Routing(this.booki);
+		require("./Routing")(this);
 	}
 	
 	bindAll(object, functions){
@@ -215,6 +213,35 @@ class Booki {
 		}
 		
 		return Object.assign({}, obj);
+	}
+	
+	/**
+	 * Simple is object check.
+	 * @param item
+	 * @returns {boolean}
+	 */
+	isObject(item) {
+		return (item && typeof item === 'object' && !Array.isArray(item));
+	}
+	
+	/**
+	 * Deep merge two objects.
+	 * @param target
+	 * @param source
+	 */
+	mergeDeep(target, source) {
+		if(this.isObject(target) && this.isObject(source)){
+			for (const key in source) {
+				if (this.isObject(source[key])) {
+					if (!target[key]) Object.assign(target, { [key]: {} });
+					this.mergeDeep(target[key], source[key]);
+				} else {
+					Object.assign(target, { [key]: source[key] });
+				}
+			}
+	  }
+	  
+	  return target;
 	}
 	
 };

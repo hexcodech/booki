@@ -64,5 +64,22 @@
 	"The entered password reset code is invalid": "The entered password reset code is invalid",
 	"Check if you copied the whole code": "Check if you copied the whole code",
 	"EmailVerificationCodeInvalidError": "EmailVerificationCodeInvalidError",
-	"The entered email verification code is invalid": "The entered email verification code is invalid"
+	"The entered email verification code is invalid": "The entered email verification code is invalid",
+	"Display name": "Display name",
+	"First name": "First name",
+	"Last name": "Last name",
+	"Locale": "Locale",
+	"Place of residence": "Place of residence",
+	"Capabilities": "Capabilities",
+	"Verified email": "Verified email",
+	"Unverified email": "Unverified email",
+	"Password algorithm": "Password algorithm",
+	"Password reset code": "Password reset code",
+	"Verification code": "Verification code",
+	"User id": "User id",
+	"Profile picture url": "Profile picture url",
+	"Email verification code": "Email verification code",
+	"PasswordResetCodeExpiredError": "PasswordResetCodeExpiredError",
+	"The entered password reset code has expired": "The entered password reset code has expired",
+	"Start the reset process again": "Start the reset process again"
 }

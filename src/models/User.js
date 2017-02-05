@@ -2,7 +2,7 @@
  * Defines the user structure
  */
  
-function User({booki, config, mongoose, errorController, generateRandomString, hash}){
+function User({booki, config, mongoose, errorController, i18n, generateRandomString, hash}){
 	
 	
 	//setup some values
@@ -16,23 +16,24 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		email						: {
 			verified					: {type: String, unique: true, required: false},
 			unverified					: {type: String, unique: false, required: false},
-			verificationCode			: {type: String, "default": "", required: false},
+			verificationCode			: {type: String, default: "", required: false},
 		},
 		
 		password					: {
-			hash						: {type: String, "default": "", required: false},
-			salt						: {type: String, "default": "", required: false},
-			algorithm					: {type: String, "default": "", required: false},
+			hash						: {type: String, default: "", required: false},
+			salt						: {type: String, default: "", required: false},
+			algorithm					: {type: String, default: "", required: false},
 			
-			resetCode					: {type: String, "default": "", required: false},
+			resetCode					: {type: String, default: "", required: false},
+			resetCodeExpirationDate		: {type: Date, default: "", required: false},
 		},
 		
-		capabilities				: {type: Array, "default": [], required: false},
+		capabilities				: {type: Array, default: [], required: false},
 		
-		locale						: {type: String, "default": "en", required: true},
+		locale						: {type: String, default: "en", required: true},
 		placeOfResidence			: {type: String, required: false},
 		
-		created						: {type: Date, "default": Date.now, required: true},
+		created						: {type: Date, default: Date.now, required: true},
 		
 		profilePictureUrl			: {
 			type: String,
@@ -44,13 +45,13 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		facebook					: {
 			friends						: {type: Array, required: false},
 			
-			accessToken					: {type: String, "default": "", required: false},
-			refreshToken				: {type: String, "default": "", required: false},
+			accessToken					: {type: String, default: "", required: false},
+			refreshToken				: {type: String, default: "", required: false},
 		},
 		
 		google						: {
-			accessToken					: {type: String, "default": "", required: false},
-			refreshToken				: {type: String, "default": "", required: false},
+			accessToken					: {type: String, default: "", required: false},
+			refreshToken				: {type: String, default: "", required: false},
 		},
 	});
 	
@@ -61,8 +62,7 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 	
 	userSchema.statics.mailController		= new (require("../controllers/MailController"))(booki);
 	userSchema.statics.EmailTemplate		= require("email-templates").EmailTemplate;
-	
-	
+		
 	/**
 	 * Finds a matching user to the passed passport profile
 	 * @function getUserByPassportProfile
@@ -313,28 +313,29 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		
 		if((this.password.resetCode && this.password.resetCode === passwordResetCode)){
 			
-			this.password.resetCode		= "";
+			if(this.password.resetCodeExpirationDate >= new Date()){	
+				this.password.resetCode			= "";
+				this.password.resetTimestamp	= 0;
 			
-			let {hash, salt, algorithm} = this.constructor.hash(password);
-			
-			this.password.hash			= hash;
-			this.password.algorithm		= algorithm;
-			this.password.salt			= salt;
-			
-			return this.save((err, user) => {
+				Object.assign(this.password, this.constructor.hash(password));
 				
-				if(err){
-					return callback(new this.constructor.errorController.errors.DatabaseError({
-						message: err.message
-					}), false);
-				}
-				
-				return callback(null, true);
-				
-			});
+				return this.save((err, user) => {
+					
+					if(err){
+						return callback(new this.constructor.errorController.errors.DatabaseError({
+							message: err.message
+						}), false);
+					}
+					
+					return callback(null, true);
+					
+				});
+			}else{
+				return callback(new this.constructor.errorController.errors.PasswordResetCodeExpiredError(), false);
+			}
+		}else{
+			return callback(new this.constructor.errorController.errors.PasswordResetCodeInvalidError(), false);
 		}
-		
-		return callback(new this.constructor.errorController.errors.PasswordResetCodeInvalidError(), false);
 	};
 	
 	/**
@@ -364,20 +365,28 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 		var passwordResetCode	= this.constructor.generateRandomString(this.constructor.config.TOKEN_LENGTH);
 		var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
 		
-		resetMail.render(this, this.locale, (err, result) => {
+		let expirationDate = new Date();
+		expirationDate.setSeconds(expirationDate.getSeconds() + this.constructor.config.RESET_CODE_LIFETIME);
+		
+		this.password.resetCode					= passwordResetCode;
+		this.password.resetCodeExpirationDate	= expirationDate;
+		
+		resetMail.render({
+			user					: this
+		}, this.locale, (err, result) => {
 			if(err){
 				return callback(new this.constructor.errorController.errors.RenderError({
 					message: err.message
 				}), false);
 			}
+			
 			this.sendMail(result.subject, result.html, result.text, (error, success) => {
 				
 				if(error){
-					return callback(error, success);
+					return callback(error, false);
 				}
 				
 				if(success){
-					this.password.resetCode = passwordResetCode;
 					
 					this.save((err, user) => {
 						if(err){
@@ -386,12 +395,10 @@ function User({booki, config, mongoose, errorController, generateRandomString, h
 							}), false);
 						}
 						
-						return callback(null, success);
+						return callback(null, true);
 						
 					});
 				}
-				
-				return callback(error, success);
 			});
 		});
 	};
