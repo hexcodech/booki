@@ -219,6 +219,9 @@ class AuthController {
 		
 		this.oauth2Server.exchange(this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
 			
+			//keeping the database clean
+			this.OAuthCode.remove({expires: {$lt: new Date()} }).exec();
+			
 			this.OAuthCode.findByCode(code, (err, authCode) => {
 				
 				if(err){
@@ -229,21 +232,6 @@ class AuthController {
 				
 				if(!authCode || client._id.toString() !== authCode.clientId.toString()/* || client.verifyRedirectUri(redirectUri)*/){
 					return callback(new this.errorController.errors.AuthCodeInvalidError(), null);
-				}
-				
-				if(new Date() >= authCode.expires){
-					
-					authCode.remove((err2) => {
-						
-						if(err2){
-							return callback(new this.errorController.errors.DatabaseError({
-								message: err2.message
-							}), null);
-						}
-						
-						return callback(new this.errorController.errors.AuthCodeExpiredError(), null);
-						
-					});
 				}
 				
 				//Delete auth code now that it has been used
@@ -426,6 +414,10 @@ class AuthController {
 				passReqToCallback: true
 			},
 			(request, accessToken, callback) => {
+				
+				//keeping the database clean
+				this.OAuthAccessToken.remove({expires: {$lt: new Date()} }).exec();
+				
 				
 				this.OAuthAccessToken.findByToken(accessToken, (err, token) => {
 					if(err){

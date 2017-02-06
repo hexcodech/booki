@@ -100,17 +100,31 @@ class OAuthClientController{
 		let secret = this.OAuthClient.generateSecret();
 		
 		let client = new this.OAuthClient({
-			id							: this.generateRandomString(this.config.CLIENT_ID_LENGTH),
-			name						: request.body.name,
-			redirectUris				: request.body.redirectUris,
+			name						: request.body.client.name,
+			redirectUris				: request.body.client.redirectUris,
 			userId						: request.user._id
 		});
+		
+		if(request.user.hasPermission("admin.client.create")){
+			if(request.body.client.userId){
+				client.userId = request.body.client.userId;
+			}
+			
+			if(request.body.client.trusted){
+				client.trusted = request.body.client.trusted;//or just 'true'
+			}
+			
+			console.log(client);
+		}
 		
 		client.setSecret(secret);
 		
 		client.save((err, client) => {
 			
 			if(err){
+				
+				console.log(err);
+				
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
 				}));
@@ -176,16 +190,18 @@ class OAuthClientController{
 							response.json(updatedClient.toJSON());
 						}
 						
-						response.end();
+						return response.end();
 						
 					});
 					
 				}else{
-					next(new this.errorController.errors.ForbiddenError());
+					return next(new this.errorController.errors.ForbiddenError());
 				}
 				
+			}else{
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			return next(new this.errorController.errors.NotFoundError());
+			
 		});
 		
 	}
@@ -212,16 +228,19 @@ class OAuthClientController{
 							}), null);
 						}
 						
-						reponse.json({success: true});
+						response.json({success: true});
 						response.end();
 					});
+					
+					return;
 						
 				}else{
-					next(new this.errorController.errors.ForbiddenError());
+					return next(new this.errorController.errors.ForbiddenError());
 				}
 				
+			}else{
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			return next(new this.errorController.errors.NotFoundError());
 		});
 		
 	}

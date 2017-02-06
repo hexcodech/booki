@@ -32,7 +32,7 @@
 							</noscript>
 						</form>
 						<script>
-							<%- 'document.querySelector(\'form input[type=submit]\').click();'  %>
+							<%- trusted ? 'document.querySelector(\'form input[type=submit]\').click();' : '//silence'  %>
 						</script>
 					</div>
 				</div>
