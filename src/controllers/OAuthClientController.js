@@ -18,6 +18,8 @@ class OAuthClientController{
 	
 	getOAuthClient(request, response, next){
 		
+		let filter;
+		
 		if(request.user.hasPermission("admin.client.filters")){
 				
 			filter = request.body.filter;

@@ -206,6 +206,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 		if(error){
 			
 			//TODO: translate the error
+			console.log(error);
 			response.json(error.toJSON());
 			response.end();
 		}

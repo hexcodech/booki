@@ -504,9 +504,6 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 	 */
 	userSchema.methods.hasPermissions = function(permissions){
 		
-		console.log("Required: ", permissions);
-		console.log("Available: ", this.permissions);
-		
 		let missing = permissions.filter((permission) => {
 			
 			for(let i=0;i<this.permissions.length;i++){
@@ -521,8 +518,6 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 			return true; //missing, leave in array
 			
 		});
-		
-		console.log("Missing: ", missing);
 		
 		return missing.length === 0;
 	};
