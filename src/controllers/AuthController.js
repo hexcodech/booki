@@ -460,8 +460,8 @@ class AuthController {
 							});
 						}
 						
-						//check whether the user has the required capabilities
-						if(request.requiredCapabilities && user.hasCapabilities(request.requiredCapabilities)){
+						//check whether the user has the required permissions
+						if(request.requiredPermissions && user.hasPermissions(request.requiredPermissions)){
 							//no scopes yet
 							return callback(null, user, { scope: "*" });
 						}
@@ -473,10 +473,10 @@ class AuthController {
 			}
 		));
 		
-		this.isBearerAuthenticated = (capabilities = []) => {
+		this.isBearerAuthenticated = (permissions = []) => {
 			
 			return (request, response, next) => {
-				request.requiredCapabilities = capabilities;
+				request.requiredPermissions = permissions;
 				
 				this.passport.authenticate("bearer", {session: false})(request, response, next);
 			};

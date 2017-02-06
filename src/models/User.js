@@ -28,7 +28,7 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 			resetCodeExpirationDate		: {type: Date, default: "", required: false},
 		},
 		
-		capabilities				: {type: Array, default: [], required: false},
+		permissions					: {type: Array, default: [], required: false},
 		
 		locale						: {type: String, default: "en", required: true},
 		placeOfResidence			: {type: String, required: false},
@@ -124,7 +124,7 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 				first						: firstName
 			},
 			
-			capabilities				: [],
+			permissions					: [],
 			
 			email						: {
 				unverified					: email,
@@ -497,54 +497,56 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 	}
 	
 	/**
-	 * Checks whether the current user has said capabilities
-	 * @function hasCapabilities
-	 * @param {Array} capabilities - The array of capabilities to check
-	 * @returns {boolean} Whether the user has all of the given capabilities
+	 * Checks whether the current user has said permissions
+	 * @function hasPermissions
+	 * @param {Array} permissions - The array of permissions to check
+	 * @returns {boolean} Whether the user has all of the given permissions
 	 */
-	userSchema.methods.hasCapabilities = function(capabilities){
+	userSchema.methods.hasPermissions = function(permissions){
 		
-		//if we require move caps than we have it's already false
-		if(capabilities.length > this.capabilities.length){
-			return false;
-		}
+		console.log("Required: ", permissions);
+		console.log("Available: ", this.permissions);
 		
-		//indexOf is too slow, iterates through the whole array
-		this.capabilities.sort();
-		capabilities.sort();
-		
-		//for every element in capabilities we should find a corresponding one in this.capabilities
-		//and because they are sorted, we need to iterate only "once"
-		
-		let found;
-		
-		for(let i=0;i<capabilities.length;i++){
+		let missing = permissions.filter((permission) => {
 			
-			found = false;
-			
-			for(let j=i;j<this.capabilities.length;j++){
-				if(capabilities[i] === this.capabilities[j]){
-					i = j;//because the arrays are sorted we can now jump to the index where the corresponding element was found
-					found = true;
-					break;
+			for(let i=0;i<this.permissions.length;i++){
+				if(
+					permission === this.permissions[i] || /* has exactly this permission */
+					permission.startsWith(this.permissions[i] + ".") /* has a higher level permission */
+				){
+					return false; //not missing, remove from array
 				}
 			}
 			
-			if(!found){return false;}
-		}
+			return true; //missing, leave in array
+			
+		});
 		
-		return true;
+		console.log("Missing: ", missing);
+		
+		return missing.length === 0;
 	};
 	
 	/**
-	 * Checks whether the current user has said capability
-	 * @function hasCapability
-	 * @param {String} capability - The capability to check
-	 * @returns {boolean} Whether the user has the given capability
+	 * Checks whether the current user has said permission
+	 * @function hasPermission
+	 * @param {String} permission - The permission to check
+	 * @returns {boolean} Whether the user has the given permission
 	 */
-	userSchema.methods.hasCapability = function(capability){
-		return this.hasCapabilities([capability]);
+	userSchema.methods.hasPermission = function(permission){
+		return this.hasPermissions([permission]);
 	};
+	
+	//Delete cascade
+	userSchema.pre('remove', function(next){
+		
+		//'this' is the user being removed
+		mongoose.model("OAuthClient").remove({userId: this._id}).exec();
+		mongoose.model("OAuthAccessToken").remove({userId: this._id}).exec();
+		mongoose.model("OAuthCode").remove({userId: this._id}).exec();
+		
+		next();
+	});
 	
 	
 	userSchema.set("toJSON", {
@@ -558,7 +560,7 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 	        	_id					: ret._id,
 	        	name				: ret.name,
 	        	
-	        	capabilities		: ret.capabilities,
+	        	permissions			: ret.permissions,
 	        	
 	        	profilePictureUrl	: ret.profilePictureUrl,
 	        	

@@ -98,7 +98,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	const systemController								= new (require("./controllers/SystemController"))(booki);
 	
-	app.get("/v1/system/stats",							authController.isBearerAuthenticated(["access-system-stats"]),
+	app.get("/v1/system/stats",							authController.isBearerAuthenticated(["admin.system.stats"]),
 														systemController.getStats
 	);
 	
@@ -108,7 +108,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	const UserValidation								= require("./validation/UserValidation.js")(booki);
 	
-	app.get("/v1/user",									authController.isBearerAuthenticated(["list-users"]),
+	app.get("/v1/user",									authController.isBearerAuthenticated(["admin.user.list"]),
 														userController.getUser
 	);
 	
@@ -120,7 +120,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 														userController.getUserById
 	);
 	
-	app.post("/v1/user",								authController.isBearerAuthenticated(["create-users"]),
+	app.post("/v1/user",								authController.isBearerAuthenticated(["admin.user.create"]),
 														validate(UserValidation),
 														userController.postUser
 	);
@@ -130,7 +130,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 														userController.putUser
 	);
 	
-	app.delete("/v1/user/:userId",						authController.isBearerAuthenticated(["delete-users"]),
+	app.delete("/v1/user/:userId",						authController.isBearerAuthenticated(["admin.user.delete"]),
 														userController.deleteUser
 	);
 	
@@ -166,9 +166,9 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	//Books
 	
-	const bookController	 								= new (require("./controllers/BookController"))(booki);						
+	const bookController	 							= new (require("./controllers/BookController"))(booki);						
 														
-	const book_isbn13_id									= require("./validation/book_isbn13_id");
+	const book_isbn13_id								= require("./validation/book_isbn13_id");
 	const book_post										= require("./validation/book_post");
 	
 	
@@ -182,7 +182,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 			};
 			
 			let labels = {};
-			let allLabels = request.user.hasCapability("access-raw-data");
+			let allLabels = request.user.hasPermission("admin.response.rawData");
 			
 			for(let key in labelsToGet){
 				

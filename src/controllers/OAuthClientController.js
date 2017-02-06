@@ -17,8 +17,21 @@ class OAuthClientController{
 	}
 	
 	getOAuthClient(request, response, next){
-		this.OAuthClient.find({userId: request.user._id}, (err, clients) => {
+		
+		if(request.user.hasPermission("admin.client.filters")){
+				
+			filter = request.body.filter;
 			
+		}else{
+			
+			filter = {
+				userId: request.user._id
+			};
+			
+		}
+		
+		this.OAuthClient.find(filter, (err, clients) => {
+		
 			if(err){
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
@@ -27,7 +40,7 @@ class OAuthClientController{
 			
 			if(clients){
 				
-				if(request.user.hasCapability("access-raw-data")){
+				if(request.user.hasPermission("admin.client.rawData")){
 				
 					response.json(clients.map((client) => {
 						return client.toJSON({rawData: true});
@@ -48,6 +61,7 @@ class OAuthClientController{
 			return next(new this.errorController.errors.UnexpectedQueryResultError());
 			
 		});
+		
 	}
 	
 	getOAuthClientById(request, response, next){
@@ -61,7 +75,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasCapability("access-raw-data")){
+				if(request.user.hasPermission("admin.client.rawData")){
 				
 					response.json(client.toJSON({rawData: true}));
 					
@@ -102,7 +116,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasCapability("access-raw-data")){
+				if(request.user.hasPermission("admin.client.rawData")){
 					response.json(Object.assign(client.toJSON({rawData: true}), {secret: secret}));//add secret to response
 				}else{
 					response.json(Object.assign(client.toJSON(), {secret: secret}));//add secret to response
@@ -127,7 +141,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasCapabilities(["edit-other-oauthclients", "access-raw-data"])){
+				if(request.user.hasPermissions(["admin.client.editOthers", "admin.client.rawData"])){
 					
 					this.OAuthClient.findByIdAndUpdate(request.params.clientId, request.body.client, {new: true}, (err2, updatedClient) => {
 			
@@ -154,7 +168,7 @@ class OAuthClientController{
 							}), null);
 						}
 						
-						if(request.user.hasCapability("access-raw-data")){
+						if(request.user.hasPermission("admin.client.rawData")){
 							response.json(updatedClient.toJSON({rawData: true}));
 						}else{
 							response.json(updatedClient.toJSON());
@@ -186,7 +200,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(client.userId === request.user._id || request.user.hasCapability("delete-other-clients")){
+				if(client.userId === request.user._id || request.user.hasPermission("admin.client.deleteOthers")){
 					
 					this.OAuthClient.findByIdAndRemove(request.params.clientId, (err) => {
 						

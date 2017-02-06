@@ -30,7 +30,7 @@ class UserController {
 		
 		let filter;
 		
-		if(request.user.hasCapability("use-arbitrary-filters")){
+		if(request.user.hasPermission("admin.user.filters")){
 			
 			filter = request.body.filter;
 			
@@ -49,7 +49,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasCapability("access-raw-data")){
+			if(request.user.hasPermission("admin.user.rawData")){
 				
 				response.json(users.map((user) => {
 					return user.toJSON({rawData: true});
@@ -76,7 +76,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasCapability("access-raw-data")){
+			if(request.user.hasPermission("admin.user.rawData")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -98,7 +98,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasCapability("access-raw-data")){
+			if(request.user.hasPermission("admin.user.rawData")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -110,7 +110,7 @@ class UserController {
 	
 	putUser(request, response, next){
 		
-		if(request.user.hasCapabilities(["edit-other-users", "access-raw-data"])){
+		if(request.user.hasPermissions(["admin.user.editOthers", "admin.user.rawData"])){
 			
 			this.User.findByIdAndUpdate(request.params.userId, request.body.user, {new: true}, (err, user) => {
 			
@@ -165,7 +165,7 @@ class UserController {
 					});
 				}
 				
-				if(request.user.hasCapability("access-raw-data")){
+				if(request.user.hasPermission("admin.user.rawData")){
 					response.json(user.toJSON({rawData: true}));
 				}else{
 					response.json(user.toJSON());

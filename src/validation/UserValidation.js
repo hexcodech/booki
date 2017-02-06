@@ -26,7 +26,7 @@ module.exports      = function({Joi}){
 					resetCode					: Joi.string().allow(''),
 				}),
 				
-				capabilities				: Joi.array().items(Joi.string()),
+				permissions					: Joi.array().items(Joi.string()),
 				
 				locale						: Joi.string().allow(''),
 				placeOfResidence			: Joi.string().allow(''),
