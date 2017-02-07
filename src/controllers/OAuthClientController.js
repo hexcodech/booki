@@ -12,7 +12,7 @@ class OAuthClientController{
 		
 		this.OAuthClient					= this.mongoose.model("OAuthClient");
 		
-		bindAll(this, ["getOAuthClient", "postOAuthClient", "getOAuthClientById", "postOAuthClient", "putOAuthClient", "deleteOAuthClient"]);
+		bindAll(this, ["getOAuthClient", "postOAuthClient", "getOAuthClientById", "putOAuthClient", "deleteOAuthClient"]);
 		
 	}
 	
@@ -42,7 +42,7 @@ class OAuthClientController{
 			
 			if(clients){
 				
-				if(request.user.hasPermission("admin.client.rawData")){
+				if(request.user.hasPermission("admin.client.rawData.read")){
 				
 					response.json(clients.map((client) => {
 						return client.toJSON({rawData: true});
@@ -77,7 +77,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasPermission("admin.client.rawData")){
+				if(request.user.hasPermission("admin.client.rawData.read")){
 				
 					response.json(client.toJSON({rawData: true}));
 					
@@ -90,6 +90,7 @@ class OAuthClientController{
 				return response.end();
 				
 			}
+			
 			return next(new this.errorController.errors.UnexpectedQueryResultError());
 		});
 	}
@@ -97,33 +98,33 @@ class OAuthClientController{
 	
 	postOAuthClient(request, response, next){
 		
-		let secret = this.OAuthClient.generateSecret();
+		const secret = this.OAuthClient.generateSecret();
 		
-		let client = new this.OAuthClient({
-			name						: request.body.client.name,
-			redirectUris				: request.body.client.redirectUris,
-			userId						: request.user._id
-		});
+		let clientData;
 		
-		if(request.user.hasPermission("admin.client.create")){
-			if(request.body.client.userId){
-				client.userId = request.body.client.userId;
+		if(request.user.hasPermissions(["admin.client.create", "admin.client.rawData.write"])){
+			
+			clientData = request.body.client;
+			
+			if(!clientData.userId){
+				clientData.userId = request.user._id;
 			}
 			
-			if(request.body.client.trusted){
-				client.trusted = request.body.client.trusted;//or just 'true'
-			}
-			
-			console.log(client);
+		}else{
+			clientData = {
+				name						: request.body.client.name,
+				redirectUris				: request.body.client.redirectUris,
+				userId						: request.user._id
+			};
 		}
+		
+		let client = new this.OAuthClient(clientData);
 		
 		client.setSecret(secret);
 		
 		client.save((err, client) => {
 			
-			if(err){
-				
-				console.log(err);
+			if(err){console.log(err);
 				
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
@@ -132,10 +133,10 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasPermission("admin.client.rawData")){
-					response.json(Object.assign(client.toJSON({rawData: true}), {secret: secret}));//add secret to response
+				if(request.user.hasPermission("admin.client.rawData.read")){
+					response.json(Object.assign(client.toJSON({rawData: true}), {secret}));//add secret to response
 				}else{
-					response.json(Object.assign(client.toJSON(), {secret: secret}));//add secret to response
+					response.json(Object.assign(client.toJSON(), {secret}));//add secret to response
 				}
 				
 				return response.end();	
@@ -157,46 +158,37 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasPermissions(["admin.client.editOthers", "admin.client.rawData"])){
+				let newClientData;
+				
+				if(request.user.hasPermissions(["admin.client.editOthers", "admin.client.rawData.write"])){
 					
-					this.OAuthClient.findByIdAndUpdate(request.params.clientId, request.body.client, {new: true}, (err2, updatedClient) => {
-			
-						if(err2){
-							return next(new this.errorController.errors.DatabaseError({
-								message: err2.message
-							}), null);
-						}
-						
-						response.json(updatedClient.toJSON({rawData: true}));
-						response.end();
-						
-					});
+					newClientData = request.body.client;
 					
-				}else if(client.userId === request.user._id){
+				}else if(client.userId === request.user._id || request.user.hasPermission("admin.client.editOthers")){
 					
-					let newClientData = this.createObjectWithOptionalKeys(request.body.client, ["name", "redirectUris"]);
-					
-					this.OAuthClient.findByIdAndUpdate(request.params.clientId, newClientData, {new: true}, (err2, updatedClient) => {
-			
-						if(err2){
-							return next(new this.errorController.errors.DatabaseError({
-								message: err2.message
-							}), null);
-						}
-						
-						if(request.user.hasPermission("admin.client.rawData")){
-							response.json(updatedClient.toJSON({rawData: true}));
-						}else{
-							response.json(updatedClient.toJSON());
-						}
-						
-						return response.end();
-						
-					});
+					newClientData = this.createObjectWithOptionalKeys(request.body.client, ["name", "redirectUris"]);
 					
 				}else{
 					return next(new this.errorController.errors.ForbiddenError());
 				}
+				
+				this.OAuthClient.findByIdAndUpdate(request.params.clientId, newClientData, {new: true}, (err2, updatedClient) => {
+			
+					if(err2){
+						return next(new this.errorController.errors.DatabaseError({
+							message: err2.message
+						}), null);
+					}
+					
+					if(request.user.hasPermission("admin.client.rawData.read")){
+						response.json(updatedClient.toJSON({rawData: true}));
+					}else{
+						response.json(updatedClient.toJSON());
+					}
+					
+					return response.end();
+					
+				});
 				
 			}else{
 				return next(new this.errorController.errors.NotFoundError());

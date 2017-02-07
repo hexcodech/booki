@@ -49,7 +49,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData")){
+			if(request.user.hasPermission("admin.user.rawData.read")){
 				
 				response.json(users.map((user) => {
 					return user.toJSON({rawData: true});
@@ -76,7 +76,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData")){
+			if(request.user.hasPermission("admin.user.rawData.read")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -98,7 +98,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData")){
+			if(request.user.hasPermission("admin.user.rawData.read")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -110,76 +110,70 @@ class UserController {
 	
 	putUser(request, response, next){
 		
-		if(request.user.hasPermissions(["admin.user.editOthers", "admin.user.rawData"])){
+		let newUserData;
+		
+		if(request.user.hasPermissions(["admin.user.editOthers", "admin.user.rawData.write"])){
 			
-			this.User.findByIdAndUpdate(request.params.userId, request.body.user, {new: true}, (err, user) => {
-			
-				if(err){
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				response.json(user.toJSON({rawData: true}));
-				
-				response.end();
-			});
-			
-		}else if(request.params.userId === request.user._id){
-			
-			let newUserData = createObjectWithOptionalKeys(request.body.user, ["name", "locale", "placeOfResidence", "profilePictureUrl"]);
-			
-			if(newEmail){
-				newUserData.email = {
-					unverified: newEmail
-				};
-			}
-			
-			//email and password are handled seperately
-			
-			this.User.findByIdAndUpdate(request.user._id, newUserData, {new: true}, (err, user) => {
-				
-				if(err){
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				let {newPassword, newEmail} = request.body.user;
-				
-				if(newPassword === true){
-					user.initPasswordReset((error, success) => { //async
-						if(error){
-							console.log(error);
-						}
+			newUserData = request.body.user;
 						
-					});
-				}
-				
-				if(newEmail && user.email.unverified !== ""){
-					user.initEmailVerification((error, success) => { //async
-						if(error){
-							console.log(error);
-						}
-						
-					});
-				}
-				
-				if(request.user.hasPermission("admin.user.rawData")){
-					response.json(user.toJSON({rawData: true}));
-				}else{
-					response.json(user.toJSON());
-				}
-				
-				response.end();
-				
-			});
+		}else if(request.params.userId === request.user._id || request.user.hasPermission("admin.user.editOthers")){
 			
+			newUserData = createObjectWithOptionalKeys(request.body.user, ["name", "locale", "placeOfResidence", "profilePictureUrl"]);
 			
 		}else{
 			//not allowed
-			next(new this.errorController.errors.ForbiddenError());
+			return next(new this.errorController.errors.ForbiddenError());
 		}
+		
+		
+		
+		let {newPassword, newEmail} = request.body.user;
+			
+		if(newEmail){
+			newUserData.email = {
+				unverified: newEmail
+			};
+		}
+		
+		//email and password are handled seperately
+		
+		this.User.findByIdAndUpdate(request.user._id, newUserData, {new: true}, (err, user) => {
+			
+			if(err){
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}), null);
+			}
+			
+			
+			if(newPassword === true){
+				user.initPasswordReset((error, success) => { //async
+					if(error){
+						console.log(error);
+					}
+					
+				});
+			}
+			
+			if(newEmail && user.email.unverified !== ""){
+				user.initEmailVerification((error, success) => { //async
+					if(error){
+						console.log(error);
+					}
+					
+				});
+			}
+			
+			if(request.user.hasPermission("admin.user.rawData.read")){
+				response.json(user.toJSON({rawData: true}));
+			}else{
+				response.json(user.toJSON());
+			}
+			
+			response.end();
+			
+		});
+		
 	}
 	
 	deleteUser(request, response, next){

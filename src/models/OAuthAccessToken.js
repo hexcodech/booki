@@ -2,7 +2,7 @@ function OAuthAccessToken({booki, config, mongoose, generateRandomString, hash})
 	
 	//store the passed parameters
 	
-	var OAuthAccessTokenSchema = new mongoose.Schema({
+	let OAuthAccessTokenSchema = new mongoose.Schema({
 		hash						: {type: String, required: true},
 		/*salt						: {type: String, required: true}, //not required as the probability of two hashes being the same is extremely low
 		algorithm					: {type: String, required: true}, //not required because changing the algorithm renders the current codes invalid */

@@ -6,7 +6,7 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 	
 	
 	//setup some values
-	var userSchema = new mongoose.Schema({
+	let userSchema = new mongoose.Schema({
 		name						: {
 			display						: {type: String, required: true},
 			first						: {type: String, required: true},

@@ -166,7 +166,7 @@ class ErrorController {
 			CensorshipError : {
 				name				: i18n.__("CensorshipError"),
 				code				: 451,
-				defaultMessage		: i18n.__("The requested couldn't be processed for legal reasons"),
+				defaultMessage		: i18n.__("For legal reasons this requested couldn't be processed"),
 			},
 			
 			
@@ -194,6 +194,13 @@ class ErrorController {
 			},
 			
 			
+			ApiError : {
+				name				: i18n.__("ApiError"),
+				code				: 601,
+				defaultMessage		: i18n.__("The api query failed"),
+				defaultResponse		: i18n.__("Please try this action again."),
+			},
+			
 			
 			RenderError : {
 				name				: i18n.__("RenderError"),
@@ -207,7 +214,7 @@ class ErrorController {
 				name				: i18n.__("UserAlreadyExistsError"),
 				code				: 601,
 				defaultMessage		: i18n.__("This email was already registered"),
-				defaultResponse		: i18n.__("Verify that you still own this email address"),
+				defaultResponse		: i18n.__("Verify that you still own this email address."),
 			}
 			
 			

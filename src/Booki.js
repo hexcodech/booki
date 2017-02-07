@@ -11,7 +11,10 @@ class Booki {
 		
 		//Require modules
 		this.fs					= require("fs");
+		this.request			= require("request");
 		this.os					= require("os");
+		this._					= require("lodash");
+		
 		this.requestStats		= require("request-stats");
 		
 		this.mongoose			= require("mongoose");
@@ -41,6 +44,8 @@ class Booki {
 		this.BearerStrategy		= require("passport-http-bearer").Strategy;
 		this.FacebookStrategy	= require("passport-facebook").Strategy;
 		this.GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
+		
+		this.gbooks				= require("google-books-search");
 		
 		this.bindAll(this, ["bindAll", "getLocale", "generateRandomString", "hash", "isObject", "mergeDeep"]);
 		
@@ -124,6 +129,8 @@ class Booki {
 		this.OAuthClient			= require("./models/OAuthClient")(this.booki);
 		this.OAuthAccessToken		= require("./models/OAuthAccessToken")(this.booki);
 		this.OAuthCode				= require("./models/OAuthCode")(this.booki);
+		
+		this.Book					= require("./models/Book")(this.booki);
 		
 		//Setup the authorization server
 		this.oauth2Server			= this.oauth2orize.createServer();

@@ -6,17 +6,17 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	//Show we're up and running and maybe annoy some people
 		
-	let troll = "";
+	let ಠ_ಠ = ""; //yes i just did that
 	
-	booki.fs.readFile(__dirname + "/../static/res/img/trollface.txt", 'utf8', (err, data) => {
+	booki.fs.readFile(__dirname + "/../static/res/img/easteregg.txt", 'utf8', (err, data) => {
 		if(err){
 			return console.log(err);
 		}
-		troll = data;
+		ಠ_ಠ = data;
 	});
 	
 	app.get("/", (response, request) => {
-		request.end(troll);
+		request.end(ಠ_ಠ);
 	});
 	
 	

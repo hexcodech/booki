@@ -113,6 +113,12 @@
 		"oAP": "\/static\/res\/css\/booki.min.css.map",
 		"oF": 0
 		},
+	"\/static\/res\/img\/easteregg.txt": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/img\/easteregg.txt",
+		"oF": 0
+		},
 	"\/static\/res\/img\/logo.svg": {
 		"ft": 2097152,
 		"miP": 1,
@@ -122,12 +128,6 @@
 		"opt": 0,
 		"plM": 3758088159,
 		"prP": 1
-		},
-	"\/static\/res\/img\/trollface.txt": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/res\/img\/trollface.txt",
-		"oF": 0
 		},
 	"\/static\/res\/scss\/booki.scss": {
 		"aP": 1,
@@ -141,24 +141,6 @@
 		"oF": 0,
 		"oS": 3,
 		"uL": 1
-		},
-	"\/static\/tests\/local-login.html": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/tests\/local-login.html",
-		"oF": 0
-		},
-	"\/static\/tests\/local-register-oauth-client.html": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/tests\/local-register-oauth-client.html",
-		"oF": 0
-		},
-	"\/static\/tests\/local-register.html": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/tests\/local-register.html",
-		"oF": 0
 		}
 	},
 "hooks": [

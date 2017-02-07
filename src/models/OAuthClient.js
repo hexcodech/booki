@@ -1,6 +1,6 @@
 function OAuthClient({booki, config, mongoose, errorController, generateRandomString, i18n, hash}){
 	
-	var OAuthClientSchema = new mongoose.Schema({
+	let OAuthClientSchema = new mongoose.Schema({
 		name						: {type: String, unique: true, required: true},
 		secret						: {
 			

@@ -81,5 +81,10 @@
 	"Email verification code": "Email verification code",
 	"PasswordResetCodeExpiredError": "PasswordResetCodeExpiredError",
 	"The entered password reset code has expired": "The entered password reset code has expired",
-	"Start the reset process again": "Start the reset process again"
+	"Start the reset process again": "Start the reset process again",
+	"For legal reasons this requested couldn't be processed": "For legal reasons this requested couldn't be processed",
+	"ApiError": "ApiError",
+	"The api query failed": "The api query failed",
+	"Please try this action again.": "Please try this action again.",
+	"Verify that you still own this email address.": "Verify that you still own this email address."
 }

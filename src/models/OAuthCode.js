@@ -1,6 +1,6 @@
 function OAuthCode({booki, config, mongoose, generateRandomString, hash}){
 	
-	var OAuthCodeSchema = new mongoose.Schema({
+	let OAuthCodeSchema = new mongoose.Schema({
 		hash						: {type: String, required: true},
 		/*salt						: {type: String, required: true}, //not required as the probability of two hashes being the same is extremely low
 		algorithm					: {type: String, required: true}, //not required because changing the algorithm only renders the current codes invalid */
