@@ -224,8 +224,6 @@ class BookController{
 					return next(error);
 				}
 				
-				console.log(books);
-				
 				if(request.user.hasPermission("admin.book.rawData.read")){
 					
 					response.json(books.map((book) => {
