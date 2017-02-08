@@ -14,26 +14,26 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 		},
 		
 		email						: {
-			verified					: {type: String, unique: true, required: false},
+			verified					: {type: String, unique: true,	required: false},
 			unverified					: {type: String, unique: false, required: false},
-			verificationCode			: {type: String, default: "", required: false},
+			verificationCode			: {type: String, default: "",	required: false},
 		},
 		
 		password					: {
-			hash						: {type: String, default: "", required: false},
-			salt						: {type: String, default: "", required: false},
-			algorithm					: {type: String, default: "", required: false},
+			hash						: {type: String, default: "",	required: false},
+			salt						: {type: String, default: "",	required: false},
+			algorithm					: {type: String, default: "",	required: false},
 			
-			resetCode					: {type: String, default: "", required: false},
-			resetCodeExpirationDate		: {type: Date, default: "", required: false},
+			resetCode					: {type: String, default: "",	required: false},
+			resetCodeExpirationDate		: {type: Date,					required: false},
 		},
 		
-		permissions					: {type: Array, default: [], required: false},
+		permissions					: {type: Array, default: [],		required: false},
 		
-		locale						: {type: String, default: "en", required: true},
+		locale						: {type: String, default: "en",		required: true},
 		placeOfResidence			: {type: String, required: false},
 		
-		created						: {type: Date, default: Date.now, required: true},
+		created						: {type: Date, default: Date.now,	required: true},
 		
 		profilePictureUrl			: {
 			type: String,
@@ -150,11 +150,11 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 				return callback(new this.errorController.errors.UserAlreadyExistsError(), null);
 				
 			}else{
-				user.save((err2) => {
+				user.save((err) => {
 					
-					if(err2){
+					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
-							message: err2.message
+							message: err.message
 						}), null);
 					}
 					
@@ -536,10 +536,30 @@ function User({booki, config, mongoose, errorController, i18n, generateRandomStr
 	userSchema.pre('remove', function(next){
 		
 		//'this' is the user being removed
-		mongoose.model("OAuthClient").remove({userId: this._id}).exec();
-		mongoose.model("OAuthAccessToken").remove({userId: this._id}).exec();
-		mongoose.model("OAuthCode").remove({userId: this._id}).exec();
+		mongoose.model("OAuthClient").find({userId: this._id}, (err, clients) => {
+			if(!err && clients){
+				clients.forEach((client) => {
+					client.remove(); //calls middleware
+				});
+			}
+		});
 		
+		mongoose.model("OAuthAccessToken").find({userId: this._id}, (err, accessTokens) => {
+			if(!err && accessTokens){
+				accessTokens.forEach((accessToken) => {
+					accessToken.remove(); //calls middleware
+				});
+			}
+		});
+		
+		mongoose.model("OAuthCode").find({userId: this._id}, (err, codes) => {
+			if(!err && codes){
+				codes.forEach((code) => {
+					code.remove(); //calls middleware
+				});
+			}
+		});
+				
 		next();
 	});
 	

@@ -235,11 +235,11 @@ class AuthController {
 				}
 				
 				//Delete auth code now that it has been used
-				authCode.remove((err2) => {
+				authCode.remove((err) => {
 					
-					if(err2){
+					if(err){
 						return callback(new this.errorController.errors.DatabaseError({
-							message: err2.message
+							message: err.message
 						}), null);
 					}
 					
@@ -263,11 +263,11 @@ class AuthController {
 					});
 					
 					// Save the access token and check for errors
-					token.save((err3) => {
+					token.save((err) => {
 						
-						if(err3){
+						if(err){
 							return callback(new this.errorController.errors.DatabaseError({
-								message: err3.message
+								message: err.message
 							}), null);
 						}
 						
@@ -431,20 +431,20 @@ class AuthController {
 						return callback(new this.errorController.errors.TokenInvalidError(), false);
 					}
 					
-					this.User.findById(token.userId, (err2, user) => {
-						if(err2){
+					this.User.findById(token.userId, (err, user) => {
+						if(err){
 							return callback(new this.errorController.errors.DatabaseError({
-								message: err2.message
+								message: err.message
 							}), false);
 						}
 						
 						// No user was found, so the token is invalid
 						if(!user){
-							this.OAuthAccessToken.remove({hash: token.hash}, (err3) => {
+							this.OAuthAccessToken.remove({hash: token.hash}, (err) => {
 								
-								if(err3){
+								if(err){
 									return callback(new this.errorController.errors.DatabaseError({
-										message: err3.message
+										message: err.message
 									}), false);
 								}
 								

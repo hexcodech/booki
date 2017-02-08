@@ -27,9 +27,10 @@ class Booki {
 		
 		this.express			= require("express");
 		this.express_session	= require("express-session");
-		this.validate			= require("express-validation");
+		this.express_validation	= require("express-validation");
 		this.bodyParser			= require("body-parser");
 		this.cookieParser		= require("cookie-parser");
+		this.helmet				= require("helmet");
 		
 		this.Joi				= require("joi");
 		this.nodemailer			= require("nodemailer");
@@ -94,6 +95,7 @@ class Booki {
 		this.app.use(this.i18n.init);
 		this.app.use(this.passport.initialize());
 		this.app.use(this.passport.session());
+		//this.app.use(this.helmet());
 		
 		this.app.use(
 			(request, response, next) => {
@@ -107,10 +109,6 @@ class Booki {
 					response.header("Content-Type", "application/json; charset=utf-8");
 				}else{
 					response.setHeader("charset", "utf-8");
-				}
-				
-				if(!request.body.filter){
-					request.body.filter = {};
 				}
 				
 				next();

@@ -1,4 +1,4 @@
-function Book({mongoose, config, request, _, gbooks, errorController}){
+function Book({mongoose, request, _, gbooks, errorController}){
 	
 	let bookSchema = new mongoose.Schema({
 				
@@ -14,17 +14,17 @@ function Book({mongoose, config, request, _, gbooks, errorController}){
 		description					: {type: String,	required: false},
 		
 		publisher					: {type: String,	required: false},
-		publishDate					: {type: Date,		required: false},
+		publicationDate				: {type: Date,		required: false},
 		
 		pageCount					: {type: Number,	required: false},
 		
-		imageUrls					: [new mongoose.Schema({
-			thumbnail					: {type: String,	required: false},
-			small						: {type: String,	required: false},
-			medium						: {type: String,	required: false},
-			large						: {type: String,	required: false},
-			extraLarge					: {type: String,	required: false}
-		})],
+		images						: {
+			original					: {type: String,	required: false},
+			sizes						: [new mongoose.Schema({
+				size						: {type: String, required: true},
+				url							: {type: String, required: true}
+			})]
+		},
 		
 		approved					: {type: Boolean,	default: false, 	required: true},
 		dateCreated					: {type: Date,		default: Date.now,	required: true},
@@ -32,7 +32,14 @@ function Book({mongoose, config, request, _, gbooks, errorController}){
 		
 	});
 	
+	bookSchema.statics.request			= request; //for other APIs
+	bookSchema.statics._				= _;
+	bookSchema.statics.gbooks			= gbooks;
+	bookSchema.statics.errorController	= errorController;
+	
 	bookSchema.statics.findOnGoogle = function(value = "", field = "isbn", offset = 0, limit = 10, type="all", order="relevance", lang = "", callback){
+		
+		let {_, gbooks, errorController} = this;
 		
 		gbooks.search(value, {field, type, offset, limit, type, order, lang}, (err, books) => {
 			
@@ -70,16 +77,16 @@ function Book({mongoose, config, request, _, gbooks, errorController}){
 					description			: _.get(book, "description"),
 					
 					publisher			: _.get(book, "publisher"),
-					publishDate			: new Date(_.get(book, "publishedDate")),
+					publicationDate		: new Date(_.get(book, "publishedDate")),
 					
 					pageCount			: _.get(book, "pageCount"),
 					
-					imageUrls			: {
-						thumbnail			: _.get(book, "thumbnail"),
-						small				: _.get(book, "images.small"),
-						medium				: _.get(book, "images.medium"),
-						large				: _.get(book, "images.large"),
-						extraLarge			: _.get(book, "images.extraLarge")
+					images				: {
+						original			:	_.get(book, "images.extraLarge")	? _.get(book, "images.extraLarge")	:
+												_.get(book, "images.large")			? _.get(book, "images.large")		:
+												_.get(book, "images.medium")		? _.get(book, "images.medium")		:
+												_.get(book, "images.small")			? _.get(book, "images.small")		:
+												_.get(book, "thumbnail")
 					},
 					
 				});
@@ -90,6 +97,8 @@ function Book({mongoose, config, request, _, gbooks, errorController}){
 	
 	bookSchema.statics.lookupByIsbn = function(isbn = "", callback){
 		
+		let {errorController} = this;
+		
 		isbn = isbn.replace(/(-|\s)/g, ""); //remove spaces and dashes
 		
 		if(isbn.length === 10){ //convert isbn10 to isbn13
@@ -97,16 +106,16 @@ function Book({mongoose, config, request, _, gbooks, errorController}){
 		}
 		
 		//even tought this function shouldn't even be called if the book is already present, we double check
-		this.findOne({isbn13: isbn}, (err, book) => {
+		this.find({isbn13: isbn}, (err, books) => {
 			if(err){
 				return callback(new errorController.errors.DatabaseError({
 					message: err.message
 				}), null);
 			}
 			
-			if(book){
+			if(books){
 				//yeah, the isbn is already in our database
-				return callback(null, book);
+				return callback(null, books);
 				
 			}else{
 				//let the games begin

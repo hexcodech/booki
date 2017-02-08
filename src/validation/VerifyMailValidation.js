@@ -4,7 +4,7 @@ module.exports      = function({Joi}){
 		body: {
 			email					: Joi.string().email().required(),
 		    emailVerificationCode	: Joi.string().required(),
-		    password				: Joi.string().min(8).max(255)
+		    password				: Joi.string().min(8).max(256)
 		}
 	}
 	

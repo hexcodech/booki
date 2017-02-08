@@ -134,9 +134,15 @@ class OAuthClientController{
 			if(client){
 				
 				if(request.user.hasPermission("admin.client.rawData.read")){
-					response.json(Object.assign(client.toJSON({rawData: true}), {secret}));//add secret to response
+					let json = client.toJSON({rawData: true});
+					
+					json.secret.secret = secret; //add secret to response
+					response.json(json);
 				}else{
-					response.json(Object.assign(client.toJSON(), {secret}));//add secret to response
+					let json = client.toJSON();
+					
+					json.secret.secret = secret; //add secret to response
+					response.json(json);
 				}
 				
 				return response.end();	
@@ -172,11 +178,11 @@ class OAuthClientController{
 					return next(new this.errorController.errors.ForbiddenError());
 				}
 				
-				this.OAuthClient.findByIdAndUpdate(request.params.clientId, newClientData, {new: true}, (err2, updatedClient) => {
+				this.OAuthClient.findByIdAndUpdate(request.params.clientId, newClientData, {new: true}, (err, updatedClient) => {
 			
-					if(err2){
+					if(err){
 						return next(new this.errorController.errors.DatabaseError({
-							message: err2.message
+							message: err.message
 						}), null);
 					}
 					
@@ -212,7 +218,7 @@ class OAuthClientController{
 				
 				if(client.userId === request.user._id || request.user.hasPermission("admin.client.deleteOthers")){
 					
-					this.OAuthClient.findByIdAndRemove(request.params.clientId, (err) => {
+					client.remove((err) => { //calls middleware
 						
 						if(err){
 							return next(new this.errorController.errors.DatabaseError({
@@ -223,8 +229,6 @@ class OAuthClientController{
 						response.json({success: true});
 						response.end();
 					});
-					
-					return;
 						
 				}else{
 					return next(new this.errorController.errors.ForbiddenError());

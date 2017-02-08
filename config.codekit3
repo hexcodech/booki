@@ -113,6 +113,20 @@
 		"oAP": "\/static\/res\/css\/booki.min.css.map",
 		"oF": 0
 		},
+	"\/static\/res\/img\/book-cover.png": {
+		"ft": 32768,
+		"iS": 21932,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/min\/book-cover.min.png",
+		"oF": 0,
+		"opt": 1
+		},
+	"\/static\/res\/img\/book-cover.psd": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/img\/book-cover.psd",
+		"oF": 0
+		},
 	"\/static\/res\/img\/easteregg.txt": {
 		"ft": 8192,
 		"oA": 2,
@@ -128,6 +142,14 @@
 		"opt": 0,
 		"plM": 3758088159,
 		"prP": 1
+		},
+	"\/static\/res\/img\/min\/book-cover.min.png": {
+		"ft": 32768,
+		"iS": 21932,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/min\/min\/book-cover.min.min.png",
+		"oF": 0,
+		"opt": 0
 		},
 	"\/static\/res\/scss\/booki.scss": {
 		"aP": 1,

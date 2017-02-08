@@ -2,7 +2,7 @@
  * Manages the REST routing
  */
 
-const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}) => {
+const Routing = ({booki, app, config, i18n, errorController, mongoose, express_validation}) => {
 	
 	//Show we're up and running and maybe annoy some people
 		
@@ -20,17 +20,34 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	});
 	
 	
+	const validate = (schema) => {
+		return express_validation(Object.assign(schema, {
+			options:    {
+				//true ignores additional fields but doesn't throw an error (quite helpful, as additional fields such as '__v' may get sent)
+				allowUnknownBody	: true,
+				
+				//BUT strictly checking parameters and query arguments. Unknown parameters or querys will throw an error
+				allowUnknownParams	: false,
+				allowUnknownQuery	: false,
+				
+				allowUnknownHeaders	: true,
+				allowUnknownCookies	: true
+			}
+		}));
+	};
+	
+	
 	
 	//Autentication
 	
 	const authController								= new (require("./controllers/AuthController"))(booki);
 	
 	
-	const LocalLoginValidation							= require("./validation/LocalLoginValidation")(booki);
-	const InitPasswordResetValidation					= require("./validation/InitPasswordResetValidation")(booki);
-	const PasswordResetValidation						= require("./validation/PasswordResetValidation")(booki);
-	const LocalRegistrationValidation					= require("./validation/LocalRegistrationValidation")(booki);
-	const VerifyMailValidation							= require("./validation/VerifyMailValidation")(booki);
+	const localLoginValidation							= require("./validation/LocalLoginValidation")(booki);
+	const initPasswordResetValidation					= require("./validation/InitPasswordResetValidation")(booki);
+	const passwordResetValidation						= require("./validation/PasswordResetValidation")(booki);
+	const localRegistrationValidation					= require("./validation/LocalRegistrationValidation")(booki);
+	const verifyMailValidation							= require("./validation/VerifyMailValidation")(booki);
 	
 	app.get("/views/login",								authController.loginView,
 														authController.catchInternalErrorView
@@ -44,25 +61,25 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	
 	
-	app.post("/v1/auth/local/login",					validate(LocalLoginValidation),
+	app.post("/v1/auth/local/login",					validate(localLoginValidation),
 														authController.authLocal,
 														authController.catchInternalErrorView
 	);
 	
-	app.post("/v1/auth/init-password-reset",			validate(InitPasswordResetValidation),
+	app.post("/v1/auth/init-password-reset",			validate(initPasswordResetValidation),
 														authController.initPasswordReset,
 														authController.catchInternalErrorView
 	);
-	app.post("/v1/auth/password-reset",					validate(PasswordResetValidation),
+	app.post("/v1/auth/password-reset",					validate(passwordResetValidation),
 														authController.passwordReset,
 														authController.catchInternalErrorView
 	);
 	
-	app.post("/v1/auth/local/register",					validate(LocalRegistrationValidation),
+	app.post("/v1/auth/local/register",					validate(localRegistrationValidation),
 														authController.registration,
 														authController.catchInternalErrorView
 	);
-	app.post("/v1/auth/local/verify-email",				validate(VerifyMailValidation),
+	app.post("/v1/auth/local/verify-email",				validate(verifyMailValidation),
 														authController.verifyEmail,
 														authController.catchInternalErrorView
 	);
@@ -106,7 +123,8 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	const userController								= new (require("./controllers/UserController"))(booki);
 	
-	const UserValidation								= require("./validation/UserValidation.js")(booki);
+	const postUserValidation							= require("./validation/PostUserValidation.js")(booki);
+	const putUserValidation								= require("./validation/PutUserValidation.js")(booki);
 	
 	app.get("/v1/user",									authController.isBearerAuthenticated(["admin.user.list"]),
 														userController.getUser
@@ -121,12 +139,12 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	);
 	
 	app.post("/v1/user",								authController.isBearerAuthenticated(["admin.user.create"]),
-														validate(UserValidation),
+														validate(postUserValidation),
 														userController.postUser
 	);
 	
 	app.put("/v1/user/:userId",							authController.isBearerAuthenticated(),
-														validate(UserValidation),
+														validate(putUserValidation),
 														userController.putUser
 	);
 	
@@ -138,8 +156,8 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	const oauthClientController							= new (require("./controllers/OAuthClientController"))(booki);
 	
-	const postOAuthClientValidation						= require("./validation/postOAuthClientValidation")(booki);
-	const putOAuthClientValidation						= require("./validation/putOAuthClientValidation")(booki);
+	const postOAuthClientValidation						= require("./validation/PostOAuthClientValidation")(booki);
+	const putOAuthClientValidation						= require("./validation/PutOAuthClientValidation")(booki);
 	
 	
 	app.get("/v1/oauth2/client",						authController.isBearerAuthenticated(),
@@ -166,39 +184,38 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, validate}
 	
 	//Books
 	
-	const bookController	 							= new (require("./controllers/BookController"))(booki);						
-														
-	const book_isbn13_id								= require("./validation/book_isbn13_id");
-	const book_post										= require("./validation/book_post");
+	const bookController	 							= new (require("./controllers/BookController"))(booki);
 	
+	const postBookValidation							= require("./validation/PostBookValidation")(booki);
+	const putBookValidation								= require("./validation/PutBookValidation")(booki);
+	const lookupBookValidation							= require("./validation/LookupBookValidation")(booki);
 	
-	//Labels
+	app.get("/v1/book/lookup",							authController.isBearerAuthenticated(),
+														validate(lookupBookValidation),
+														bookController.lookupBook
+	);
 	
-	/*app.get("/v1/label",							authController.isBearerAuthenticated(),
-		(request, response) => {
-			
-			let labelsToGet = {
-				user: userController.User,
-			};
-			
-			let labels = {};
-			let allLabels = request.user.hasPermission("admin.response.rawData");
-			
-			for(let key in labelsToGet){
-				
-				if(!labelsToGet.hasOwnProperty(key)){continue;}
-				
-				labels[key] = labelsToGet[key].getLabels({
-					allLabels: allLabels
-				});
-			}
-			
-			response.json(labels);
-			response.end();
-															
-		}
-	);*/
+	app.get("/v1/book/:bookId",							authController.isBearerAuthenticated(),
+														bookController.getBookById
+	);
 	
+	app.get("/v1/book",									authController.isBearerAuthenticated(),
+														bookController.getBook
+	);
+	
+	app.post("/v1/book",								authController.isBearerAuthenticated(),
+														validate(postBookValidation),
+														bookController.postBook
+	);
+	
+	app.put("/v1/book/:bookId",							authController.isBearerAuthenticated(),
+														validate(putBookValidation),
+														bookController.putBook
+	);
+	
+	app.delete("/v1/book/:bookId",						authController.isBearerAuthenticated(),
+														bookController.deleteBook
+	);
 	
 	//last error catch
 	

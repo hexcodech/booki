@@ -115,7 +115,7 @@ class UserController {
 		if(request.user.hasPermissions(["admin.user.editOthers", "admin.user.rawData.write"])){
 			
 			newUserData = request.body.user;
-						
+									
 		}else if(request.params.userId === request.user._id || request.user.hasPermission("admin.user.editOthers")){
 			
 			newUserData = createObjectWithOptionalKeys(request.body.user, ["name", "locale", "placeOfResidence", "profilePictureUrl"]);
@@ -137,7 +137,7 @@ class UserController {
 		
 		//email and password are handled seperately
 		
-		this.User.findByIdAndUpdate(request.user._id, newUserData, {new: true}, (err, user) => {
+		this.User.findByIdAndUpdate(request.params.userId, newUserData, {new: true}, (err, user) => {
 			
 			if(err){
 				return next(new this.errorController.errors.DatabaseError({
@@ -145,39 +145,47 @@ class UserController {
 				}), null);
 			}
 			
-			
-			if(newPassword === true){
-				user.initPasswordReset((error, success) => { //async
-					if(error){
-						console.log(error);
-					}
-					
-				});
-			}
-			
-			if(newEmail && user.email.unverified !== ""){
-				user.initEmailVerification((error, success) => { //async
-					if(error){
-						console.log(error);
-					}
-					
-				});
-			}
-			
-			if(request.user.hasPermission("admin.user.rawData.read")){
-				response.json(user.toJSON({rawData: true}));
+			if(user){
+				
+				if(newPassword === true){
+					user.initPasswordReset((error, success) => { //async
+						if(error){
+							console.log(error);
+						}
+						
+					});
+				}
+				
+				if(newEmail && user.email.unverified !== ""){
+					user.initEmailVerification((error, success) => { //async
+						if(error){
+							console.log(error);
+						}
+						
+					});
+				}
+				
+				if(request.user.hasPermission("admin.user.rawData.read")){
+					response.json(user.toJSON({rawData: true}));
+				}else{
+					response.json(user.toJSON());
+				}
+				
+				response.end();
+				
 			}else{
-				response.json(user.toJSON());
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			
-			response.end();
 			
 		});
 		
 	}
 	
 	deleteUser(request, response, next){
-		this.User.findByIdAndRemove(request.params.userId, (err) => {
+		
+		//findByIdAndRemove doesn't call mongoose middlewares for a real cleanup.. https://github.com/Automattic/mongoose/issues/964
+		
+		this.User.findById(request.params.userId, (err, user) => {
 			
 			if(err){
 				return next(new this.errorController.errors.DatabaseError({
@@ -185,8 +193,18 @@ class UserController {
 				}), null);
 			}
 			
-			response.json({success: true});
-			response.end();
+			user.remove((err) => {
+				if(err){
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}), null);
+				}
+				
+				response.json({success: true});
+				response.end();
+				
+			});
+			
 		});
 	}
 	

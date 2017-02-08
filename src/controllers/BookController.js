@@ -12,7 +12,7 @@ class BookController{
 		
 		this.Book							= this.mongoose.model("Book");
 		
-		bindAll(this, ["getBook", "lookupBookByIsbn", "lookupBookByTitle", "postBook", "getBookById", "postBook", "putBook", "deleteBook"]);
+		bindAll(this, ["getBook", "getBookById", "postBook", "putBook", "deleteBook", "lookupBook"]);
 		
 	}
 	
@@ -54,52 +54,6 @@ class BookController{
 		
 	}
 	
-	lookupBookByIsbn(request, response, next){
-		this.Book.lookupByIsbn(request.body.isbn, (error, book) => {
-			if(error){
-				return next(error);
-			}
-			
-			if(request.user.hasPermission("admin.book.rawData.read")){
-				
-				response.json(book.toJSON({rawData: true}));
-				
-			}else{
-				
-				response.json(book.toJSON());
-				
-			}
-			
-			response.end();
-			
-		});
-	}
-	
-	lookupBookByTitle(request, response, next){
-		this.Book.lookupByTitle(request.body.title, (error, books) => {
-			if(error){
-				return next(error);
-			}
-			
-			if(request.user.hasPermission("admin.book.rawData.read")){
-				
-				response.json(books.map((book) => {
-					return book.toJSON({rawData: true});
-				}));
-				
-			}else{
-				
-				response.json(books.map((book) => {
-					return book.toJSON();
-				}));
-				
-			}
-			
-			response.end();
-			
-		});
-	}
-	
 	getBookById(request, response, next){
 		this.Book.findOne({_id: request.params.bookId}, (err, book) => {
 			
@@ -129,23 +83,24 @@ class BookController{
 		});
 	}
 	
-	
 	postBook(request, response, next){
-		
-		let secret = this.Book.generateSecret();
 		
 		let bookData;
 		
 		if(request.user.hasPermissions(["admin.book.create", "admin.book.rawData.write"])){
 			bookData = request.body.book;
+			
+			if(!bookData.createdBy){
+				bookData.createdBy = request.user._id; //add cretor
+			}
+			
 		}else{
 			bookData = createObjectWithOptionalKeys(request.body.book, [
-				"title", "subtitle", "language", "authors", "description", "publisher", "publishDate", "pageCount", "imageUrls"
+				"title", "subtitle", "language", "authors", "description", "publisher", "publicationDate", "pageCount", "imageUrls"
 			]);
+			
+			bookData.createdBy = request.user._id; //add cretor
 		}
-		
-		bookData.createdBy = request.user._id; //add cretor
-		
 		
 		
 		let book = new this.Book(bookData);
@@ -193,15 +148,15 @@ class BookController{
 					newBookData = request.body.book;
 				}else{
 					newBookData = createObjectWithOptionalKeys(request.body.book, [
-						"title", "subtitle", "language", "authors", "description", "publisher", "publishDate", "pageCount", "imageUrls"
+						"title", "subtitle", "language", "authors", "description", "publisher", "publicationDate", "pageCount", "images"
 					]);
 				}
 				
-				this.Book.findByIdAndUpdate(request.params.bookId, newBookData, {new: true}, (err2, updatedBook) => {
+				this.Book.findByIdAndUpdate(request.params.bookId, newBookData, {new: true}, (err, updatedBook) => {
 		
-					if(err2){
+					if(err){
 						return next(new this.errorController.errors.DatabaseError({
-							message: err2.message
+							message: err.message
 						}), null);
 					}
 					
@@ -237,7 +192,7 @@ class BookController{
 				
 				if(book.createdBy === request.user._id || request.user.hasPermission("admin.book.deleteOthers")){
 					
-					this.Book.findByIdAndRemove(request.params.bookId, (err) => {
+					book.remove((err) => { //calls middleware
 						
 						if(err){
 							return next(new this.errorController.errors.DatabaseError({
@@ -248,8 +203,6 @@ class BookController{
 						response.json({success: true});
 						response.end();
 					});
-					
-					return;
 						
 				}else{
 					return next(new this.errorController.errors.ForbiddenError());
@@ -258,9 +211,70 @@ class BookController{
 			}else{
 				return next(new this.errorController.errors.NotFoundError());
 			}
+			
 		});
+	}
+	
+	lookupBook(request, response, next){
+		
+		if(request.query.isbn){
+			
+			return this.Book.lookupByIsbn(request.query.isbn, (error, books) => {
+				if(error){
+					return next(error);
+				}
+				
+				console.log(books);
+				
+				if(request.user.hasPermission("admin.book.rawData.read")){
+					
+					response.json(books.map((book) => {
+						return book.toJSON({rawData: true});
+					}));
+					
+				}else{
+					
+					response.json(books.map((book) => {
+						return book.toJSON();
+					}));
+					
+				}
+				
+				response.end();
+				
+			});
+			
+		}else if(request.query.title){
+			
+			return this.Book.lookupByTitle(request.query.title, (error, books) => {
+				if(error){
+					return next(error);
+				}
+				
+				if(request.user.hasPermission("admin.book.rawData.read")){
+					
+					response.json(books.map((book) => {
+						return book.toJSON({rawData: true});
+					}));
+					
+				}else{
+					
+					response.json(books.map((book) => {
+						return book.toJSON();
+					}));
+					
+				}
+				
+				response.end();
+				
+			});
+			
+		}
+		
+		return next(new this.errorController.errors.NotFoundError());
 		
 	}
+	
 }
 
 module.exports = BookController;

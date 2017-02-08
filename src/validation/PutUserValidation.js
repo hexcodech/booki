@@ -1,15 +1,18 @@
 module.exports      = function({Joi}){
 	
 	return {
+		
+		params: {
+			userId: Joi.string().required()
+		},
+		
 		body: {
 			
 			user: {
-				_id							: Joi.string().allow(''),
-
 				name						: Joi.object().keys({
-					display						: Joi.string().regex(/[A-z]+/).max(511).allow(''),
-					first						: Joi.string().regex(/[A-z]+/).max(255).allow(''),
-					last						: Joi.string().regex(/[A-z]+/).max(255).allow(''),
+					display						: Joi.string().regex(/[A-z]+/).max(512).allow(''),
+					first						: Joi.string().regex(/[A-z]+/).max(256).allow(''),
+					last						: Joi.string().regex(/[A-z]+/).max(256).allow(''),
 				}),
 				
 				email						: Joi.object().keys({
@@ -24,9 +27,10 @@ module.exports      = function({Joi}){
 					algorithm					: Joi.string().allow(''),
 					
 					resetCode					: Joi.string().allow(''),
+					resetCodeExpirationDate		: Joi.date(),
 				}),
 				
-				permissions					: Joi.array().items(Joi.string()),
+				permissions					: Joi.array().items(Joi.string().max(128)),
 				
 				locale						: Joi.string().allow(''),
 				placeOfResidence			: Joi.string().allow(''),
@@ -49,7 +53,7 @@ module.exports      = function({Joi}){
 				
 				/* for updating self */
 				
-				newPassword					: Joi.string().min(8).max(255).allow(''),
+				newPassword					: Joi.string().min(8).max(256).allow(''),
 				newEmail					: Joi.string().email().allow(''),
 			}
 			

@@ -1,4 +1,4 @@
-module.exports      = function({Joi}){
+module.exports      = ({Joi}) => {
 	
 	return {
 		body: {
