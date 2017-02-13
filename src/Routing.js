@@ -6,17 +6,18 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, express_v
 	
 	//Show we're up and running and maybe annoy some people
 		
-	let ಠ_ಠ = ""; //yes i just did that
+	let easteregg = "";
 	
-	booki.fs.readFile(__dirname + "/../static/res/img/easteregg.txt", 'utf8', (err, data) => {
+	booki.fs.readFile(__dirname + "/../static/res/easteregg.txt", 'utf8', (err, data) => {
 		if(err){
 			return console.log(err);
 		}
-		ಠ_ಠ = data;
+		
+		easteregg = data;
 	});
 	
 	app.get("/", (response, request) => {
-		request.end(ಠ_ಠ);
+		request.end(easteregg);
 	});
 	
 	
@@ -42,6 +43,20 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, express_v
 	
 	const authController								= new (require("./controllers/AuthController"))(booki);
 	
+	
+	//enables unauthenticated users without throwing an error on 'request.user.hasPermission' if 'request.user' is undefined
+	app.use((request, response, next) => {
+		
+		request.hasPermissions = (permissions) => {
+			return request.user && request.user.hasPermissions(permissions);
+		};
+		
+		request.hasPermission = (permission) => {
+			return request.user && request.user.hasPermission(permission);
+		};
+		
+		next();
+	});
 	
 	const localLoginValidation							= require("./validation/LocalLoginValidation")(booki);
 	const initPasswordResetValidation					= require("./validation/InitPasswordResetValidation")(booki);
@@ -134,8 +149,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, express_v
 														userController.getCurrentUser
 	);
 	
-	app.get("/v1/user/:userId",							authController.isBearerAuthenticated(),
-														userController.getUserById
+	app.get("/v1/user/:userId",							userController.getUserById
 	);
 	
 	app.post("/v1/user",								authController.isBearerAuthenticated(["admin.user.create"]),
@@ -190,17 +204,14 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, express_v
 	const putBookValidation								= require("./validation/PutBookValidation")(booki);
 	const lookupBookValidation							= require("./validation/LookupBookValidation")(booki);
 	
-	app.get("/v1/book/lookup",							authController.isBearerAuthenticated(),
-														validate(lookupBookValidation),
+	app.get("/v1/book/lookup",							validate(lookupBookValidation),
 														bookController.lookupBook
 	);
 	
-	app.get("/v1/book/:bookId",							authController.isBearerAuthenticated(),
-														bookController.getBookById
+	app.get("/v1/book/:bookId",							bookController.getBookById
 	);
 	
-	app.get("/v1/book",									authController.isBearerAuthenticated(),
-														bookController.getBook
+	app.get("/v1/book",									bookController.getBook
 	);
 	
 	app.post("/v1/book",								authController.isBearerAuthenticated(),
@@ -213,7 +224,7 @@ const Routing = ({booki, app, config, i18n, errorController, mongoose, express_v
 														bookController.putBook
 	);
 	
-	app.delete("/v1/book/:bookId",						authController.isBearerAuthenticated(),
+	app.delete("/v1/book/:bookId",						authController.isBearerAuthenticated(["admin.book.delete"]),
 														bookController.deleteBook
 	);
 	

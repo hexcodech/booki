@@ -454,8 +454,8 @@ class AuthController {
 						
 						//check whether the user has the required permissions
 						if(request.requiredPermissions && user.hasPermissions(request.requiredPermissions)){
-							//no scopes yet
-							return callback(null, user, { scope: "*" });
+							//request.hasPermission not possible yet, as request.user isn't set yet
+							return callback(null, user);
 						}
 						
 						return callback(new this.errorController.errors.ForbiddenError(), false);
@@ -713,7 +713,6 @@ class AuthController {
 			
 		});
 	}
-	
 	
 	catchInternalError(error, request, response, next){
 		

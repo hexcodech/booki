@@ -30,7 +30,7 @@ class UserController {
 		
 		let filter;
 		
-		if(request.user.hasPermission("admin.user.filters")){
+		if(request.hasPermission("admin.user.filters")){
 			
 			filter = request.body.filter;
 			
@@ -49,7 +49,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData.read")){
+			if(request.hasPermission("admin.user.rawData.read")){
 				
 				response.json(users.map((user) => {
 					return user.toJSON({rawData: true});
@@ -76,7 +76,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData.read")){
+			if(request.hasPermission("admin.user.rawData.read")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -98,7 +98,7 @@ class UserController {
 				}), null);
 			}
 			
-			if(request.user.hasPermission("admin.user.rawData.read")){
+			if(request.hasPermission("admin.user.rawData.read")){
 				response.json(user.toJSON({rawData: true}));
 			}else{
 				response.json(user.toJSON());
@@ -112,11 +112,11 @@ class UserController {
 		
 		let newUserData;
 		
-		if(request.user.hasPermissions(["admin.user.editOthers", "admin.user.rawData.write"])){
+		if(request.hasPermissions(["admin.user.editOthers", "admin.user.rawData.write"])){
 			
 			newUserData = request.body.user;
 									
-		}else if(request.params.userId === request.user._id || request.user.hasPermission("admin.user.editOthers")){
+		}else if(request.params.userId === request.user._id || request.hasPermission("admin.user.editOthers")){
 			
 			newUserData = createObjectWithOptionalKeys(request.body.user, ["name", "locale", "placeOfResidence", "profilePictureUrl"]);
 			
@@ -165,7 +165,7 @@ class UserController {
 					});
 				}
 				
-				if(request.user.hasPermission("admin.user.rawData.read")){
+				if(request.hasPermission("admin.user.rawData.read")){
 					response.json(user.toJSON({rawData: true}));
 				}else{
 					response.json(user.toJSON());

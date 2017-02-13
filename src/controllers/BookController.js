@@ -30,7 +30,7 @@ class BookController{
 			
 			if(books){
 				
-				if(request.user.hasPermission("admin.book.rawData.read")){
+				if(request.hasPermission("admin.book.rawData.read")){
 				
 					response.json(books.map((book) => {
 						return book.toJSON({rawData: true});
@@ -65,7 +65,7 @@ class BookController{
 			
 			if(book){
 				
-				if(request.user.hasPermission("admin.book.rawData.read")){
+				if(request.hasPermission("admin.book.rawData.read")){
 				
 					response.json(book.toJSON({rawData: true}));
 					
@@ -87,7 +87,7 @@ class BookController{
 		
 		let bookData;
 		
-		if(request.user.hasPermissions(["admin.book.create", "admin.book.rawData.write"])){
+		if(request.hasPermissions(["admin.book.create", "admin.book.rawData.write"])){
 			bookData = request.body.book;
 			
 			if(!bookData.createdBy){
@@ -116,7 +116,7 @@ class BookController{
 			
 			if(book){
 				
-				if(request.user.hasPermission("admin.book.rawData.read")){
+				if(request.hasPermission("admin.book.rawData.read")){
 					response.json(book.toJSON({rawData: true}));
 				}else{
 					response.json(book.toJSON());
@@ -144,7 +144,7 @@ class BookController{
 				
 				let newBookData;
 		
-				if(request.user.hasPermission("admin.book.rawData.write")){
+				if(request.hasPermission("admin.book.rawData.write")){
 					newBookData = request.body.book;
 				}else{
 					newBookData = createObjectWithOptionalKeys(request.body.book, [
@@ -160,7 +160,7 @@ class BookController{
 						}), null);
 					}
 					
-					if(request.user.hasPermission("admin.book.rawData.read")){
+					if(request.hasPermission("admin.book.rawData.read")){
 						response.json(updatedBook.toJSON({rawData: true}));
 					}else{
 						response.json(updatedBook.toJSON());
@@ -190,7 +190,7 @@ class BookController{
 			
 			if(book){
 				
-				if(book.createdBy === request.user._id || request.user.hasPermission("admin.book.deleteOthers")){
+				if(book.createdBy === request.user._id || request.hasPermission("admin.book.deleteOthers")){
 					
 					book.remove((err) => { //calls middleware
 						
@@ -224,7 +224,7 @@ class BookController{
 					return next(error);
 				}
 				
-				if(request.user.hasPermission("admin.book.rawData.read")){
+				if(request.hasPermission("admin.book.rawData.read")){
 					
 					response.json(books.map((book) => {
 						return book.toJSON({rawData: true});
@@ -249,7 +249,7 @@ class BookController{
 					return next(error);
 				}
 				
-				if(request.user.hasPermission("admin.book.rawData.read")){
+				if(request.hasPermission("admin.book.rawData.read")){
 					
 					response.json(books.map((book) => {
 						return book.toJSON({rawData: true});

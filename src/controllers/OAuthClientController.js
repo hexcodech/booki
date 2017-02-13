@@ -20,7 +20,7 @@ class OAuthClientController{
 		
 		let filter;
 		
-		if(request.user.hasPermission("admin.client.filters")){
+		if(request.hasPermission("admin.client.filters")){
 				
 			filter = request.body.filter;
 			
@@ -42,7 +42,7 @@ class OAuthClientController{
 			
 			if(clients){
 				
-				if(request.user.hasPermission("admin.client.rawData.read")){
+				if(request.hasPermission("admin.client.rawData.read")){
 				
 					response.json(clients.map((client) => {
 						return client.toJSON({rawData: true});
@@ -77,7 +77,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasPermission("admin.client.rawData.read")){
+				if(request.hasPermission("admin.client.rawData.read")){
 				
 					response.json(client.toJSON({rawData: true}));
 					
@@ -102,7 +102,7 @@ class OAuthClientController{
 		
 		let clientData;
 		
-		if(request.user.hasPermissions(["admin.client.create", "admin.client.rawData.write"])){
+		if(request.hasPermissions(["admin.client.create", "admin.client.rawData.write"])){
 			
 			clientData = request.body.client;
 			
@@ -133,7 +133,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(request.user.hasPermission("admin.client.rawData.read")){
+				if(request.hasPermission("admin.client.rawData.read")){
 					let json = client.toJSON({rawData: true});
 					
 					json.secret.secret = secret; //add secret to response
@@ -166,11 +166,11 @@ class OAuthClientController{
 				
 				let newClientData;
 				
-				if(request.user.hasPermissions(["admin.client.editOthers", "admin.client.rawData.write"])){
+				if(request.hasPermissions(["admin.client.editOthers", "admin.client.rawData.write"])){
 					
 					newClientData = request.body.client;
 					
-				}else if(client.userId === request.user._id || request.user.hasPermission("admin.client.editOthers")){
+				}else if(client.userId === request.user._id || request.hasPermission("admin.client.editOthers")){
 					
 					newClientData = this.createObjectWithOptionalKeys(request.body.client, ["name", "redirectUris"]);
 					
@@ -186,7 +186,7 @@ class OAuthClientController{
 						}), null);
 					}
 					
-					if(request.user.hasPermission("admin.client.rawData.read")){
+					if(request.hasPermission("admin.client.rawData.read")){
 						response.json(updatedClient.toJSON({rawData: true}));
 					}else{
 						response.json(updatedClient.toJSON());
@@ -216,7 +216,7 @@ class OAuthClientController{
 			
 			if(client){
 				
-				if(client.userId === request.user._id || request.user.hasPermission("admin.client.deleteOthers")){
+				if(client.userId === request.user._id || request.hasPermission("admin.client.deleteOthers")){
 					
 					client.remove((err) => { //calls middleware
 						
