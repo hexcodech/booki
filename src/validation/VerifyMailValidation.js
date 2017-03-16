@@ -1,11 +1,13 @@
-module.exports      = function({Joi}){
-	
+module.exports      = function(){
+
+	const Joi = require('joi');
+
 	return {
 		body: {
-			email					: Joi.string().email().required(),
-		    emailVerificationCode	: Joi.string().required(),
-		    password				: Joi.string().min(8).max(256)
+			email                   : Joi.string().email().required(),
+			emailVerificationCode   : Joi.string().required(),
+			password                : Joi.string().min(8).max(256)
 		}
 	}
-	
+
 };

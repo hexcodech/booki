@@ -1,1 +1,10 @@
-{}
+{
+	"Booki": "Booki",
+	"OAuth Dialog": "OAuth Dialog",
+	"Hi": "Hi",
+	"is requesting full access to your account": "is requesting full access to your account",
+	"Do you approve?": "Do you approve?",
+	"Allow": "Allow",
+	"Deny": "Deny",
+	"Continue": "Continue"
+}

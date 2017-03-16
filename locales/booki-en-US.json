@@ -64,5 +64,22 @@
 	"The data could not be rendered": "The data could not be rendered",
 	"UserAlreadyExistsError": "UserAlreadyExistsError",
 	"This email was already registered": "This email was already registered",
-	"Verify that you still own this email address.": "Verify that you still own this email address."
+	"Verify that you still own this email address.": "Verify that you still own this email address.",
+	"Booki": "Booki",
+	"Login / Register": "Login / Register",
+	"Email address": "Email address",
+	"Password": "Password",
+	"Forgot your password?": "Forgot your password?",
+	"Login": "Login",
+	"Don't you have an account yet?": "Don't you have an account yet?",
+	"First name": "First name",
+	"Register": "Register",
+	"Do you already have an account?": "Do you already have an account?",
+	"Reset password": "Reset password",
+	"Do you still remember your password?": "Do you still remember your password?",
+	"Sign in with": "Sign in with",
+	"Facebook": "Facebook",
+	"Google": "Google",
+	"Maybe you mistyped something orthe requested resource was deleted": "Maybe you mistyped something orthe requested resource was deleted",
+	"For legal reasons this requested couldn't be processed :(": "For legal reasons this requested couldn't be processed :("
 }
