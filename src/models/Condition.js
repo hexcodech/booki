@@ -14,8 +14,10 @@ const Condition = ({sequelize, models}) => {
 		classMethods: {
     	associate: function({Offer}){
 				this.hasMany(Offer, {
-		      onDelete : 'cascade',
-		      hooks    : true
+					as         : 'Offers',
+					foreignKey : 'condition_id',
+		      onDelete   : 'cascade',
+		      hooks      : true
 		    });
 			}
   	},

@@ -56,11 +56,11 @@ const Routing = ({booki, app, config}) => {
 	app.use((request, response, next) => {
 
 		request.hasPermissions = (permissions) => {
-			return request.user && request.user.hasPermissions(permissions);
+			return request.user && request.user.doesHavePermissions(permissions);
 		};
 
 		request.hasPermission = (permission) => {
-			return request.user && request.user.hasPermission(permission);
+			return request.user && request.user.doesHavePermission(permission);
 		};
 
 		next();

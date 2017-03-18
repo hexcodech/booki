@@ -69,9 +69,7 @@ class UserController {
 
 	getUserById(request, response, next){
 
-		this.User.findOne({
-			where: {id: request.params.userId}
-		}).then((user) => {
+		this.User.findById(request.params.userId).then((user) => {
 
 			if(request.hasPermission('admin.user.hiddenData.read')){
 				response.json(user.toJSON({hiddenData: true}));
@@ -176,7 +174,7 @@ class UserController {
 			return next(new this.errorController.errors.ForbiddenError());
 		}
 
-		this.User.findOne({where: {id: request.params.userId}}).then((user) => {
+		this.User.findById(request.params.userId).then((user) => {
 
 			if(!user){
 				return next(new this.errorController.errors.NotFoundError());

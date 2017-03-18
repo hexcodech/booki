@@ -14,16 +14,26 @@ const Offer = ({sequelize, models}) => {
 		defaultScope: {
 			include: [
 				{
-					model    : models.Condition
+					model    : models.Condition,
+					as      : 'Condition'
 				}
 			]
 		},
 
 		classMethods: {
     	associate: function({Book, User, Condition}){
-				this.belongsTo(Book);
-				this.belongsTo(User);
-				this.belongsTo(Condition);
+				this.belongsTo(Book, {
+					as         : 'Book',
+					foreignKey : 'book_id'
+				});
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id'
+				});
+				this.belongsTo(Condition, {
+					as         : 'Condition',
+					foreignKey : 'condition_id'
+				});
 			}
   	},
   	instanceMethods: {

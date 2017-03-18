@@ -93,12 +93,8 @@ const User = ({
 		defaultScope: {
 			include: [
 				{
-					model   : models.PermissionRelation,
-					include : [
-						{
-							model  : models.Permission
-						},
-					]
+					model   : models.Permission,
+					as      : 'Permissions'
 				},
 				{
 					model   : models.Image,
@@ -109,49 +105,72 @@ const User = ({
 
 		classMethods: {
     	associate: function({
-				PermissionRelation, OAuthProvider, OAuthAccessToken,
-				OAuthCode,          Image,         Book,
-				Offer
+				Permission,   OAuthProvider, OAuthAccessToken,
+				OAuthCode,    OAuthClient,   Image,
+				Book,         Offer
 			}){
-				this.hasMany(PermissionRelation, {
-					onDelete : 'cascade',
-					hooks    : true
+				this.belongsToMany(Permission, {
+					as          : 'Permissions',
+					foreignKey  : 'user_id',
+					otherKey    : 'permission_id',
+					through     : 'permission_relations',
+					onDelete    : 'cascade',
+					hooks       : true
 				});
 
 				this.hasMany(OAuthProvider, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthProviders',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OAuthClient, {
+					as         : 'OAuthProviders',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(OAuthAccessToken, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthAccessTokens',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(OAuthCode, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthCodes',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(Image, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'Images',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.belongsTo(Image,{
-					as       : 'ProfilePicture',
-					onDelete : 'cascade',
-					hooks    : true
+					as          : 'ProfilePicture',
+					foreignKey  : 'profile_picture_id',
+					constraints : false //otherwise we have a circular dependency
 				});
 
 				this.hasMany(Book, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'Books',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(Offer, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'Offers',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 
@@ -189,10 +208,8 @@ const User = ({
 					}
 
 					let userData = {
-						name: {
-							display          : firstName,
-							first            : firstName
-						},
+						nameDisplay: firstName,
+						nameFirst: firstName,
 
 						permission : [],
 
@@ -580,20 +597,14 @@ const User = ({
 				});
 			},
 
-			getPermissions: function(){
-				let user = this.get();
-
-				if(Array.isArray(user.PermissionRelations)){
-					return user.PermissionRelations.map((relation) => {
-						return relation.getPermission().get('permission');
-					});
-				}else{
-					return [];
-				}
+			getPermissionArray: function(){
+				return this.get('Permissions').map((permission) => {
+					return permission.get('permission');
+				});
 			},
 
-			hasPermissions: function(permissionsNeeded = []){
-				let permissions = this.getPermissions();
+			doesHavePermissions: function(permissionsNeeded = []){
+				let permissions = this.getPermissionArray();
 
 				let missing = permissionsNeeded.filter((permission) => {
 
@@ -616,7 +627,7 @@ const User = ({
 				return missing.length === 0;
 			},
 
-			hasPermission: function(permission){
+			doesHavePermission: function(permission){
 				return this.hasPermissions([permission]);
 			},
 
@@ -632,10 +643,10 @@ const User = ({
 					json.ProfilePicture = user.ProfilePicture.toJSON();
 				}
 
-		    json.permissions = user.getPermissions();
+		    json.permissions = this.getPermissions();
 
 
-				if(hiddenData === true){
+				if(options.hiddenData === true){
 					json = Object.assign(json, pick(user, [
 						'emailVerified', 'emailUnverified', 'emailVerificationCode',
 						'passwordAlgorithm', 'passwordResetCode',

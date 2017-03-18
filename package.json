@@ -71,6 +71,7 @@
     "request": "^2.79.0",
     "request-stats": "^2.0.1",
     "sequelize": "^3.30.2",
-    "valid-url": "^1.0.9"
+    "valid-url": "^1.0.9",
+    "winston": "^2.3.1"
   }
 }

@@ -16,18 +16,26 @@ const OAuthAccessToken = ({
 		defaultScope: {
 			include: [
 				{
-					model   : models.User
+					model   : models.User,
+					as      : 'User'
 				},
 				{
-					model   : models.Client
+					model   : models.Client,
+					as      : 'OAuthClient'
 				}
 			]
 		},
 	}, {
 		classMethods: {
     	associate: function({User, OAuthClient}){
-				this.belongsTo(User);
-				this.belongsTo(OAuthClient);
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id'
+				});
+				this.belongsTo(OAuthClient, {
+					as         : 'OAuthClient',
+					foreignKey : 'oauth_client_id'
+				});
 			},
 			generateToken: function(){
 				return generateRandomString(config.TOKEN_LENGTH);

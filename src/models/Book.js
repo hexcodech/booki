@@ -61,17 +61,23 @@ const Book = ({
 		defaultScope: {
 			include: [
 				{
-					model    : models.Image
+					model    : models.Image,
+					as       : 'Image'
 				}
 			]
 		},
 
 		classMethods: {
     	associate: function({User, Image}){
-				this.belongsTo(User);
-				this.belongsTo(Image,   {
-					onDelete  : 'cascade',
-					hooks     : true
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id'
+				});
+				this.belongsTo(Image, {
+					as         : 'Cover',
+					foreignKey : 'cover_image_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 

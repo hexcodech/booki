@@ -55,16 +55,22 @@ const OAuthClient = ({
 				this.belongsTo(User);
 
 				this.hasMany(OAuthCode, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthCodes',
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.hasMany(OAuthAccessToken, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthAccessTokens',
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.hasMany(OAuthRedirectUri, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'OAuthRedirectUris',
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 

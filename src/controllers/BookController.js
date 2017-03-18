@@ -83,13 +83,7 @@ class BookController{
 	}
 
 	getBookById(request, response, next){
-		this.Book.findOne({_id: request.params.bookId}, (err, book) => {
-
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			}
+		this.Book.findById(request.params.bookId).then((book) => {
 
 			if(book){
 
@@ -103,7 +97,13 @@ class BookController{
 			}
 
 			return next(new this.errorController.errors.UnexpectedQueryResultError());
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
+
 	}
 
 	postBook(request, response, next){
@@ -115,7 +115,7 @@ class BookController{
 		]));
 
 		//check whether the cover actually exists
-		this.Image.find({where: {id: request.body.book.coverId}})
+		this.Image.findById(request.body.book.coverId)
 		.then((image) => {
 
 			if(image){
@@ -182,7 +182,7 @@ class BookController{
 			where   : {id: request.params.bookId},
 			include : [{
 				model   : this.User,
-				as      : 'user'
+				as      : 'User'
 			}, {
 				model   : this.Image,
 				as      : 'CoverImage'
@@ -199,7 +199,7 @@ class BookController{
 					return next(new this.errorController.errors.ForbiddenError());
 				}
 
-				this.Image.find({where: {id: request.body.book.coverId}})
+				this.Image.findById(request.body.book.coverId)
 				.then((image) => {
 
 					if(image){
@@ -263,7 +263,7 @@ class BookController{
 			where   : {id: request.params.bookId},
 			include : [{
 				model   : this.User,
-				as      : 'user'
+				as      : 'User'
 			}, {
 				model   : this.Image,
 				as      : 'CoverImage'

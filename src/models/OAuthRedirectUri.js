@@ -9,7 +9,10 @@ const OAuthRedirectUri = ({sequelize}) => {
 	}, {
 		classMethods: {
     	associate: function({OAuthClient}){
-				this.belongsTo(OAuthClient);
+				this.belongsTo(OAuthClient, {
+					as         : 'OAuthClient',
+					foreignKey : 'oauth_client_id'
+				});
 			}
   	},
   	instanceMethods: {

@@ -6,29 +6,66 @@ class Booki {
 
 	constructor(){
 
-		this.booki                = this;
+		this.booki    = this;
 
-		//Require modules
+		//Setup logging
+		this.winston = require('winston');
+		this.logger  = new (this.winston.Logger)({
+			transports: [
+				new (this.winston.transports.Console)({
+					name        : 'console-log',
+					level       : 'debug',
+					colorize    : true,
+					prettyPrint : true
+				}),
+				new (this.winston.transports.File)({
+					name        : 'file-log',
+					filename    : 'booki.log',
+					colorize    : true,
+					prettyPrint : true
+				})
+			],
+			levels: {
+				critical  : 0,
+				error     : 1,
+				sql_error : 2,
+				warning   : 3,
+				info      : 4,
+				debug     : 5,
+				sql       : 6
+			}
+		});
 
-		console.log('Loading modules...');
+		this.winston.addColors({
+			critical : 'red',
+			error    : 'red',
+			warning  : 'yellow',
+			info     : 'blue',
+			debug    : 'magenta',
+			sql      : 'green'
+		});
 
-		this.crypto								= require('crypto');
-		this.i18n                 = require('i18n');
+		//Load modules
+		this.logger.log('info', 'Loading modules...');
 
-		this.oauth2orize          = require('oauth2orize');
-		this.passport             = require('passport');
+		this.crypto             = require('crypto');
+		this.i18n               = require('i18n');
 
-		let requestStats        = require('request-stats');
-		let bindAll             = require('lodash/bindAll');
-		let Sequelize           = require('sequelize');
-		let express             = require('express');
-		let expressSession      = require('express-session');
-		let bodyParser          = require('body-parser');
-		let helmet              = require('helmet');
+		this.oauth2orize        = require('oauth2orize');
+		this.passport           = require('passport');
+
+		const requestStats      = require('request-stats');
+		const bindAll           = require('lodash/bindAll');
+		const Sequelize         = require('sequelize');
+		const express           = require('express');
+		const expressSession    = require('express-session');
+		const bodyParser        = require('body-parser');
+		const helmet            = require('helmet');
+		const logger            = this.logger;
 
 		//Load config
-		console.log('Loading config..');
-		this.config               = require('../config.json');
+		logger.log('info', 'Loading config..');
+		this.config             = require('../config.json');
 
 		bindAll(this, [
 		 	'getLocale', 'generateRandomString', 'hash',
@@ -52,7 +89,7 @@ class Booki {
 
 		//Connect to to the database
 
-		console.log('Connecting to the database...');
+		logger.log('info', 'Connecting to the database...');
 
 		this.sequelize = new Sequelize(
 			this.config.DB_NAME,
@@ -60,41 +97,50 @@ class Booki {
 			this.config.DB_PASSWORD,
 			{
 			host: this.config.DB_HOST,
-			dialect: 'mysql'/*|'mariadb'|'sqlite'|'postgres'|'mssql'*/,
+			dialect: 'mysql',
 			pool: {
 				max  : 5,
 				min  : 0,
 				idle : 10000
+			},
+			logging: (message) => {
+				if(message.indexOf('error') !== -1){
+					logger.log('sql_error', message);
+				}else{
+					logger.log('sql', message);
+				}
 			}
 		});
 
 		//Start the server
 
-		console.log('Starting express server...');
+		logger.log('info', 'Starting express server...');
 		this.app = new express();
 
 		this.server = this.app.listen(this.config.HTTP_PORT, () => {
-			console.log(
+			logger.log('info',
 				'Server running on',
 				this.server.address().address + ':' + this.server.address().port
 			);
 		});
 
 		//Configure the server
-		console.log('Configuring express...');
+		logger.log('info', 'Configuring express...');
 		this.app.use('/static/',
-			express.static(__dirname + '/../static'));
+			express.static(__dirname + '/../static')
+		);
 		this.app.use('/.well-known/',
-			express.static(__dirname + '/../.well-known'));
+			express.static(__dirname + '/../.well-known')
+		);
 
 		this.app.use(bodyParser.json());
 		this.app.use(bodyParser.urlencoded({
 			extended: true
 		}));
 		this.app.use(expressSession({//OAuth2orize requires it
-			secret				: this.config.SESSION_SECRET,
-			saveUninitialized	: true,
-			resave				: true
+			secret            : this.config.SESSION_SECRET,
+			saveUninitialized : true,
+			resave            : true
 		}));
 
 		this.app.use(this.i18n.init);
@@ -134,13 +180,11 @@ class Booki {
 
 
 		//Load all Models
-		console.log('Loading models...');
+		logger.log('info', 'Loading models...');
 		const modelFiles = [
-			'Condition',     'Offer', 'File',             'ThumbnailType',
-
-			'Thumbnail',     'Image', 'Permission',       'PermissionRelation',
-			'OAuthProvider', 'User',  'OAuthRedirectUri', 'OAuthClient',
-			'OAuthCode', 'OAuthAccessToken', 'Book'
+			'Condition', 'Offer', 'File', 'ThumbnailType', 'Thumbnail',
+			'Image', 'Permission', 'OAuthProvider', 'User', 'OAuthRedirectUri',
+			'OAuthClient', 'OAuthCode', 'OAuthAccessToken', 'Book'
 		];
 
 		this.models = {};
@@ -151,10 +195,9 @@ class Booki {
 			)(this);
 		});
 
-		console.log('Associating models...');
+		logger.log('info', 'Associating models...');
 		//Add associations
 		for(let modelKey in this.models){
-			console.log(modelKey);
 			if(
 				this.models.hasOwnProperty(modelKey) &&
 				this.models[modelKey].associate
@@ -165,41 +208,8 @@ class Booki {
 		//setup tables if needed
 		this.sequelize.sync();
 
-		let {User, Permission, PermissionRelation} = this.models;
-
-		User.upsert({id: 1, nameDisplay: 'hei', nameLast: 'joooo'})
-		.then((success) => {
-			User.findById(1).then((user) => {
-
-				let p = Permission.upsert({id: 1, permission: 'admin'}).then((p)=>{
-
-					let relation = PermissionRelation.upsert({id: 1}).then((r) => {
-						r.setUser(user);
-						r.setPermission(p);
-
-						user.reload().then((user)=>{
-
-							console.log('permission: ', user.getPermission());
-							console.log(JSON.stringify(user.toJSON({hiddenData: true})));
-
-						});
-
-					});
-
-				});
-
-			});
-
-		});
-
-		/*this.OAuthClient			= require('./models/OAuthClient')(this);
-		this.OAuthAccessToken		= require('./models/OAuthAccessToken')(this);
-		this.OAuthCode				= require('./models/OAuthCode')(this);
-
-		this.Book					= require('./models/Book')(this);*/
-
 		//Do the routing
-		console.log('Start routing...');
+		logger.log('info', 'Setting up routes');
 		require('./Routing')(this);
 	}
 

@@ -50,7 +50,7 @@ class AuthController {
 
 		this.passport.deserializeUser((userId, done) => {
 
-			this.User.findOne({where: {id: userId}}).then((user) => {
+			this.User.findById(userId).then((user) => {
 				done(null, user);
 			}).catch((err) => {
 
@@ -91,7 +91,7 @@ class AuthController {
 
 			(clientId, clientSecret, callback) => {
 
-				this.OAuthClient.findOne({where: {id: clientId}}).then((client) => {
+				this.OAuthClient.findById(clientId).then((client) => {
 					if(!client){
 						return callback(null, false);
 					}
@@ -181,7 +181,7 @@ class AuthController {
 							);
 						}
 
-						this.User.find({where: {id: token.userId}}).then((user) => {
+						this.User.findById(token.userId).then((user) => {
 
 							if(!user){
 								// No user was found, so the token is invalid
@@ -328,7 +328,7 @@ class AuthController {
 
 		this.oauth2Server.deserializeClient((id, callback) => {
 
-			this.OAuthClient.findOne({where: {id: id}}).then((client) => {
+			this.OAuthClient.findById(id).then((client) => {
 				return callback(null, client);
 			}).catch((err) => {
 				return callback(new this.errorController.errors.DatabaseError({
@@ -430,7 +430,7 @@ class AuthController {
 		this.authorization = [
 			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
 
-				this.OAuthClient.findOne({where: {id: clientId}})
+				this.OAuthClient.findById(clientId)
 				.then((client) => {
 
 					if(client && client.verifyRedirectUri(redirectUri)){

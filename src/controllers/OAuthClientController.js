@@ -47,7 +47,7 @@ class OAuthClientController{
 		this.OAuthClient.find({where: query, include: [
 			{
 				model : this.User,
-				as    : 'user',
+				as    : 'User',
 				where : {id: userId}
 			}
 		]}).then((clients) => {
@@ -86,7 +86,7 @@ class OAuthClientController{
 			where   : {id: request.params.clientId},
 			include : [{
 				model   : this.User,
-				as      : 'user',
+				as      : 'User',
 				where   : {id: request.user.id}
 			}]
 		}).then((client) => {
@@ -192,7 +192,7 @@ class OAuthClientController{
 
 	putOAuthClient(request, response, next){
 
-		this.OAuthClient.findOne({where: {id: request.params.clientId}})
+		this.OAuthClient.findById(request.params.clientId)
 		.then((client) => {
 
 			if(client){
@@ -275,7 +275,7 @@ class OAuthClientController{
 
 	deleteOAuthClient(request, response, next){
 
-		this.OAuthClient.find({where: {id: request.params.clientId}})
+		this.OAuthClient.findById(request.params.clientId)
 		.then((client) => {
 
 			if(client){

@@ -24,21 +24,29 @@ const Image = ({sequelize, config, models}) => {
     defaultScope: {
 			include: [
 				{
-					model   : models.Thumbnail
+					model   : models.Thumbnail,
+					as      : 'Thumbnails'
 				}
 			]
 		},
-		
+
 		classMethods: {
     	associate: function({User, File, Thumbnail}){
-				this.belongsTo(User);
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id'
+				});
 				this.belongsTo(File, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'File',
+					foreignKey : 'file_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 		    this.hasMany(Thumbnail, {
-					onDelete : 'cascade',
-					hooks    : true
+					as         : 'Thumbnails',
+					foreignKey : 'image_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			}
   	},

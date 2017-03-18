@@ -17,7 +17,10 @@ const OAuthProvider = ({sequelize}) => {
 	}, {
 		classMethods: {
     	associate: function({User}){
-				this.belongsTo(User);
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id'
+				});
 			}
   	},
   	instanceMethods: {
