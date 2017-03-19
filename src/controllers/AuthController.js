@@ -181,11 +181,11 @@ class AuthController {
 							);
 						}
 
-						this.User.findById(token.userId).then((user) => {
+						this.User.findById(token.get('user_id')).then((user) => {
 
 							if(!user){
 								// No user was found, so the token is invalid
-								token.destroy().then(() => {
+								return token.destroy().then(() => {
 									return callback(
 										new this.errorController.errors.TokenInvalidError(), false
 									);
@@ -201,7 +201,7 @@ class AuthController {
 							//check whether the user has the required permissions
 							if(
 								request.requiredPermissions &&
-								user.hasPermissions(request.requiredPermissions)
+								user.doesHavePermissions(request.requiredPermissions)
 							){
 								//request.hasPermission not possible yet, as request.user
 								//isn't set yet

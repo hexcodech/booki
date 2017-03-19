@@ -34,7 +34,7 @@ const OAuthAccessToken = ({
 			hashToken: function(token){
 				return generateHash(token, false).hash;
 			},
-			findByToken: function(){
+			findByToken: function(token){
 				return this.findOne({where: {hash: this.hashToken(token)}});
 			}
   	},

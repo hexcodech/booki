@@ -378,7 +378,7 @@ const User = ({
 							this.set('passwordHash',      newHash);
 							this.set('passwordAlgorithm', newAlgorithm);
 						}
-						
+
 						this.save().then((user) => {
 							return resolve(true);
 						}).catch((err) => {
@@ -624,7 +624,7 @@ const User = ({
 				return this.hasPermissions([permission]);
 			},
 
-    	toJSON: function(options){
+    	toJSON: function(options = {}){
 				let user = this.get(); //invoking virtual getters
 
 				let json = pick(user, [
@@ -639,7 +639,7 @@ const User = ({
 		    json.permissions = this.getPermissions();
 
 
-				if(options.hiddenData === true){
+				if(options.hiddenData && options.hiddenData === true){
 					json = Object.assign(json, pick(user, [
 						'emailVerified', 'emailUnverified', 'emailVerificationCode',
 						'passwordAlgorithm', 'passwordResetCode',
