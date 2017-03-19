@@ -1,6 +1,6 @@
 const OAuthAccessToken = ({
-	booki,                  config,     sequelize,
-	generateRandomString,   hash,       models
+	booki,                  config,       sequelize,
+	generateRandomString,   generateHash, models
 }) => {
 
 	const Sequelize   = require('sequelize');
@@ -15,17 +15,8 @@ const OAuthAccessToken = ({
 	}, {
 		defaultScope: {
 			include: [
-				{
-					model   : models.User,
-					as      : 'User'
-				},
-				{
-					model   : models.Client,
-					as      : 'OAuthClient'
-				}
 			]
 		},
-	}, {
 		classMethods: {
     	associate: function({User, OAuthClient}){
 				this.belongsTo(User, {
@@ -41,7 +32,7 @@ const OAuthAccessToken = ({
 				return generateRandomString(config.TOKEN_LENGTH);
 			},
 			hashToken: function(token){
-				return hash(token, false).hash;
+				return generateHash(token, false).hash;
 			},
 			findByToken: function(){
 				return this.findOne({where: {hash: this.hashToken(token)}});

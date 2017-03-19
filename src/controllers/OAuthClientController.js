@@ -44,7 +44,7 @@ class OAuthClientController{
 
 		}
 
-		this.OAuthClient.find({where: query, include: [
+		this.OAuthClient.findAll({where: query, include: [
 			{
 				model : this.User,
 				as    : 'User',

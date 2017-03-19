@@ -20,6 +20,7 @@ class Booki {
 				}),
 				new (this.winston.transports.File)({
 					name        : 'file-log',
+					level       : 'sql',
 					filename    : 'booki.log',
 					colorize    : true,
 					prettyPrint : true
@@ -68,7 +69,7 @@ class Booki {
 		this.config             = require('../config.json');
 
 		bindAll(this, [
-		 	'getLocale', 'generateRandomString', 'hash',
+		 	'getLocale', 'generateRandomString', 'generateHash',
 			'isObject',  'mergeDeep'
 		]);
 
@@ -104,11 +105,7 @@ class Booki {
 				idle : 10000
 			},
 			logging: (message) => {
-				if(message.indexOf('error') !== -1){
-					logger.log('sql_error', message);
-				}else{
-					logger.log('sql', message);
-				}
+				logger.log('sql', message);
 			}
 		});
 
@@ -237,7 +234,7 @@ class Booki {
 
 	/**
 	 * Hash string using this.HASH_ALGORITHM or the passed algorithm
-	 * @function hash
+	 * @function generateHash
 	 * @param {string} string - The string to be hashed
 	 * @param {string} salt - The salt to be used while hashing
 	 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that
@@ -245,7 +242,7 @@ class Booki {
 	 * @returns {object} - The hashed string, the generated salt and the
 	 * used hash algorithm {hash: '', salt: '', algorithm: ''}
 	 */
-	hash(string, salt = null, algorithm = null){
+	generateHash(string, salt = null, algorithm = null){
 
 		if(!algorithm){
 			algorithm = this.config.HASH_ALGORITHM;

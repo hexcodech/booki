@@ -1,7 +1,7 @@
 const OAuthClient = ({
 	booki,            config,                 sequelize,
 	errorController,  generateRandomString,   i18n,
-	hash,             models
+	generateHash,     models
 }) => {
 
 	const pick      = require('lodash/pick');
@@ -52,7 +52,10 @@ const OAuthClient = ({
     	associate: function({
 				User, OAuthCode, OAuthAccessToken, OAuthRedirectUri
 			}){
-				this.belongsTo(User);
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id',
+				});
 
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',
@@ -82,7 +85,7 @@ const OAuthClient = ({
   	instanceMethods: {
 
 			setSecret: function(secret){
-				let {hash, salt, algorithm} = hash(secret);
+				let {hash, salt, algorithm} = generateHash(secret);
 
 				this.set({
 					secretHash      : hash,
@@ -92,14 +95,14 @@ const OAuthClient = ({
 			},
 
 			verifySecret: function(secret){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
-					let {hash} = this.constructor.hash(
+					let {hash} = generateHash(
 						secret,
 						this.get('secretSalt'),
 						this.get('secretAlgorithm')
 					);
-					let {hash : newHash, algorithm: newAlgorithm}	= this.constructor.hash(
+					let {hash : newHash, algorithm: newAlgorithm}	= generateHash(
 						secret,
 						this.get('secretSalt')
 					);
@@ -120,7 +123,7 @@ const OAuthClient = ({
 								if(err){
 
 									return reject(
-										new this.constructor.errorController.errors.DatabaseError({
+										new errorController.errors.DatabaseError({
 											message: err.message
 										})
 									);
@@ -135,9 +138,12 @@ const OAuthClient = ({
 			},
 
 			verifyRedirectUri: function(redirectUri){
-				let uris = this.get('RedirectUris');
 
-				for(var i=0;i<this.uris.length;i++){
+				let uris = this.get('OAuthRedirectUris').map((uri) => {
+					return uri.get('uri');
+				});
+
+				for(var i=0;i<uris.length;i++){
 					if(uris[i] === redirectUri){
 						return true;
 					}

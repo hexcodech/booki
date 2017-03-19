@@ -40,7 +40,7 @@ class UserController {
 
 	getUser(request, response, next){
 
-		this.User.find({
+		this.User.findAll({
 			where: {name: request.body.filter.name}
 		}).then((users) => {
 
@@ -113,13 +113,15 @@ class UserController {
 					where    : {permission: permission},
 					defaults : {permission: permission}
 				}).then((result) => {
+					let promises = [];
 					let permissionInstance = result[0], created = result[1];
 
 					let relation = this.PermissionRelation.build({});
-					relation.setUser(user);
-					relation.setPermission(permission);
+					promises.push(relation.setUser(user));
+					promises.push(relation.setPermission(permission));
+					promises.push(relation.save());
 
-					relation.save().then(() => {
+					Promise.all(promises).then(() => {
 						callback(); //successfully added new relation
 					}).catch((err) => {
 						return callback(new this.errorController.errors.DatabaseError({
@@ -234,13 +236,16 @@ class UserController {
 						where    : {permission: permission},
 						defaults : {permission: permission}
 					}).then((result) => {
+						let promises = [];
 						let permissionInstance = result[0], created = result[1];
 
 						let relation = this.PermissionRelation.build({});
-						relation.setUser(user);
-						relation.setPermission(permission);
+						promises.push(relation.setUser(user));
+						promises.push(relation.setPermission(permission));
 
-						relation.save().then(() => {
+						promises.push(relation.save());
+
+						Promise.all(promises).then(() => {
 							callback(); //successfully added new relation
 						}).catch((err) => {
 							return callback(new this.errorController.errors.DatabaseError({

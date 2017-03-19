@@ -40,7 +40,7 @@ class AuthController {
 			'loginView',							'mailVerificationView',	'auth',
 			'authFacebookCallback', 	'authGoogleCallback',		'catchInternalError',
 			'catchInternalErrorView',	'passwordResetView',		'initPasswordReset',
-			'passwordReset'
+			'passwordReset',          'verifyEmail'
 		]);
 
 		//setup passport serialization
@@ -129,14 +129,14 @@ class AuthController {
 						return done(new this.errorController.errors.LoginError(), null);
 					}
 
-					user.verifyPassword(password).then(() => {
-						return done(null, user);
+					user.verifyPassword(password).then((success) => {
+						return done(null, success ? user : null);
 					}).catch((error) => {
 						return done(error, null);
 					});
 
 				}).catch((err) => {
-					return callback(new this.errorController.errors.DatabaseError({
+					return done(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}), null);
 				});
@@ -355,13 +355,15 @@ class AuthController {
 
 			let code = this.OAuthCode.build({
 				hash        : this.OAuthCode.hashCode(codeValue),
-				clientId    : client.get('id'),
-				userId      : user.get('id'),
 				expires     : expirationDate
 			});
 
+			let promises = [
+				code.setUser(user), code.setOAuthClient(client), code.save()
+			];
+
 			// Save the auth code and check for errors
-			code.save().then(() => {
+			Promise.all(promises).then(() => {
 				return callback(null, codeValue);
 			}).catch((err) => {
 				return callback(new this.errorController.errors.DatabaseError({
@@ -376,47 +378,54 @@ class AuthController {
 
 			//keeping the database clean
 			this.OAuthCode.destroy({where: {expires: {$lt: new Date()} }})
-			.then((authCode) => {
+			.then(() => {
 
-				//Delete the auth code now that it has been used
-				authCode.remove().then(() => {
+				this.OAuthCode.findByCode(code).then((authCode) => {
+					//Delete the auth code now that it has been used
+					let clientId = authCode.get('oauth_client_id'),
+					    userId   = authCode.get('user_id');
+					authCode.destroy().then(() => {
 
-					let expirationDate = Date.now() +
-															 this.config.ACCESS_TOKEN_LIFETIME * 1000;
+						let expirationDate = Date.now() +
+																 this.config.ACCESS_TOKEN_LIFETIME * 1000;
 
-					// Create an access token
-					let tokenData = {
-						token			: this.OAuthAccessToken.generateToken(),
-						clientId		: authCode.clientId,
-						userId			: authCode.userId,
-						expires			: expirationDate
-					};
+						// Create an access token
+						let tokenData = {
+							token       : this.OAuthAccessToken.generateToken(),
+							clientId    : clientId,
+							userId      : userId,
+							expires     : expirationDate
+						};
 
-					//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
-					let token = this.OAuthAccessToken.build({
-						hash        : this.OAuthAccessToken.hashToken(tokenData.token),
-						clientId    : authCode.clientId,
-						userId      : authCode.userId,
-						expires     : expirationDate
-					});
+						//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
+						let token = this.OAuthAccessToken.build({
+							hash        : this.OAuthAccessToken.hashToken(tokenData.token),
+							expires     : expirationDate
+						});
 
-					// Save the access token and check for errors
-					token.save().then(() => {
-						callback(null, tokenData);
+						let promises = [
+							token.setUser(userId), token.setOAuthClient(clientId),
+							token.save()
+						];
+
+						// Save the access token and check for errors
+						Promise.all(promises).then(() => {
+							callback(null, tokenData);
+						}).catch((err) => {
+							return callback(new this.errorController.errors.DatabaseError({
+								message: err.message
+							}), null);
+						});
 
 					}).catch((err) => {
 						return callback(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}), null);
 					});
-
-				}).catch((err) => {
-					return callback(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
+				}).catch((error) => {
+					return callback(error);
 				});
-
-			}).catch(() => {
+			}).catch((err) => {
 				return callback(new this.errorController.errors.DatabaseError({
 					message: err.message
 				}), null);
@@ -447,32 +456,30 @@ class AuthController {
 					}), false);
 				});
 			}),
-			(request, response, done) => {
+			(request, response, next) => {
 				//Check whether request qualifies for immediate approval
 
 				let {client} = request.oauth2;
 
 				//Or the user already approved to this client
-				this.OAuthAccessToken.findOne({
-					where: {clientId: client.get('id')}
-				}).then((token) => {
+				client.getOAuthAccessTokens().then((tokens) => {
 					//If the client is trusted or there's already a token issued
-					if(client.trusted === true || token){
+					if(client.get('trusted') === true || tokens.length > 0){
 						//pass it
 						request.trusted = true;
 					}else{
 						request.trusted = false;
 					}
-					return done(null, false);
+					return next(null);
 
 				}).catch((err) => {
-					return done(new this.errorController.errors.DatabaseError({
+					return next(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}), false);
+					}));
 				});
 
 			},
-			(request, response) => {
+			(request, response, next) => {
 
 				this.ejs.renderFile(__dirname + '/../views/OAuthDialog.ejs', {
 					__: (string) => {
@@ -490,7 +497,7 @@ class AuthController {
 
 					if(err){
 						return next(
-							new this.constructor.errorController.errors.RenderError({
+							new errorController.errors.RenderError({
 								message: err.message
 							})
 						);
@@ -518,11 +525,8 @@ class AuthController {
 		    password               = request.body.password;
 
 		this.User.findOne({where: {emailUnverified: email}}).then((user) => {
-
 			user.verifyEmail(email, emailVerificationCode).then(() => {
-
 				if(password){
-
 					//still requires the password reset code so this should be safe
 					user.updatePassword(password, emailVerificationCode).then(() => {
 						response.redirect('/views/login');
@@ -557,7 +561,7 @@ class AuthController {
 		}, {}, (err, str) => {
 
 			if(err){
-				return next(new this.constructor.errorController.errors.RenderError({
+				return next(new errorController.errors.RenderError({
 					message: err.message
 				}));
 			}
@@ -583,7 +587,7 @@ class AuthController {
 		}, {}, (err, str) => {
 
 			if(err){
-				return next(new this.constructor.errorController.errors.RenderError({
+				return next(new errorController.errors.RenderError({
 					message: err.message
 				}));
 			}

@@ -48,7 +48,7 @@ class BookController{
 			{publisher    : likeSearch},
 		];
 
-		this.Book.find({where: query}, (err, books) => {
+		this.Book.findAll({where: query}, (err, books) => {
 
 			if(err){
 				return next(new this.errorController.errors.DatabaseError({
@@ -118,12 +118,14 @@ class BookController{
 		this.Image.findById(request.body.book.coverId)
 		.then((image) => {
 
+			let promises = [];
+
 			if(image){
-				book.setCoverImage(image);
+				promises.push(book.setCoverImage(image));
 			}else{
 				//if not, use the default image
 				//TODO add first default image database entry
-				book.setCoverImage(1);
+				promises.push(book.setCoverImage(1));
 			}
 
 			//add additional fields
@@ -146,7 +148,8 @@ class BookController{
 			}
 
 			//save and return it
-			book.save().then((book) => {
+			promises.push(book.save());
+			Promise.all(promises).then((book) => {
 
 				if(book){
 
@@ -178,7 +181,7 @@ class BookController{
 
 	putBook(request, response, next){
 
-		this.Book.find({
+		this.Book.findOne({
 			where   : {id: request.params.bookId},
 			include : [{
 				model   : this.User,
@@ -202,8 +205,10 @@ class BookController{
 				this.Image.findById(request.body.book.coverId)
 				.then((image) => {
 
+					let promises = [];
+
 					if(image){
-						book.setCoverImage(image);
+						promises.push(book.setCoverImage(image));
 					}
 
 					book.set(omitBy(pick(request.body.book, [
@@ -223,7 +228,9 @@ class BookController{
 
 					}
 
-					book.save().then((book) => {
+					promises.push(book.save());
+
+					Promise.all(book).then(() => {
 
 						if(request.hasPermission('admin.book.hiddenData.read')){
 							response.json(book.toJSON({hiddenData: true}));
@@ -259,7 +266,7 @@ class BookController{
 
 	deleteBook(request, response, next){
 
-		this.Book.find({
+		this.Book.findOne({
 			where   : {id: request.params.bookId},
 			include : [{
 				model   : this.User,

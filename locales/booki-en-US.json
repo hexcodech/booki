@@ -81,5 +81,16 @@
 	"Facebook": "Facebook",
 	"Google": "Google",
 	"Maybe you mistyped something orthe requested resource was deleted": "Maybe you mistyped something orthe requested resource was deleted",
-	"For legal reasons this requested couldn't be processed :(": "For legal reasons this requested couldn't be processed :("
+	"For legal reasons this requested couldn't be processed :(": "For legal reasons this requested couldn't be processed :(",
+	"Verify email": "Verify email",
+	"Email": "Email",
+	"Email verification code": "Email verification code",
+	"Your new password": "Your new password",
+	"OAuth Dialog": "OAuth Dialog",
+	"Hi": "Hi",
+	"is requesting full access to your account": "is requesting full access to your account",
+	"Do you approve?": "Do you approve?",
+	"Allow": "Allow",
+	"Deny": "Deny",
+	"Continue": "Continue"
 }

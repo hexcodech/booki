@@ -5,7 +5,7 @@
 const User = ({
 	booki,						config,	sequelize,
 	errorController,	i18n,		generateRandomString,
-	hash,							models
+	generateHash,			models
 }) => {
 
 	const pick            = require('lodash/pick');
@@ -175,7 +175,7 @@ const User = ({
 			},
 
 			getUserByPassportProfile: function(profile){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					this.findOne({
 						where: {emailVerified: {$in: profile.emails} }
@@ -184,11 +184,11 @@ const User = ({
 						if(user){
 							return resolve(user);
 						}else{
-							reject(new this.errorController.errors.UnexpectedQueryResultError());
+							reject(new errorController.errors.UnexpectedQueryResultError());
 						}
 
 					}).catch((err) => {
-						return reject(new this.errorController.errors.DatabaseError({
+						return reject(new errorController.errors.DatabaseError({
 							message: err.message
 						}));
 					});
@@ -197,7 +197,7 @@ const User = ({
 			},
 
 			register: function(firstName, email, locale){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					let lastName	= '';
 					let names		= firstName.split(' ');
@@ -213,47 +213,40 @@ const User = ({
 
 						permission : [],
 
-						email: {
-							unverified       : email,
-							verificationCode : ''
-						},
+						emailUnverified: email,
+						emailVerificationCode : '',
 
-						locale             : locale,
+						locale: locale,
 
 					};
 
 					this.findAll({
 						where: { $or: [{emailVerified: email}, {emailUnverified: email}] }
 					}).then((users) => {
-
 						if(users && users.length > 0){
 
 							return reject(
-								new this.errorController.errors.UserAlreadyExistsError()
+								new errorController.errors.UserAlreadyExistsError()
 							);
 
 						}else{
-
-							this.build(userData).then((user) => {
-
-								user.initEmailVerification().then(() => {
+							this.create(userData).then((user) => {
+								user.initEmailVerification(true).then(() => {
 									resolve(user);
 								}).catch((error) => {
 									reject(error);
 								});
 
 							}).catch((err) => {
-
-								return reject(new this.errorController.errors.DatabaseError({
+								return reject(new errorController.errors.DatabaseError({
 									message: err.message
 								}));
-
 							});
 						}
 
 					}).catch((err) => {
 
-						return reject(new this.errorController.errors.DatabaseError({
+						return reject(new errorController.errors.DatabaseError({
 							message: err.message
 						}));
 
@@ -262,7 +255,7 @@ const User = ({
 			},
 
 			findOrCreateUserByPassportProfile: function(profile){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					this.getUserByPassportProfile(profile).then(() => {
 
@@ -278,7 +271,7 @@ const User = ({
 							return resolve(user);
 
 						}).catch((err) => {
-							return reject(new this.errorController.errors.DatabaseError({
+							return reject(new errorController.errors.DatabaseError({
 								message: err.message
 							}));
 						});
@@ -340,16 +333,39 @@ const User = ({
 				return Promise.all(promises);
 			},
 
-			verifyPassword: function(){
-				return new Promise((reject, resolve) => {
+  	},
+  	instanceMethods: {
 
-					let {hash} = hash(
+			sendMail: function(
+				subject = '',
+				html = '',
+				text = '',
+				toEmail = this.get('emailVerified'),
+				cc = [],
+				bcc = [],
+				replyTo = null
+			){
+				return mailController.sendMail(
+					['"' + this.get('nameFirst') + '" <' + toEmail + '>'],
+					subject,
+					html,
+					text,
+					cc,
+					bcc,
+					replyTo
+				);
+			},
+
+			verifyPassword: function(password){
+				return new Promise((resolve, reject) => {
+
+					let {hash} = generateHash(
 						password,
 						this.get('passwordSalt'),
 						this.get('passwordAlgorithm')
 					);
 
-					let {hash : newHash, newAlgorithm} = hash(
+					let {hash : newHash, newAlgorithm} = generateHash(
 						password,
 						this.get('passwordSalt')
 					);
@@ -362,10 +378,9 @@ const User = ({
 							this.set('passwordHash',      newHash);
 							this.set('passwordAlgorithm', newAlgorithm);
 						}
-
+						
 						this.save().then((user) => {
-							return resolve(user);
-
+							return resolve(true);
 						}).catch((err) => {
 							return reject(
 								new errorController.errors.DatabaseError({
@@ -373,10 +388,9 @@ const User = ({
 								})
 							);
 						});
+					}else{
+						return resolve(false);
 					}
-
-					return reject(false);
-
 				});
 			},
 
@@ -390,7 +404,7 @@ const User = ({
 
 						if(this.get('passwordResetCodeExpirationDate') >= new Date()){
 
-							let {hash, salt, algorithm} = hash(password);
+							let {hash, salt, algorithm} = generateHash(password);
 
 							this.set({
 								passwordHash			: hash,
@@ -423,32 +437,10 @@ const User = ({
 						);
 					}
 				});
-			}
-
-  	},
-  	instanceMethods: {
-			sendMail: function(
-				subject = '',
-				html = '',
-				text = '',
-				toEmail = this.get('emailVerified'),
-				cc = [],
-				bcc = [],
-				replyTo = null
-			){
-				return mailController.sendMail(
-					['"' + this.get('nameFirst') + '" <' + toEmail + '>'],
-					subject,
-					html,
-					text,
-					cc,
-					bcc,
-					replyTo
-				);
 			},
 
 			initPasswordReset: function(){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					let passwordResetCode	= generateRandomString(
 						config.TOKEN_LENGTH
@@ -500,7 +492,7 @@ const User = ({
 			},
 
 			initEmailVerification: function(registration = false){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					let emailVerificationCode	= generateRandomString(
 						config.CONFIRM_TOKEN_LENGTH
@@ -509,7 +501,7 @@ const User = ({
 						__dirname + '/../templates/emails/email-confirmation'
 					);
 
-					this.email.verificationCode = emailVerificationCode;
+					this.set('emailVerificationCode', emailVerificationCode);
 
 					confirmationMail.render(
 					{
@@ -537,6 +529,9 @@ const User = ({
 
 							if(registration){
 								this.set('passwordResetCode', emailVerificationCode);
+								this.set('passwordResetCodeExpirationDate',
+									Date.now() + (config.RESET_CODE_LIFETIME * 1000)
+								);
 							}
 
 							return this.save().then(() => {
@@ -559,7 +554,7 @@ const User = ({
 				email = '',
 				emailVerificationCode = null
 			){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					if(
 						email && emailVerificationCode &&
@@ -570,21 +565,19 @@ const User = ({
 						this.set({
 							emailVerified         : email,
 							emailVerificationCode : '',
-							emailUnverified       : ''
+							emailUnverified       : null
 						});
 
-						return this.save((err, user) => {
-
-							if(err){
-								return reject(
-									new errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							}
+						return this.save().then(() => {
 
 							return resolve();
 
+						}).catch((err) => {
+							return reject(
+								new errorController.errors.DatabaseError({
+									message: err.message
+								})
+							);
 						});
 
 					}

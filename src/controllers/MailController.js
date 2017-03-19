@@ -39,7 +39,7 @@ class MailController {
 		replyTo = null
 	){
 
-		return new Promise((reject, resolve) => {
+		return new Promise((resolve, reject) => {
 
 			let data	= {
 				from: '"' +   this.config.MAIL_FROM_NAME +

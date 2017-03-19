@@ -1,4 +1,6 @@
 <% include ../header %>
-	<p>Hi there <em><%= user.name.display %></em>,</p>
-	<p>This is your password reset code: <em><%= user.password.resetCode %></em>.</p>
+	<p>Hi there <em><%= user.nameDisplay %></em>,</p>
+	<p>This is your password reset code:
+		<em><%= user.passwordResetCode %></em>.
+	</p>
 <% include ../footer %>

@@ -2,7 +2,7 @@
  * Manages the REST routing
  */
 
-const Routing = ({booki, app, config}) => {
+const Routing = ({booki, app, config, logger}) => {
 
 	const express_validation = require('express-validation');
 	const fs                 = require('fs');
@@ -313,8 +313,8 @@ const Routing = ({booki, app, config}) => {
 		if(error){
 
 			//TODO: translate the error
-			console.log(error);
-			response.json(error.toJSON());
+			logger.log('error', error);
+			response.json(error);
 			response.end();
 		}
 

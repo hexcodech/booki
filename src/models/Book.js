@@ -90,7 +90,7 @@ const Book = ({
 				order  = 'relevance',
 				lang   = ''
 			){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 					let {_, gbooks, errorController} = this;
 
 					gbooks.search(value, {field, type, offset, limit, type, order, lang},
@@ -163,7 +163,7 @@ const Book = ({
 			},
 
 			lookupByIsbn: function(isbn = '', page = 0){
-				return new Promise((reject, resolve) => {
+				return new Promise((resolve, reject) => {
 
 					let {errorController} = this;
 
@@ -174,7 +174,7 @@ const Book = ({
 					}
 
 					//even tought this function shouldn't even be called if the book is already present, we double check
-					this.find({where: {isbn13: isbn}}).then((books) => {
+					this.findAll({where: {isbn13: isbn}}).then((books) => {
 
 						if(books){
 							//the isbn is already in our database
@@ -212,8 +212,8 @@ const Book = ({
 			lookupByTitle: function(title = '', page = 0){
 				let likeQuery = '%' + title.replace('_', '\_').replace('%', '\%') + '%';
 
-				return new Promise((reject, resolve) => {
-					this.find({where: {$or: [
+				return new Promise((resolve, reject) => {
+					this.findAll({where: {$or: [
 						{title     : likeQuery},
 						{subtitle  : likeQuery}
 					]}}).then((books) => {
