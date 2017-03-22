@@ -636,7 +636,7 @@ const User = ({
 					json.ProfilePicture = user.ProfilePicture.toJSON();
 				}
 
-		    json.permissions = this.getPermissions();
+		    json.permissions = this.getPermissionArray();
 
 
 				if(options.hiddenData && options.hiddenData === true){

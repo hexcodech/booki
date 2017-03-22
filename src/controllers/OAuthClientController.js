@@ -6,9 +6,9 @@ class OAuthClientController{
 	}){
 
 		const bindAll                = require('lodash/bindAll');
-		const pick                   = require('lodash/pick');
-		const omitBy                 = require('lodash/omitBy');
-		const isNil                  = require('lodash/isNil');
+		this.pick                    = require('lodash/pick');
+		this.omitBy                  = require('lodash/omitBy');
+		this.isNil                   = require('lodash/isNil');
 
 		this.config                  = config;
 		this.errorController         = errorController;
@@ -29,7 +29,7 @@ class OAuthClientController{
 
 	getOAuthClient(request, response, next){
 
-		let query = pick(request.body.client, [
+		let query = this.pick(request.body.client, [
 			'id', 'name', 'trusted'
 		]);
 
@@ -201,9 +201,9 @@ class OAuthClientController{
 					['admin.client.editOthers', 'admin.client.hiddenData.write'])
 				){
 
-					client.set(omitBy(pick(request.body.client, [
+					client.set(this.omitBy(this.pick(request.body.client, [
 						'trusted'
-					]), isNil));
+					]), this.isNil));
 
 				}else if(
 					client.userId !== request.user.id &&
@@ -212,9 +212,9 @@ class OAuthClientController{
 					return next(new this.errorController.errors.ForbiddenError());
 				}
 
-				client.set(omitBy(pick(request.body.client, [
+				client.set(this.omitBy(this.pick(request.body.client, [
 					'name'
-				]), isNil));
+				]), this.isNil));
 
 				let promises = [];
 

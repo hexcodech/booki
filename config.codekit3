@@ -7,12 +7,18 @@
 		"uuidString": "8FD20BD1-890E-45B3-8DCA-F384EB641ED2"
 		}
 	],
-"creatorBuild": "25568",
+"creatorBuild": "25704",
 "files": {
 	"\/.gitignore": {
 		"ft": 8192,
 		"oA": 2,
 		"oAP": "\/.gitignore",
+		"oF": 0
+		},
+	"\/booki.log": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/booki.log",
 		"oF": 0
 		},
 	"\/config-sample.json": {
@@ -1131,6 +1137,12 @@
 		"oAP": "\/build\/node_modules",
 		"oF": 0
 		},
+	"\/npm-debug.log": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/npm-debug.log",
+		"oF": 0
+		},
 	"\/package.json": {
 		"ft": 524288,
 		"oA": 1,
@@ -1188,10 +1200,12 @@
 	"\/static\/res\/img\/cover\/book-cover.png": {
 		"ft": 32768,
 		"iS": 21932,
+		"l": 1,
 		"oA": 1,
 		"oAP": "\/static\/res\/img\/cover\/min\/book-cover.min.png",
 		"oF": 0,
-		"opt": 1
+		"opt": 1,
+		"q": 100
 		},
 	"\/static\/res\/img\/cover\/book-cover.psd": {
 		"ft": 8192,
@@ -2569,6 +2583,10 @@
 			"active": 1,
 			"optionString": ""
 			},
+		"no-compare-neg-zero": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-cond-assign": {
 			"active": 1,
 			"optionString": "'except-parens'"
@@ -3048,6 +3066,10 @@
 		"no-with": {
 			"active": 0,
 			"optionString": ""
+			},
+		"nonblock-statement-body-position": {
+			"active": 0,
+			"optionString": "'beside'"
 			},
 		"object-curly-newline": {
 			"active": 0,
@@ -3648,7 +3670,8 @@
 		"autoOutputPathRelativePath": "min\/",
 		"autoOutputPathReplace1": "",
 		"autoOutputPathReplace2": "",
-		"autoOutputPathStyle": 2
+		"autoOutputPathStyle": 2,
+		"quality": 100
 		},
 	"languageDefaultsJS": {
 		"autoOutputAction": 1,
@@ -3741,7 +3764,9 @@
 		"autoOutputPathRelativePath": "min\/",
 		"autoOutputPathReplace1": "",
 		"autoOutputPathReplace2": "",
-		"autoOutputPathStyle": 2
+		"autoOutputPathStyle": 2,
+		"enableLossy": 1,
+		"quality": 100
 		},
 	"languageDefaultsPUG": {
 		"autoOutputAction": 1,

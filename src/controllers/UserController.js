@@ -9,11 +9,11 @@ class UserController {
 	}){
 
 		const bindAll           = require('lodash/bindAll');
-		const pick              = require('lodash/pick');
-		const omitBy            = require('lodash/omitBy');
-		const isNil             = require('lodash/isNil');
+		this.pick               = require('lodash/pick');
+		this.omitBy             = require('lodash/omitBy');
+		this.isNil              = require('lodash/isNil');
 
-		const async             = require('async');
+		this.async              = require('async');
 
 		//store passed parameters
 		this.config             = config;
@@ -40,8 +40,16 @@ class UserController {
 
 	getUser(request, response, next){
 
+		let query = {};
+
+		if(request.hasPermission('admin.user.query')){
+			query = request.body.query;
+		}else{
+			query.name = request.body.query.name;
+		}
+
 		this.User.findAll({
-			where: {name: request.body.filter.name}
+			where: query
 		}).then((users) => {
 
 			if(request.hasPermission('admin.user.hiddenData.read')){
@@ -91,7 +99,7 @@ class UserController {
 
 		//this function is for admins only so we need to accept any fields anyway
 
-		let user = this.User.build(pick(request.body.user, [
+		let user = this.User.build(this.pick(request.body.user, [
 			'id', 'nameDisplay', 'nameFirst', 'nameLast',
 			'emailVerified', 'emailUnverified', 'emailVerificationCode',
 			'locale', 'placeOfResidence'
@@ -108,7 +116,7 @@ class UserController {
 			}
 
 			//asynchronously adding permissions
-			async.each(request.body.user.permissions, (permission, callback) => {
+			this.async.each(request.body.user.permissions, (permission, callback) => {
 				this.Permission.findOrCreate({
 					where    : {permission: permission},
 					defaults : {permission: permission}
@@ -187,10 +195,10 @@ class UserController {
 
 			//add normal fields
 
-			user.set(omitBy(pick(request.body.user, [
+			user.set(this.omitBy(this.pick(request.body.user, [
 				'nameDisplay', 'nameFirst', 'nameLast',
 				'locale', 'placeOfResidence'
-			]), isNil));
+			]), this.isNil));
 
 
 			//check for email / password change
@@ -208,9 +216,9 @@ class UserController {
 			if(request.hasPermission('admin.user.hiddenData.write')){
 				//if the user has this permission we need to update more fields
 
-				user.set(omitBy(pick(request.body.user, [
+				user.set(this.omitBy(this.pick(request.body.user, [
 					'emailVerified', 'emailUnverified', 'emailVerificationCode'
-				]), isNil));
+				]), this.isNil));
 
 				if(
 					!request.body.user.permissions ||
@@ -231,7 +239,7 @@ class UserController {
 				}
 
 				//to add
-				async.each(newPermissions, (permission, callback) => {
+				this.async.each(newPermissions, (permission, callback) => {
 					this.Permission.findOrCreate({
 						where    : {permission: permission},
 						defaults : {permission: permission}

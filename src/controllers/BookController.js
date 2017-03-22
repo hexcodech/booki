@@ -6,11 +6,9 @@ class BookController{
 	}){
 
 		const bindAll                     = require('lodash/bindAll');
-		const pick                        = require('lodash/pick');
-		const omitBy                      = require('lodash/omitBy');
-		const isNil                       = require('lodash/isNil');
-
-		const Sequelize                   = require('sequelize');
+		this.pick                         = require('lodash/pick');
+		this.omitBy                       = require('lodash/omitBy');
+		this.isNil                        = require('lodash/isNil');
 
 		this.config                       = config;
 		this.errorController              = errorController;
@@ -108,7 +106,7 @@ class BookController{
 
 	postBook(request, response, next){
 
-		let book = this.Book.build(pick(request.body.book, [
+		let book = this.Book.build(this.pick(request.body.book, [
 			'title',           'subtitle',    'language',
 			'description',     'publisher',   'publicationDate',
 			'pageCount'
@@ -133,7 +131,7 @@ class BookController{
 				'admin.book.create', 'admin.book.hiddenData.write'
 			])){
 
-				book.set(pick(request.body.book, [
+				book.set(this.pick(request.body.book, [
 					'id', 'approved'
 				]));
 
@@ -211,16 +209,16 @@ class BookController{
 						promises.push(book.setCoverImage(image));
 					}
 
-					book.set(omitBy(pick(request.body.book, [
+					book.set(this.omitBy(this.pick(request.body.book, [
 						'title',           'subtitle',    'language',
 						'description',     'publisher',   'publicationDate',
 						'pageCount'
-					]), isNil));
+					]), this.isNil));
 
 					if(request.hasPermission('admin.book.hiddenData.write')){
-						book.set(omitBy(pick(request.body.book, [
+						book.set(this.omitBy(this.pick(request.body.book, [
 							'approved'
-						]), isNil));
+						]), this.isNil));
 
 						if(request.body.book.userId){
 							book.set('user', request.body.book.userId);
