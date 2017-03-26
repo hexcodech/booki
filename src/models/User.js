@@ -15,7 +15,7 @@ const User = ({
 	))(booki);
 	const EmailTemplate   = require('email-templates').EmailTemplate;
 
-	let User					= sequelize.define('user', {
+	let User = sequelize.define('user', {
 
 		/* Name */
 
@@ -86,6 +86,7 @@ const User = ({
 
 			placeOfResidence: {
 				type          : Sequelize.STRING,
+				default       : 'The milky way'
 			},
 
 

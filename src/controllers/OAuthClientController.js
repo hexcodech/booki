@@ -29,13 +29,22 @@ class OAuthClientController{
 
 	getOAuthClient(request, response, next){
 
-		let query = this.pick(request.body.client, [
-			'id', 'name', 'trusted'
-		]);
+		let query = {}, include = [], userId = null;
 
-		let userId = request.user.id;
+		if(request.hasPermission('admin.user.query')){
+
+			query = request.body.query;
+
+		}else{
+			query = this.pick(request.body.client, [
+				'id', 'name', 'trusted'
+			]);
+
+			userId = request.user.id;
+		}
 
 		if(
+			request.body.client &&
 			request.body.client.userId &&
 			request.hasPermission('admin.client.filters')
 		){
@@ -44,13 +53,16 @@ class OAuthClientController{
 
 		}
 
-		this.OAuthClient.findAll({where: query, include: [
-			{
+		if(userId){
+			include.push({
 				model : this.User,
 				as    : 'User',
 				where : {id: userId}
-			}
-		]}).then((clients) => {
+			});
+		}
+
+		this.OAuthClient.findAll({where: query, include: include})
+		.then((clients) => {
 
 			if(clients){
 

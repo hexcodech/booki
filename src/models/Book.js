@@ -62,7 +62,7 @@ const Book = ({
 			include: [
 				{
 					model    : models.Image,
-					as       : 'Image'
+					as       : 'Cover'
 				}
 			]
 		},

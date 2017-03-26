@@ -152,7 +152,7 @@ const OAuthClient = ({
 				return false;
 			},
 
-    	toJSON: function(options){
+    	toJSON: function(options = {hiddenData: false}){
 				let client = this.get();
 
 				let json = pick(client, [
@@ -161,8 +161,8 @@ const OAuthClient = ({
 
 				//user id
 
-				if(client.user){
-					json.user	= client.User.toJSON(options);
+				if(options.hiddenData && client.User){
+					json.userId	= client.User.get('id');
 				}
 
 				//redirect uris

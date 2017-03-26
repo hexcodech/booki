@@ -31,28 +31,25 @@ class BookController{
 
 		let query  = {};
 		let search =  request.body.search;
-		//escape string
 
-		search = search.replace('_', '\_');
-		search = search.replace('%', '\%');
+		if(search){
+			//escape string
 
-		let likeSearch = {'$like' : '%' + search + '%'};
+			search = search.replace('_', '\_');
+			search = search.replace('%', '\%');
 
-		query['$or'] = [
-			{isbn13       : likeSearch},
-			{title        : likeSearch},
-			{subtitle     : likeSearch},
-			{description  : likeSearch},
-			{publisher    : likeSearch},
-		];
+			let likeSearch = {'$like' : '%' + search + '%'};
 
-		this.Book.findAll({where: query}, (err, books) => {
+			query['$or'] = [
+				{isbn13       : likeSearch},
+				{title        : likeSearch},
+				{subtitle     : likeSearch},
+				{description  : likeSearch},
+				{publisher    : likeSearch},
+			];
+		}
 
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			}
+		this.Book.findAll({where: query}).then((books) => {
 
 			if(books){
 
@@ -69,13 +66,15 @@ class BookController{
 					}));
 
 				}
-
 				return response.end();
-
 			}
 
 			return next(new this.errorController.errors.UnexpectedQueryResultError());
 
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
 
 	}

@@ -230,7 +230,8 @@ class UserController {
 				if(!request.hasPermission('admin.user.permissions.change')){
 					newPermissions = []; //this will skip the permision changes
 				}
-
+				//FIXME 'relations'
+				
 				//to remove
 				for(let i=0;i<relations.length;i++){
 					if(newPermissions.indexOf(permissions[i]) === -1){//same indicies
