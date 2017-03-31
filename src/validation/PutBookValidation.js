@@ -5,7 +5,7 @@ module.exports = () => {
 	return {
 
 		params: {
-			bookId: Joi.string().required(),
+			bookId: Joi.number().required(),
 		},
 
 		body: {

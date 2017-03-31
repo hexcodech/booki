@@ -354,12 +354,14 @@ class AuthController {
 			let expirationDate = Date.now() + this.config.AUTH_CODE_LIFETIME * 1000;
 
 			let code = this.OAuthCode.build({
-				hash        : this.OAuthCode.hashCode(codeValue),
-				expires     : expirationDate
+				hash            : this.OAuthCode.hashCode(codeValue),
+				expires         : expirationDate,
+				user_id         : user.get('id'),
+				oauth_client_id : client.get('id')
 			});
 
 			let promises = [
-				code.setUser(user), code.setOAuthClient(client), code.save()
+				code.save()
 			];
 
 			// Save the auth code and check for errors
@@ -376,59 +378,59 @@ class AuthController {
 		this.oauth2Server.exchange(this.oauth2orize.exchange.code(
 		(client, code, redirectUri, callback) => {
 
-			//keeping the database clean
-			this.OAuthCode.destroy({where: {expires: {$lt: new Date()} }})
-			.then(() => {
+			this.OAuthCode.findByCode(code).then((authCode) => {
 
-				this.OAuthCode.findByCode(code).then((authCode) => {
-					//Delete the auth code now that it has been used
-					let clientId = authCode.get('oauth_client_id'),
-					    userId   = authCode.get('user_id');
-					authCode.destroy().then(() => {
+				if(authCode.get('expires') < Date.now()){
+					return callback(
+						new this.errorController.errors.AuthCodeExpiredError()
+					);
+				}
 
-						let expirationDate = Date.now() +
-																 this.config.ACCESS_TOKEN_LIFETIME * 1000;
+				//Delete the auth code now that it has been used
+				let clientId = authCode.get('oauth_client_id'),
+						userId   = authCode.get('user_id');
 
-						// Create an access token
-						let tokenData = {
-							token       : this.OAuthAccessToken.generateToken(),
-							clientId    : clientId,
-							userId      : userId,
-							expires     : expirationDate
-						};
+				let promises = [
+					this.OAuthCode.destroy({where: {
+						$or: [{
+							expires: {$lt: new Date()}
+						}, {
+							id: authCode.get('id')
+						}]
+					}})
+				];
 
-						//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
-						let token = this.OAuthAccessToken.build({
-							hash        : this.OAuthAccessToken.hashToken(tokenData.token),
-							expires     : expirationDate
-						});
+				let expirationDate = Date.now() +
+														 this.config.ACCESS_TOKEN_LIFETIME * 1000;
 
-						let promises = [
-							token.setUser(userId), token.setOAuthClient(clientId),
-							token.save()
-						];
+				// Create an access token
+				let tokenData = {
+					token       : this.OAuthAccessToken.generateToken(),
+					clientId    : clientId,
+					userId      : userId,
+					expires     : expirationDate
+				};
 
-						// Save the access token and check for errors
-						Promise.all(promises).then(() => {
-							callback(null, tokenData);
-						}).catch((err) => {
-							return callback(new this.errorController.errors.DatabaseError({
-								message: err.message
-							}), null);
-						});
+				//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
+				promises.push(this.OAuthAccessToken.create({
+					hash            : this.OAuthAccessToken.hashToken(tokenData.token),
+					expires         : expirationDate,
+					user_id         : userId,
+					oauth_client_id : clientId
+				}));
 
-					}).catch((err) => {
-						return callback(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}), null);
-					});
-				}).catch((error) => {
-					return callback(error);
+				// Save the access token and check for errors
+				Promise.all(promises).then(() => {
+					callback(null, tokenData);
+
+				}).catch((err) => {
+					return callback(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}), null);
 				});
-			}).catch((err) => {
-				return callback(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
+
+			}).catch((error) => {
+				return callback(error);
 			});
 
 		}));

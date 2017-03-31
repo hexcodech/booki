@@ -1,4 +1,4 @@
-module.exports = () => {
+module.exports = ({config}) => {
 
 	const Joi = require('joi');
 
@@ -6,12 +6,12 @@ module.exports = () => {
 		body: {
 
 			user: {
-				id                                : Joi.number(),
+				id                                : Joi.number().allow(null),
 
 				nameDisplay                       : Joi.string().regex(/[A-z]+/)
-				                                    .max(511),
+				                                    .max(511).required(),
 				nameFirst                         : Joi.string().regex(/[A-z]+/)
-				                                    .max(255).allow('', null),
+				                                    .max(255).required(),
 				nameLast                          : Joi.string().regex(/[A-z]+/)
 				                                    .max(255).allow('', null),
 
@@ -24,20 +24,17 @@ module.exports = () => {
 				passwordAlgorithm                 : Joi.string().allow('', null),
 
 				passwordResetCode                 : Joi.string().allow('', null),
-				passwordResetCodeExpirationDate   : Joi.date(),
+				passwordResetCodeExpirationDate   : Joi.date().allow(null),
 
 				permissions                       : Joi.array().items(
 				                                      Joi.string().max(127)
 				                                    ),
 
-				locale                            : Joi.string().allow('', null),
+				locale                            : Joi.string().valid(config.LOCALES)
+				                                    .required(),
 				placeOfResidence                  : Joi.string().allow('', null),
 
-				created                           : Joi.date().allow('', null),
-
-				profilePictureUrl                 : Joi.string().uri({
-				                                      scheme: ['http', 'https']
-				                                    }).allow(''),
+				created                           : Joi.date().allow(null),
 
 				facebook: {
 					accessToken                     : Joi.string().allow('', null),
@@ -47,7 +44,7 @@ module.exports = () => {
 				google: {
 					accessToken                     : Joi.string().allow('', null),
 					refreshToken                    : Joi.string().allow('', null),
-				}
+				},
 
 			}
 

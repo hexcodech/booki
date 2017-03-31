@@ -9,8 +9,8 @@ const File = ({sequelize, models}) => {
 		}
 	}, {
 		classMethods: {
-    	associate: function({}){
-
+    	associate: function({Image}){
+				
 			}
   	},
   	instanceMethods: {

@@ -24,15 +24,21 @@ const Offer = ({sequelize, models}) => {
     	associate: function({Book, User, Condition}){
 				this.belongsTo(Book, {
 					as         : 'Book',
-					foreignKey : 'book_id'
+					foreignKey : 'book_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.belongsTo(Condition, {
 					as         : 'Condition',
-					foreignKey : 'condition_id'
+					foreignKey : 'condition_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			}
   	},

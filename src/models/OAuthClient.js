@@ -31,7 +31,8 @@ const OAuthClient = ({
 		/* Trusted */
 
 			trusted: {
-				type        : Sequelize.BOOLEAN
+				type        : Sequelize.BOOLEAN,
+				default     : false
 			}
 	}, {
 		defaultScope: {
@@ -55,25 +56,20 @@ const OAuthClient = ({
 				this.belongsTo(User, {
 					as         : 'User',
 					foreignKey : 'user_id',
-				});
-
-				this.hasMany(OAuthCode, {
-					as         : 'OAuthCodes',
-					foreignKey : 'oauth_client_id',
 					onDelete   : 'cascade',
 					hooks      : true
+				});
+				this.hasMany(OAuthCode, {
+					as         : 'OAuthCodes',
+					foreignKey : 'oauth_client_id'
 				});
 				this.hasMany(OAuthAccessToken, {
 					as         : 'OAuthAccessTokens',
-					foreignKey : 'oauth_client_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'oauth_client_id'
 				});
 				this.hasMany(OAuthRedirectUri, {
 					as         : 'OAuthRedirectUris',
-					foreignKey : 'oauth_client_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'oauth_client_id'
 				});
 			},
 

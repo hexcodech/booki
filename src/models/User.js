@@ -76,7 +76,7 @@ const User = ({
 		/* Locale */
 			locale: {
 				type          : Sequelize.STRING,
-				default       : 'en-us',
+				default       : 'en-US',
 				validate      : {
 					isIn          : [config.LOCALES],
 				}
@@ -121,37 +121,27 @@ const User = ({
 
 				this.hasMany(OAuthProvider, {
 					as         : 'OAuthProviders',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(OAuthClient, {
 					as         : 'OAuthProviders',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(OAuthAccessToken, {
 					as         : 'OAuthAccessTokens',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(Image, {
 					as         : 'Images',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.belongsTo(Image,{
@@ -162,16 +152,12 @@ const User = ({
 
 				this.hasMany(Book, {
 					as         : 'Books',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(Offer, {
 					as         : 'Offers',
 					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
 				});
 			},
 

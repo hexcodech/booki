@@ -75,9 +75,7 @@ const Book = ({
 				});
 				this.belongsTo(Image, {
 					as         : 'Cover',
-					foreignKey : 'cover_image_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'cover_image_id'
 				});
 			},
 

@@ -19,7 +19,9 @@ const OAuthProvider = ({sequelize}) => {
     	associate: function({User}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			}
   	},

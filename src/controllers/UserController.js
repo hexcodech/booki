@@ -24,7 +24,6 @@ class UserController {
 		this.getLocale          = getLocale;
 
 		this.User               = models.User;
-		this.PermissionRelation = models.PermissionRelation;
 		this.Permission         = models.Permission;
 
 		bindAll(this, [
@@ -121,13 +120,12 @@ class UserController {
 					where    : {permission: permission},
 					defaults : {permission: permission}
 				}).then((result) => {
+
 					let promises = [];
 					let permissionInstance = result[0], created = result[1];
 
-					let relation = this.PermissionRelation.build({});
-					promises.push(relation.setUser(user));
-					promises.push(relation.setPermission(permission));
-					promises.push(relation.save());
+					promises.push(user.addPermission(permissionInstance));
+					promises.push(user.save());
 
 					Promise.all(promises).then(() => {
 						callback(); //successfully added new relation
@@ -151,7 +149,7 @@ class UserController {
 				//added relations, refreshing the user instance in order to include the
 				//newly added permissions
 
-				user.reload().then((user) => {
+				user.reload().then(() => {
 
 					if(request.hasPermission('admin.user.hiddenData.read')){
 						response.json(user.toJSON({hiddenData: true}));
@@ -228,14 +226,20 @@ class UserController {
 				}
 
 				if(!request.hasPermission('admin.user.permissions.change')){
-					newPermissions = []; //this will skip the permision changes
+					 //this will skip the permision changes
+					request.body.user.permissions = [];
 				}
-				//FIXME 'relations'
-				
+
+				let permissions = user.get('Permissions'),
+				    newPermissions = request.body.user.permissions;
+
 				//to remove
-				for(let i=0;i<relations.length;i++){
-					if(newPermissions.indexOf(permissions[i]) === -1){//same indicies
-						promises.push(relations[i].destroy());
+
+				for(let i=0;i<permissions.length;i++){
+					if(
+						newPermissions.indexOf(permissions[i].get('permission')) === -1
+					){
+						promises.push(user.removePermission(permissions[i]));
 					}
 				}
 
@@ -248,11 +252,8 @@ class UserController {
 						let promises = [];
 						let permissionInstance = result[0], created = result[1];
 
-						let relation = this.PermissionRelation.build({});
-						promises.push(relation.setUser(user));
-						promises.push(relation.setPermission(permission));
-
-						promises.push(relation.save());
+						promises.push(user.addPermission(permissionInstance));
+						promises.push(user.save());
 
 						Promise.all(promises).then(() => {
 							callback(); //successfully added new relation
@@ -275,11 +276,11 @@ class UserController {
 
 					promises.push(user.save());
 
-					Promise.all(promises).then((user) => {
+					Promise.all(promises).then(() => {
 
 						//added relations, refreshing the user instance in order to reflect
 						//the changes made
-						user.reload().then((user) => {
+						user.reload().then(() => {
 
 							if(request.hasPermission('admin.user.hiddenData.read')){
 								response.json(user.toJSON({hiddenData: true}));

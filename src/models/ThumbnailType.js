@@ -12,9 +12,7 @@ const ThumbnailType = ({sequelize}) => {
     	associate: function({Thumbnail}){
 				this.hasMany(Thumbnail, {
 					as         : 'Thumbnails',
-					foreignKey : 'thumbnail_type_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'thumbnail_type_id'
 				});
 			}
   	},

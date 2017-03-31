@@ -34,7 +34,9 @@ const Image = ({sequelize, config, models}) => {
     	associate: function({User, File, Thumbnail}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.belongsTo(File, {
 					as         : 'File',

@@ -1,11 +1,11 @@
-module.exports      = function(){
+module.exports      = function({config}){
 
 	const Joi = require('joi');
 
 	return {
 
 		params: {
-			userId: Joi.string().required()
+			userId: Joi.number().required()
 		},
 
 		body: {
@@ -14,13 +14,13 @@ module.exports      = function(){
 				id                                : Joi.number(),
 
 				nameDisplay                       : Joi.string().regex(/[A-z]+/)
-				                                    .max(511).allow('', null),
+				                                    .max(511),
 				nameFirst                         : Joi.string().regex(/[A-z]+/)
-				                                    .max(255).allow('', null),
+				                                    .max(255),
 				nameLast                          : Joi.string().regex(/[A-z]+/)
 				                                    .max(255).allow('', null),
 
-				emailVerified                     : Joi.string().email().allow('', null),
+				emailVerified                     : Joi.string().email().allow(''),
 				emailUnverified                   : Joi.string().email().allow('', null),
 				emailVerificationCode             : Joi.string().allow('', null),
 
@@ -35,14 +35,10 @@ module.exports      = function(){
 				                                      Joi.string().max(127)
 				                                    ),
 
-				locale                            : Joi.string().allow('', null),
+				locale                            : Joi.string().valid(config.LOCALES),
 				placeOfResidence                  : Joi.string().allow('', null),
 
-				created                           : Joi.date().allow('', null),
-
-				profilePictureUrl                 : Joi.string().uri({
-				                                      scheme: ['http', 'https']
-				                                    }).allow('', null),
+				created                           : Joi.date(),
 
 				facebook: {
 					accessToken                     : Joi.string().allow('', null),

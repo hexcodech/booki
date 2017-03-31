@@ -21,11 +21,15 @@ const OAuthAccessToken = ({
     	associate: function({User, OAuthClient}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.belongsTo(OAuthClient, {
 					as         : 'OAuthClient',
-					foreignKey : 'oauth_client_id'
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 			generateToken: function(){

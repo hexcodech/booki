@@ -30,10 +30,9 @@ const Routing = ({booki, app, config, logger}) => {
 		return express_validation(Object.assign(schema, {
 			options:    {
 				//true ignores additional fields but doesn't throw an error
-				//(quite helpful, as additional fields may get sent)
 				allowUnknownBody		: true,
 
-				//BUT strictly checking parameters and query arguments.
+				//but strictly checking parameters and query arguments.
 				//Unknown parameters or querys will throw an error
 				allowUnknownParams	: false,
 				allowUnknownQuery		: false,

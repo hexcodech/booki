@@ -136,12 +136,12 @@ class OAuthClientController{
 		const secret = this.OAuthClient.generateSecret();
 		let   promises = [];
 
-		let   client = this.Client.build({
-			name: request.body.client.name
+		let   client = this.OAuthClient.build({
+			name: request.body.client.name,
+			user_id: request.user.id
 		});
 
 		client.setSecret(secret);
-		client.setUser(request.user.id);
 
 		if(
 			request.hasPermissions(
@@ -150,56 +150,63 @@ class OAuthClientController{
 		){
 
 			if(request.body.client.userId){
-				client.setUser(request.body.client.userId);
+				client.set('user_id', request.body.client.userId);
 			}
 
-			if(request.body.client.id){
-				client.set('id', request.body.client.id);
-			}
+			client.set(this.omitBy(this.pick(request.body.client, [
+				'id', 'trusted'
+			]), this.isNil));
+
 		}
 
-		let uris = [];
+		client.save().then(() => {
+			
+			let uris = [];
 
-		if(request.body.client.redirectUris){
+			if(request.body.client.redirectUris){
 
-			request.body.client.redirectUris.forEach((uri) => {
+				request.body.client.redirectUris.forEach((uri) => {
 
-				uris.push(redirectUri = this.OAuthRedirectUri.build({
-					uri: uri
+					promises.push(this.OAuthRedirectUri.create({
+						uri: uri,
+						oauth_client_id: client.get('id')
+					}));
+
+				});
+			}
+
+			Promise.all(promises).then(() => {
+
+				client.reload().then(() => {
+					let json = {};
+
+					if(request.hasPermission('admin.client.hiddenData.read')){
+						json = client.toJSON({hiddenData: true});
+					}else{
+						json = client.toJSON();
+					}
+
+					json.secret = secret; //attach secret to response
+					response.json(json);
+
+					return response.end();
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+
+			}).catch((err) => {
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
 				}));
-
 			});
-
-			uris.forEach((uri) => {
-				promises.push(uri.save());
-			});
-
-			client.setOAuthRedirectUris(uris);
-		}
-
-		promises.push(client.save());
-
-		Promise.all(promises).then(() => {
-
-			let json = {};
-
-			if(request.hasPermission('admin.client.hiddenData.read')){
-				json = client.toJSON({hiddenData: true});
-			}else{
-				json = client.toJSON();
-			}
-
-			json.secret.secret = secret; //attach secret to response
-			response.json(json);
-
-			return response.end();
 
 		}).catch((err) => {
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
 			}));
 		});
-
 	}
 
 	putOAuthClient(request, response, next){
@@ -231,7 +238,7 @@ class OAuthClientController{
 				let promises = [];
 
 				if(request.body.client.redirectUris){
-					const currentUris = client.getOAuthRedirectUris(),
+					const currentUris = client.get('OAuthRedirectUris'),
 					      newUris     = request.body.client.redirectUris;
 
 					//To remove
@@ -249,10 +256,11 @@ class OAuthClientController{
 					for(let i=0;i<newUris.length;i++){
 						if(tempCurrentUris.indexOf(newUris[i]) === -1){
 							let uri = this.OAuthRedirectUri.build({
-								uri: newUris[i]
+								uri: newUris[i],
+								oauth_client_id: client.get('id')
 							});
+
 							promises.push(uri.save());
-							promises.push(client.addRedirectUri(uri));
 						}
 					}
 				}
@@ -260,13 +268,19 @@ class OAuthClientController{
 				promises.push(client.save());
 
 				Promise.all(promises).then(() => {
-					if(request.hasPermission('admin.client.hiddenData.read')){
-						response.json(client.toJSON({hiddenData: true}));
-					}else{
-						response.json(client.toJSON());
-					}
+					client.reload().then(() => {
+						if(request.hasPermission('admin.client.hiddenData.read')){
+							response.json(client.toJSON({hiddenData: true}));
+						}else{
+							response.json(client.toJSON());
+						}
 
-					return response.end();
+						return response.end();
+					}).catch((err) => {
+						return next(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
+					});
 				}).catch((err) => {
 					return next(new this.errorController.errors.DatabaseError({
 						message: err.message
