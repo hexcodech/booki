@@ -3,13 +3,14 @@
  */
 
 const User = ({
-	booki,						config,	sequelize,
-	errorController,	i18n,		generateRandomString,
-	generateHash,			models
+	booki, config,	sequelize, errorController, i18n, generateRandomString,
+	generateHash, models
 }) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize		    = require('sequelize');
+	const async           = require('async');
+
 	const mailController  = new (require(
 		'../controllers/MailController'
 	))(booki);
@@ -121,27 +122,37 @@ const User = ({
 
 				this.hasMany(OAuthProvider, {
 					as         : 'OAuthProviders',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(OAuthClient, {
 					as         : 'OAuthProviders',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(OAuthAccessToken, {
 					as         : 'OAuthAccessTokens',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.hasMany(Image, {
 					as         : 'Images',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 
 				this.belongsTo(Image,{
@@ -152,119 +163,100 @@ const User = ({
 
 				this.hasMany(Book, {
 					as         : 'Books',
-					foreignKey : 'user_id'
+					foreignKey : 'user_id',
 				});
 
 				this.hasMany(Offer, {
 					as         : 'Offers',
 					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 
 			getUserByPassportProfile: function(profile){
-				return new Promise((resolve, reject) => {
+				return this.findOne({
+					where: {emailVerified: {$in: profile.emails} }
+				}).then((user) => {
 
-					this.findOne({
-						where: {emailVerified: {$in: profile.emails} }
-					}).then((user) => {
+					if(user){
+						return user;
+					}else{
+						throw new errorController.errors.UnexpectedQueryResultError();
+					}
 
-						if(user){
-							return resolve(user);
-						}else{
-							reject(new errorController.errors.UnexpectedQueryResultError());
-						}
-
-					}).catch((err) => {
-						return reject(new errorController.errors.DatabaseError({
-							message: err.message
-						}));
+				}).catch((err) => {
+					throw new errorController.errors.DatabaseError({
+						message: err.message
 					});
-
 				});
 			},
 
 			register: function(firstName, email, locale){
-				return new Promise((resolve, reject) => {
+				let lastName	= '';
+				let names		= firstName.split(' ');
 
-					let lastName	= '';
-					let names		= firstName.split(' ');
+				if(names.length === 2){
+					firstName	= names[0];
+					lastName	= names[1];
+				}
 
-					if(names.length === 2){
-						firstName	= names[0];
-						lastName	= names[1];
+				let userData = {
+					nameDisplay: firstName,
+					nameFirst: firstName,
+
+					permission : [],
+
+					emailUnverified: email,
+					emailVerificationCode : '',
+
+					locale: locale,
+
+				};
+
+				return this.findAll({
+					where: { $or: [{emailVerified: email}, {emailUnverified: email}] }
+				}).then((users) => {
+					if(users && users.length > 0){
+
+						throw new errorController.errors.UserAlreadyExistsError();
+
+					}else{
+						return this.create(userData).then((user) => {
+							user.initEmailVerification(true).then(() => {
+								return user;
+							}).catch((error) => {
+								throw error;
+							});
+
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
+							});
+						});
 					}
 
-					let userData = {
-						nameDisplay: firstName,
-						nameFirst: firstName,
-
-						permission : [],
-
-						emailUnverified: email,
-						emailVerificationCode : '',
-
-						locale: locale,
-
-					};
-
-					this.findAll({
-						where: { $or: [{emailVerified: email}, {emailUnverified: email}] }
-					}).then((users) => {
-						if(users && users.length > 0){
-
-							return reject(
-								new errorController.errors.UserAlreadyExistsError()
-							);
-
-						}else{
-							this.create(userData).then((user) => {
-								user.initEmailVerification(true).then(() => {
-									resolve(user);
-								}).catch((error) => {
-									reject(error);
-								});
-
-							}).catch((err) => {
-								return reject(new errorController.errors.DatabaseError({
-									message: err.message
-								}));
-							});
-						}
-
-					}).catch((err) => {
-
-						return reject(new errorController.errors.DatabaseError({
-							message: err.message
-						}));
-
-					});
 				});
 			},
 
 			findOrCreateUserByPassportProfile: function(profile){
-				return new Promise((resolve, reject) => {
+				return this.getUserByPassportProfile(profile).then(() => {
 
-					this.getUserByPassportProfile(profile).then(() => {
+					if(user){
+						//update values for the current user
+						user.updateFromPassportProfile(profile, customKeysAndVals);
+					}else{
+						//we have to create a new user
+						user = this.createFromPassportProfile(profile, customKeysAndVals);
+					}
 
-						if(user){
-							//update values for the current user
-							user.updateFromPassportProfile(profile, customKeysAndVals);
-						}else{
-							//we have to create a new user
-							user = this.createFromPassportProfile(profile, customKeysAndVals);
-						}
+					user.save().then((user) => {
+						return user;
 
-						user.save().then((user) => {
-							return resolve(user);
-
-						}).catch((err) => {
-							return reject(new errorController.errors.DatabaseError({
-								message: err.message
-							}));
+					}).catch((err) => {
+						throw new errorController.errors.DatabaseError({
+							message: err.message
 						});
-
-					}).catch((error) => {
-						reject(error);
 					});
 
 				});
@@ -344,237 +336,197 @@ const User = ({
 			},
 
 			verifyPassword: function(password){
-				return new Promise((resolve, reject) => {
+				let {hash} = generateHash(
+					password,
+					this.get('passwordSalt'),
+					this.get('passwordAlgorithm')
+				);
 
-					let {hash} = generateHash(
-						password,
-						this.get('passwordSalt'),
-						this.get('passwordAlgorithm')
-					);
+				let {hash : newHash, newAlgorithm} = generateHash(
+					password,
+					this.get('passwordSalt')
+				);
 
-					let {hash : newHash, newAlgorithm} = generateHash(
-						password,
-						this.get('passwordSalt')
-					);
+				if(hash == this.get('passwordHash')){
+					//password is correct, check if the hash algorithm changed
 
-					if(hash == this.get('passwordHash')){
-						//password is correct, check if the hash algorithm changed
-
-						if(this.get('passwordAlgorithm') !== newAlgorithm){
-							//yes it did, hash and store the password with the new algorithm one
-							this.set('passwordHash',      newHash);
-							this.set('passwordAlgorithm', newAlgorithm);
-						}
-
-						this.save().then((user) => {
-							return resolve(true);
-						}).catch((err) => {
-							return reject(
-								new errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-					}else{
-						return resolve(false);
+					if(this.get('passwordAlgorithm') !== newAlgorithm){
+						//yes it did, hash and store the password with the new algorithm one
+						this.set('passwordHash',      newHash);
+						this.set('passwordAlgorithm', newAlgorithm);
 					}
-				});
+
+					return this.save().then((user) => {
+						return true;
+					}).catch((err) => {
+						throw new errorController.errors.DatabaseError({
+							message: err.message
+						});
+					});
+				}else{
+					return false;
+				}
 			},
 
 			updatePassword: function(password, passwordResetCode){
-				return new Promise((resolve, reject) => {
+				if(
+					this.get('passwordResetCode') &&
+					this.get('passwordResetCode') === passwordResetCode
+				){
 
-					if(
-						this.get('passwordResetCode') &&
-						this.get('passwordResetCode') === passwordResetCode
-					){
+					if(this.get('passwordResetCodeExpirationDate') >= new Date()){
 
-						if(this.get('passwordResetCodeExpirationDate') >= new Date()){
+						let {hash, salt, algorithm} = generateHash(password);
 
-							let {hash, salt, algorithm} = generateHash(password);
+						this.set({
+							passwordHash			: hash,
+							passwordSalt			: salt,
+							passwordAlgorithm	: algorithm,
+							passwordResetCode : ''
+						});
 
-							this.set({
-								passwordHash			: hash,
-								passwordSalt			: salt,
-								passwordAlgorithm	: algorithm,
-								passwordResetCode : ''
+						return this.save().then((user) => {
+							return;
+
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
 							});
+						});
 
-							this.save().then((user) => {
-								return resolve();
-
-							}).catch((err) => {
-								return reject(
-									new errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
-
-						}else{
-							return reject(
-								new errorController.errors
-								.PasswordResetCodeExpiredError()
-							);
-						}
 					}else{
-						return reject(
-							new errorController.errors
-							.PasswordResetCodeInvalidError()
-						);
+						throw new errorController.errors
+							.PasswordResetCodeExpiredError();
 					}
-				});
+				}else{
+						throw new errorController.errors
+						.PasswordResetCodeInvalidError();
+				}
 			},
 
 			initPasswordReset: function(){
-				return new Promise((resolve, reject) => {
+				let passwordResetCode	= generateRandomString(
+					config.TOKEN_LENGTH
+				);
+				let resetMail = new EmailTemplate(
+					__dirname + '/../templates/emails/password-reset'
+				);
 
-					let passwordResetCode	= generateRandomString(
-						config.TOKEN_LENGTH
-					);
-					let resetMail = new EmailTemplate(
-						__dirname + '/../templates/emails/password-reset'
-					);
+				let expirationDate =
+					Date.now() + config.RESET_CODE_LIFETIME * 1000;
 
-					let expirationDate =
-						Date.now() + config.RESET_CODE_LIFETIME * 1000;
+				this.set('passwordResetCode', passwordResetCode);
+				this.set('passwordResetCodeExpirationDate', expirationDate);
 
-					this.set('passwordResetCode', passwordResetCode);
-					this.set('passwordResetCodeExpirationDate', expirationDate);
+				return resetMail.render({
+					user: this.get()
+				}, this.get('locale')).then((result) => {
 
-					resetMail.render({
-						user: this.get()
-					}, this.get('locale'), (err, result) => {
+					return this.sendMail(
+						result.subject, result.html, result.text
+					).then(() => {
 
-						if(err){
-							return reject(
-								new errorController.errors.RenderError({
-									message: err.message
-								})
-							);
-						}
-
-						this.sendMail(result.subject, result.html, result.text).then(() => {
-
-							this.save((err, user) => {
-								if(err){
-									return reject(
-										new errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								}
-
-								return resolve(true);
-
+						return this.save().then(() => {
+							return true;
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
 							});
-
-						}).catch((error) => {
-							return reject(error);
 						});
 
+					}).catch((error) => {
+						throw error;
 					});
 
+				}).catch((err) => {
+					throw new errorController.errors.RenderError({
+						message: err.message
+					});
 				});
+
 			},
 
 			initEmailVerification: function(registration = false){
-				return new Promise((resolve, reject) => {
 
-					let emailVerificationCode	= generateRandomString(
-						config.CONFIRM_TOKEN_LENGTH
-					);
-					let confirmationMail = new EmailTemplate(
-						__dirname + '/../templates/emails/email-confirmation'
-					);
+				let emailVerificationCode	= generateRandomString(
+					config.CONFIRM_TOKEN_LENGTH
+				);
+				let confirmationMail = new EmailTemplate(
+					__dirname + '/../templates/emails/email-confirmation'
+				);
 
-					this.set('emailVerificationCode', emailVerificationCode);
+				this.set('emailVerificationCode', emailVerificationCode);
 
-					confirmationMail.render(
-					{
-						user					: this.get()
-					},
+				return confirmationMail.render({
+					user: this.get()
+				}, this.get('locale')).then((result) => {
 
-					this.get('locale'), (err, result) => {
+					return this.sendMail(
+						result.subject,
+						result.html,
+						result.text,
+						this.get('emailUnverified')
+					).then(() => {
 
-						if(err){
-							return reject(
-								new errorController.errors.RenderError({
-									message: err.message
-								})
+						this.set('emailVerificationCode', emailVerificationCode);
+
+						if(registration){
+							this.set('passwordResetCode', emailVerificationCode);
+							this.set('passwordResetCodeExpirationDate',
+								Date.now() + (config.RESET_CODE_LIFETIME * 1000)
 							);
 						}
 
-						this.sendMail(
-							result.subject,
-							result.html,
-							result.text,
-							this.get('emailUnverified')
-						).then(() => {
+						return this.save().then(() => {
+							return true;
 
-							this.set('emailVerificationCode', emailVerificationCode);
-
-							if(registration){
-								this.set('passwordResetCode', emailVerificationCode);
-								this.set('passwordResetCodeExpirationDate',
-									Date.now() + (config.RESET_CODE_LIFETIME * 1000)
-								);
-							}
-
-							return this.save().then(() => {
-								return resolve();
-
-							}).catch((err) => {
-								resolve(new errorController.errors.DatabaseError({
-									message: err.message
-								}));
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
 							});
-
-						}).catch((error) => {
-							return reject(error);
 						});
+
+					}).catch((err) => {
+						throw new errorController.errors.InternalServerError({
+							message: err.message
+						});
+					});
+
+				}).catch((err) => {
+					throw new errorController.errors.RenderError({
+						message: err.message
 					});
 				});
 			},
 
-			verifyEmail: function(
-				email = '',
-				emailVerificationCode = null
-			){
-				return new Promise((resolve, reject) => {
+			verifyEmail: function(email = '', emailVerificationCode = null){
+				if(
+					email && emailVerificationCode &&
+					this.get('emailVerificationCode') === emailVerificationCode &&
+					this.get('emailUnverified') === email
+				){
 
-					if(
-						email && emailVerificationCode &&
-						this.get('emailVerificationCode') === emailVerificationCode &&
-						this.get('emailUnverified') === email
-					){
+					this.set({
+						emailVerified         : email,
+						emailVerificationCode : '',
+						emailUnverified       : null
+					});
 
-						this.set({
-							emailVerified         : email,
-							emailVerificationCode : '',
-							emailUnverified       : null
+					return this.save().then(() => {
+
+						return true;
+
+					}).catch((err) => {
+						throw new errorController.errors.DatabaseError({
+							message: err.message
 						});
+					});
 
-						return this.save().then(() => {
-
-							return resolve();
-
-						}).catch((err) => {
-							return reject(
-								new errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-
-					}
-
-					return reject(
-						new errorController.errors.EmailVerificationCodeInvalidError(),
-						false
+				}else{
+					return Promise.reject(
+						new errorController.errors.EmailVerificationCodeInvalidError()
 					);
-
-				});
+				}
 			},
 
 			getPermissionArray: function(){
@@ -609,6 +561,44 @@ const User = ({
 
 			doesHavePermission: function(permission){
 				return this.hasPermissions([permission]);
+			},
+
+			setPermissionsRaw: function(permissions){
+				return new Promise((resolve, reject) => {
+					
+					let permissionInstances = [];
+
+					async.each(permissions,
+						(permission, callback) => {
+
+						models.Permission.findOrCreate({
+							where    : {permission: permission},
+							defaults : {permission: permission}
+						}).then((result) => {
+
+							let promises = [];
+							let permissionInstance = result[0], created = result[1];
+
+							permissionInstances.push(permissionInstance);
+							callback();
+
+						}).catch((err) => {
+							return callback(err);
+						});
+
+					}, (err) => {
+						if(err){
+							throw err;
+						}
+
+						this.setPermissions(permissionInstances).then(() => {
+							resolve(true);
+						}).catch((err) => {
+							reject(err);
+						});
+
+					});
+				});
 			},
 
     	toJSON: function(options = {}){

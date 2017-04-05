@@ -29,7 +29,7 @@ module.exports      = function({config}){
 				passwordAlgorithm                 : Joi.string().allow('', null),
 
 				passwordResetCode                 : Joi.string().allow('', null),
-				passwordResetCodeExpirationDate   : Joi.date(),
+				passwordResetCodeExpirationDate   : Joi.date().allow(null),
 
 				permissions                       : Joi.array().items(
 				                                      Joi.string().max(127)

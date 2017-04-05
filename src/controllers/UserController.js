@@ -13,8 +13,6 @@ class UserController {
 		this.omitBy             = require('lodash/omitBy');
 		this.isNil              = require('lodash/isNil');
 
-		this.async              = require('async');
-
 		//store passed parameters
 		this.config             = config;
 		this.app                = app;
@@ -114,38 +112,7 @@ class UserController {
 				request.body.user.permissions = [];
 			}
 
-			//asynchronously adding permissions
-			this.async.each(request.body.user.permissions, (permission, callback) => {
-				this.Permission.findOrCreate({
-					where    : {permission: permission},
-					defaults : {permission: permission}
-				}).then((result) => {
-
-					let promises = [];
-					let permissionInstance = result[0], created = result[1];
-
-					promises.push(user.addPermission(permissionInstance));
-					promises.push(user.save());
-
-					Promise.all(promises).then(() => {
-						callback(); //successfully added new relation
-					}).catch((err) => {
-						return callback(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}));
-					});
-
-				}).catch((err) => {
-					return callback(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}));
-				});
-
-			}, (error) => {
-				if(error){
-					return next(error);
-				}
-
+			user.setPermissionsRaw(request.body.user.permissions).then(() => {
 				//added relations, refreshing the user instance in order to include the
 				//newly added permissions
 
@@ -162,9 +129,11 @@ class UserController {
 						message: err.message
 					}));
 				});
-
+			}).catch((err) => {
+				return next(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}));
 			});
-
 		}).catch((err) => {
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
@@ -230,76 +199,30 @@ class UserController {
 					request.body.user.permissions = [];
 				}
 
-				let permissions = user.get('Permissions'),
-				    newPermissions = request.body.user.permissions;
+				Promise.all([
+					user.save(),
+					user.setPermissionsRaw(request.body.user.permissions)
+				]).then(() => {
+					//added relations, refreshing the user instance in order to include
+					//the newly added permissions
 
-				//to remove
+					user.reload().then(() => {
 
-				for(let i=0;i<permissions.length;i++){
-					if(
-						newPermissions.indexOf(permissions[i].get('permission')) === -1
-					){
-						promises.push(user.removePermission(permissions[i]));
-					}
-				}
-
-				//to add
-				this.async.each(newPermissions, (permission, callback) => {
-					this.Permission.findOrCreate({
-						where    : {permission: permission},
-						defaults : {permission: permission}
-					}).then((result) => {
-						let promises = [];
-						let permissionInstance = result[0], created = result[1];
-
-						promises.push(user.addPermission(permissionInstance));
-						promises.push(user.save());
-
-						Promise.all(promises).then(() => {
-							callback(); //successfully added new relation
-						}).catch((err) => {
-							return callback(new this.errorController.errors.DatabaseError({
-								message: err.message
-							}));
-						});
-
-					}).catch((err) => {
-						return callback(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}));
-					});
-
-				}, (error) => {
-					if(error){
-						return next(error);
-					}
-
-					promises.push(user.save());
-
-					Promise.all(promises).then(() => {
-
-						//added relations, refreshing the user instance in order to reflect
-						//the changes made
-						user.reload().then(() => {
-
-							if(request.hasPermission('admin.user.hiddenData.read')){
-								response.json(user.toJSON({hiddenData: true}));
-							}else{
-								response.json(user.toJSON());
-							}
-
-						}).catch((err) => {
-							return next(new this.errorController.errors.DatabaseError({
-								message: err.message
-							}));
-						});
+						if(request.hasPermission('admin.user.hiddenData.read')){
+							response.json(user.toJSON({hiddenData: true}));
+						}else{
+							response.json(user.toJSON());
+						}
 
 					}).catch((err) => {
 						return next(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}));
 					});
-
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
 				});
 
 			}else{

@@ -16,13 +16,14 @@ class BookController{
 		this.Book                         = models.Book;
 		this.Image                        = models.Image;
 		this.User                         = models.User;
+		this.Person                       = models.Person;
 
 		this.getLocale                    = getLocale;
 		this.generateRandomString         = generateRandomString;
 
 		bindAll(this, [
 			'getBook', 'getBookById', 'postBook',
-			'putBook', 'deleteBook',  'lookupBook'
+			'putBook', 'deleteBook',  'lookupBook', 'lookupAuthor'
 		]);
 
 	}
@@ -105,70 +106,67 @@ class BookController{
 
 	postBook(request, response, next){
 
-		let book = this.Book.build(this.pick(request.body.book, [
+		let book = this.Book.create(this.pick(request.body.book, [
 			'title',           'subtitle',    'language',
 			'description',     'publisher',   'publicationDate',
 			'pageCount'
-		]));
+		])).then(() => {
+			//check whether the cover actually exists
+			this.Image.findById(request.body.book.coverId)
+			.then((image) => {
 
-		//check whether the cover actually exists
-		this.Image.findById(request.body.book.coverId)
-		.then((image) => {
+				let promises = [];
 
-			let promises = [];
-
-			if(image){
-				promises.push(book.setCoverImage(image));
-			}else{
-				//if not, use the default image
-				//TODO add first default image database entry
-				promises.push(book.setCoverImage(1));
-			}
-
-			//add additional fields
-			if(request.hasPermissions([
-				'admin.book.create', 'admin.book.hiddenData.write'
-			])){
-
-				book.set(this.pick(request.body.book, [
-					'id', 'approved'
-				]));
-
-				if(request.body.book.userId){
-					book.set('user', request.body.book.userId);
-				}else{
-					book.set('user', request.user.get('id'));
+				if(image){
+					promises.push(book.setCoverImage(image));
 				}
 
-			}else{
-				book.set('user', request.user.get('id'));
-			}
+				//add additional fields
+				if(request.hasPermissions([
+					'admin.book.create', 'admin.book.hiddenData.write'
+				])){
 
-			//save and return it
-			promises.push(book.save());
-			Promise.all(promises).then((book) => {
+					book.set(this.pick(request.body.book, [
+						'id', 'approved'
+					]));
 
-				if(book){
-
-					if(request.hasPermission('admin.book.hiddenData.read')){
-						response.json(book.toJSON({hiddenData: true}));
+					if(request.body.book.userId){
+						book.set('user_id', request.body.book.userId);
 					}else{
-						response.json(book.toJSON());
+						book.set('user_id', request.user.get('id'));
 					}
 
-					return response.end();
+				}else{
+					book.set('user_id', request.user.get('id'));
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				promises.push(book.setAuthorsRaw(request.body.book.authors));
+
+				Promise.all(promises).then(() => {
+
+					book.reload().then(() => {
+						if(request.hasPermission('admin.book.hiddenData.read')){
+							response.json(book.toJSON({hiddenData: true}));
+						}else{
+							response.json(book.toJSON());
+						}
+					}).catch((err) => {
+						return next(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
+					});
+
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
 
 			}).catch((err) => {
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
 				}));
 			});
-
 		}).catch((err) => {
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
@@ -298,6 +296,10 @@ class BookController{
 				message: err.message
 			}));
 		});
+
+	}
+
+	lookupAuthor(request, response, next){
 
 	}
 

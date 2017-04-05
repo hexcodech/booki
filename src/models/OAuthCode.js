@@ -51,17 +51,13 @@ const OAuthCode = ({
 			},
 
 			findByCode: function(code = ''){
-				return new Promise((resolve, reject) => {
-
-					this.findOne({where: {hash: this.hashCode(code)}})
-					.then((oauthCode) => {
-						return resolve(oauthCode);
-					}).catch((err) => {
-						return reject(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}));
+				return this.findOne({where: {hash: this.hashCode(code)}})
+				.then((oauthCode) => {
+					return oauthCode;
+				}).catch((err) => {
+					throw new this.errorController.errors.DatabaseError({
+						message: err.message
 					});
-
 				});
 			}
   	},

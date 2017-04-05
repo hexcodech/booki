@@ -10,14 +10,16 @@ const Permission = ({sequelize}) => {
 	}, {
 		classMethods: {
     	associate: function({User}){
+
 				this.belongsToMany(User, {
-					as         : 'Permission',
+					as         : 'Users',
 					foreignKey : 'permission_id',
 					otherKey   : 'user_id',
 					through    : 'permission_relations',
 					onDelete   : 'cascade',
 					hooks      : true,
 				});
+				
 			}
   	},
   	instanceMethods: {

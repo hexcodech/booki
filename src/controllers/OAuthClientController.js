@@ -160,7 +160,7 @@ class OAuthClientController{
 		}
 
 		client.save().then(() => {
-			
+
 			let uris = [];
 
 			if(request.body.client.redirectUris){
@@ -216,6 +216,8 @@ class OAuthClientController{
 
 			if(client){
 
+				let promises = [];
+
 				if(request.hasPermissions(
 					['admin.client.editOthers', 'admin.client.hiddenData.write'])
 				){
@@ -223,6 +225,10 @@ class OAuthClientController{
 					client.set(this.omitBy(this.pick(request.body.client, [
 						'trusted'
 					]), this.isNil));
+
+					if(request.body.client.userId){
+						promises.push(client.setUser(request.body.client.userId));
+					}
 
 				}else if(
 					client.userId !== request.user.id &&
@@ -234,8 +240,6 @@ class OAuthClientController{
 				client.set(this.omitBy(this.pick(request.body.client, [
 					'name'
 				]), this.isNil));
-
-				let promises = [];
 
 				if(request.body.client.redirectUris){
 					const currentUris = client.get('OAuthRedirectUris'),

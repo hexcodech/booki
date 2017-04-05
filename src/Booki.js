@@ -20,7 +20,7 @@ class Booki {
 				}),
 				new (this.winston.transports.File)({
 					name        : 'file-log',
-					level       : 'sql',
+					level       : 'debug',
 					filename    : 'booki.log',
 					colorize    : true,
 					prettyPrint : true
@@ -29,25 +29,24 @@ class Booki {
 			levels: {
 				critical  : 0,
 				error     : 1,
-				sql_error : 2,
-				warning   : 3,
-				info      : 4,
-				debug     : 5,
-				sql       : 6
+				warning   : 2,
+				info      : 3,
+				debug     : 4,
 			}
 		});
 
 		this.winston.addColors({
-			critical : 'red',
-			error    : 'red',
-			warning  : 'yellow',
-			info     : 'blue',
-			debug    : 'magenta',
-			sql      : 'green'
+			critical  : 'red',
+			error     : 'red',
+			warning   : 'yellow',
+			info      : 'blue',
+			debug     : 'magenta'
 		});
 
 		//Load modules
 		this.logger.log('info', 'Loading modules...');
+
+		//TODO chech licenses of packages
 
 		this.crypto             = require('crypto');
 		this.i18n               = require('i18n');
@@ -58,11 +57,14 @@ class Booki {
 		const requestStats      = require('request-stats');
 		const bindAll           = require('lodash/bindAll');
 		const Sequelize         = require('sequelize');
+		const mysql             = require('mysql2/promise');
 		const express           = require('express');
 		const expressSession    = require('express-session');
 		const bodyParser        = require('body-parser');
 		const helmet            = require('helmet');
 		const logger            = this.logger;
+
+		let setupPromises       = [];
 
 		//Load config
 		logger.log('info', 'Loading config..');
@@ -88,7 +90,7 @@ class Booki {
 			'./controllers/ErrorController')
 		)(this);
 
-		//Connect to to the database
+		//Connect sequelize to the database
 
 		logger.log('info', 'Connecting to the database...');
 
@@ -98,16 +100,25 @@ class Booki {
 			this.config.DB_PASSWORD,
 			{
 			host: this.config.DB_HOST,
+			port: this.config.DB_PORT,
 			dialect: 'mysql',
 			pool: {
 				max  : 5,
 				min  : 0,
 				idle : 10000
 			},
-			logging: (message) => {
-				logger.log('sql', message);
-			}
+			logging: null
 		});
+
+
+		//And to the sphinx server
+		setupPromises.push(mysql.createConnection({
+			host: this.config.DB_HOST,
+			port: this.config.SPHINX_PORT
+		}).then((connection) => {
+			this.dbConnection = connection;
+			return connection;
+		}));
 
 		//Start the server
 
@@ -179,6 +190,7 @@ class Booki {
 		//Load all Models
 		logger.log('info', 'Loading models...');
 		const modelFiles = [
+			'Person',
 			'Condition', 'Offer', 'File', 'ThumbnailType', 'Thumbnail',
 			'Image', 'Permission', 'OAuthProvider', 'User', 'OAuthRedirectUri',
 			'OAuthClient', 'OAuthCode', 'OAuthAccessToken', 'Book'
@@ -187,9 +199,15 @@ class Booki {
 		this.models = {};
 
 		modelFiles.forEach((model) => {
+
 			this.models[model] = require(
 				'./models/' + model
 			)(this);
+
+			if(this.models[model].attributes.id){
+				this.models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
+			}
+
 		});
 
 		logger.log('info', 'Associating models...');
@@ -205,9 +223,13 @@ class Booki {
 		//setup tables if needed
 		this.sequelize.sync();
 
-		//Do the routing
-		logger.log('info', 'Setting up routes');
-		require('./Routing')(this);
+		Promise.all(setupPromises).then(() => {
+			//Do the routing
+			logger.log('info', 'Setting up routes');
+			require('./Routing')(this);
+		}).catch((e) => {
+			logger.log('critical', e);
+		});
 	}
 
 	getLocale(user = null, request = null){

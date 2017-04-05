@@ -7,7 +7,7 @@ const Book = ({
 
 	const Sequelize = require('sequelize');
 	const request   = require('request');
-	const gbooks    = require('google-books-search');
+	const async     = require('async');
 
 	let Book					= sequelize.define('book', {
 
@@ -55,6 +55,7 @@ const Book = ({
 
 		approved: {
 			type         : Sequelize.BOOLEAN,
+			default      : false
 		},
 
 	}, {
@@ -68,7 +69,7 @@ const Book = ({
 		},
 
 		classMethods: {
-    	associate: function({User, Image}){
+    	associate: function({User, Image, Person}){
 				this.belongsTo(User, {
 					as         : 'User',
 					foreignKey : 'user_id'
@@ -77,168 +78,169 @@ const Book = ({
 					as         : 'Cover',
 					foreignKey : 'cover_image_id'
 				});
-			},
-
-			findOnGoogle: function(
-				value  = '',
-				field  = 'isbn',
-				offset = 0,
-				limit  = 10,
-				type   = 'all',
-				order  = 'relevance',
-				lang   = ''
-			){
-				return new Promise((resolve, reject) => {
-					let {_, gbooks, errorController} = this;
-
-					gbooks.search(value, {field, type, offset, limit, type, order, lang},
-					(err, books) => {
-
-						if(err){
-							return reject(new errorController.errors.ApiError({
-								message: err.message
-							}));
-						}
-
-						if(books.length === 0){
-							return resolve([]);
-						}
-
-
-						return resolve(books.map((book) => {
-
-							let isbn = '';
-
-							for(let i=0;i<book.industryIdentifiers.length;i++){
-								if(book.industryIdentifiers[i].type === 'ISBN_13'){
-									isbn = book.industryIdentifiers[i].identifier;
-								}
-							}
-
-							let cover = models.Image.build({
-								url: get(book, 'images.extraLarge')
-
-								   ? get(book, 'images.extraLarge') :
-										 get(book, 'images.large')
-
-									 ? get(book, 'images.large')      :
-										 get(book, 'images.medium')
-
-									 ? get(book, 'images.medium')     :
-										 get(book, 'images.small')
-
-									 ? get(book, 'images.small')      :
-										 get(book, 'thumbnail')
-							});
-
-							book = this.build({
-								isbn13           : isbn,
-
-								title            : get(book, 'title'),
-								subtitle         : get(book, 'subtitle'),
-
-								language         : get(book, 'language'),
-
-								//FIXME authors field not valid anymore
-								authors          : get(book, 'authors'),
-
-								description      : get(book, 'description'),
-
-								publisher        : get(book, 'publisher'),
-								publicationDate  : new Date(get(book, 'publishedDate')),
-
-								pageCount        : get(book, 'pageCount')
-							});
-
-							book.setCoverImage(cover);
-
-							return book;
-
-						}));
-
-					});
+				this.belongsToMany(Person, {
+					as         : 'Authors',
+					foreignKey : 'book_id',
+					otherKey   : 'author_id',
+					through    : 'author_relations'
 				});
 			},
 
 			lookupByIsbn: function(isbn = '', page = 0){
-				return new Promise((resolve, reject) => {
+				let {errorController} = this;
 
-					let {errorController} = this;
+				isbn = isbn.replace(/(-|\s)/g, ''); //remove spaces and dashes
 
-					isbn = isbn.replace(/(-|\s)/g, ''); //remove spaces and dashes
+				if(isbn.length === 10){ //convert isbn10 to isbn13
+					isbn = '978' + isbn;
+				}
 
-					if(isbn.length === 10){ //convert isbn10 to isbn13
-						isbn = '978' + isbn;
+				//even tought this function shouldn't even be called if the
+				//book is already present, we double check
+				return this.findAll({where: {isbn13: isbn}}).then((books) => {
+
+					if(books){
+						//the isbn is already in our database
+						return resolve(books);
+
+					}else{
+
+						let promises = [];
+
+						//use the amazon product advertising api
+
+						Promises.all(promises).then((bookArrays) => {
+
+							resolve([].concat.apply([], bookArrays)); //flatten array
+
+						}).catch((error) => {
+							reject(error);
+						});
 					}
 
-					//even tought this function shouldn't even be called if the book is already present, we double check
-					this.findAll({where: {isbn13: isbn}}).then((books) => {
-
-						if(books){
-							//the isbn is already in our database
-							return resolve(books);
-
-						}else{
-							//let the games begin
-
-							let promises = [];
-
-							//lets start with google books
-
-							promises.push(this.findOnGoogle(
-								isbn, 'isbn', 10 * page, 10, 'all', 'relevance', ''
-							));
-
-							Promises.all(promises).then((bookArrays) => {
-
-								resolve([].concat.apply([], bookArrays)); //flatten array
-
-							}).catch((error) => {
-								reject(error);
-							});
-						}
-
-					}).catch((err) => {
-						reject(new errorController.errors.DatabaseError({
-							message: err.message
-						}));
-					});
-
+				}).catch((err) => {
+					reject(new errorController.errors.DatabaseError({
+						message: err.message
+					}));
 				});
 			},
 
 			lookupByTitle: function(title = '', page = 0){
 				let likeQuery = '%' + title.replace('_', '\_').replace('%', '\%') + '%';
 
-				return new Promise((resolve, reject) => {
-					this.findAll({where: {$or: [
-						{title     : likeQuery},
-						{subtitle  : likeQuery}
-					]}}).then((books) => {
+				return this.findAll({where: {$or: [
+					{title     : likeQuery},
+					{subtitle  : likeQuery}
+				]}}).then((books) => {
 
-						let promises = [];
+					let promises = [];
 
-						promises.push(this.findOnGoogle(
-							title, 'title', 10 * page, 10, 'all', 'relevance', ''
-						));
+					promises.push(this.findOnGoogle(
+						title, 'title', 10 * page, 10, 'all', 'relevance', ''
+					));
 
-						Promise.all(promises).then((bookArrays) => {
+					return Promise.all(promises).then((bookArrays) => {
 
-							resolve([].concat.apply(books, bookArrays)); //flatten array
+						return [].concat.apply(books, bookArrays); //flatten array
 
-						}).catch((error) => {
-							reject(error);
-						});
+					}).catch((error) => {
+						throw error;
+					});
 
-					}).catch((err) => {
-						reject(new errorController.errors.DatabaseError({
-							message: err.message
-						}));
+				}).catch((err) => {
+					throw new errorController.errors.DatabaseError({
+						message: err.message
 					});
 				});
+
 			}
   	},
   	instanceMethods: {
+			setAuthorsRaw: function(authors){
+
+				return new Promise((resolve, reject) => {
+
+					let authorInstances = [];
+
+					async.each(authors, (author, callback) => {
+
+						if(isNan(author)){
+							let parts = author.split(' ');
+
+							if(parts.length === 0 || parts.length > 4){
+								return;
+							}
+
+
+							let author = models.Person.build();
+
+							switch(parts.length){
+								case 1:
+									author.set({
+										'nameLast' : parts[0]
+									});
+									break;
+								case 2:
+									author.set({
+										'nameFirst': parts[0],
+										'nameLast' : parts[1]
+									});
+									break;
+								case 3:
+									author.set({
+										'nameFirst'  : parts[0],
+										'nameMiddle' : parts[1],
+										'nameLast'   : parts[2]
+									});
+									break;
+
+								case 4:
+								default:
+									author.set({
+										'nameTitle'  : parts[0],
+										'nameFirst'  : parts[1],
+										'nameMiddle' : parts[2],
+										'nameLast'   : parts[3]
+									});
+									break;
+							}
+
+							author.save().then(() => {
+
+								authorInstances.push(author);
+								callback();
+
+							}).catch((err) => {
+								callback(err);
+							});
+
+						}else{
+							this.Person.findById(author).then((instance) => {
+								if(instance){
+									authorInstances.push(instance);
+									callback();
+								}else{
+									callback(new Error('The author couldn\'t be found!'));
+								}
+							}).catch((err) => {
+								callback(err);
+							});
+
+						}
+					}, (err) => {
+						if(err){
+							return reject(err);
+						}
+
+						this.setAuthors(authorInstances).then(() => {
+							resolve();
+						}).catch((err) => {
+							reject(err);
+						});
+
+					});
+				});
+			},
     	toJSON: function(options){
 				let book = this.get(); //invoking virtual getters
 

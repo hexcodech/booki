@@ -61,15 +61,21 @@ const OAuthClient = ({
 				});
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',
-					foreignKey : 'oauth_client_id'
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.hasMany(OAuthAccessToken, {
 					as         : 'OAuthAccessTokens',
-					foreignKey : 'oauth_client_id'
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.hasMany(OAuthRedirectUri, {
 					as         : 'OAuthRedirectUris',
-					foreignKey : 'oauth_client_id'
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 			},
 
@@ -91,46 +97,39 @@ const OAuthClient = ({
 			},
 
 			verifySecret: function(secret){
-				return new Promise((resolve, reject) => {
+				let {hash} = generateHash(
+					secret,
+					this.get('secretSalt'),
+					this.get('secretAlgorithm')
+				);
+				let {hash : newHash, algorithm: newAlgorithm}	= generateHash(
+					secret,
+					this.get('secretSalt')
+				);
 
-					let {hash} = generateHash(
-						secret,
-						this.get('secretSalt'),
-						this.get('secretAlgorithm')
-					);
-					let {hash : newHash, algorithm: newAlgorithm}	= generateHash(
-						secret,
-						this.get('secretSalt')
-					);
+				if(this.get('secretHash') && hash === this.get('secretHash')){
 
-					if(this.get('secretHash') && hash === this.get('secretHash')){
+					if(this.get('secretAlgorithm') !== newAlgorithm){
 
-						if(this.get('secretAlgorithm') !== newAlgorithm){
+						//if the algorithm changed, update the hash
+						this.set({
+							secretHash      : newHash,
+							secretSalt      : salt,
+							secretAlgorithm : newAlgorithm
+						});
 
-							//if the algorithm changed, update the hash
-							this.set({
-								secretHash      : newHash,
-								secretSalt      : salt,
-								secretAlgorithm : newAlgorithm
+						return this.save().then(() => {
+							return true;
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
 							});
+						});
 
-							return this.save((err, client) => {
-
-								if(err){
-
-									return reject(
-										new errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								}
-								return resolve();
-							});
-						}
-						return resolve();
 					}
-					return reject();
-				});
+					return Promise.resolve();
+				}
+				return Promise.reject();
 			},
 
 			verifyRedirectUri: function(redirectUri){
