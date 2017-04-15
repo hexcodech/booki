@@ -1,11 +1,9 @@
-const OAuthCode = ({
-	booki,                config,        sequelize,
-	generateRandomString, generateHash,  models
-}) => {
+const OAuthCode = ({config, sequelize, models}) => {
 
-	const Sequelize   = require('sequelize');
+	const Sequelize       = require('sequelize');
+	const CryptoUtilities = require('../utilities/CryptoUtilities');
 
-	let OAuthCode = sequelize.define('oauth_code', {
+	let OAuthCode         = sequelize.define('oauth_code', {
 		hash: {
 			type       : Sequelize.STRING,
 		},
@@ -43,21 +41,17 @@ const OAuthCode = ({
 			},
 
 			generateCode: function(){
-				return generateRandomString(config.TOKEN_LENGTH);
+				return CryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
 			},
 
 			hashCode: function(code = ''){
-				return generateHash(code, false).hash;
+				return CryptoUtilities.generateHash(code, false).hash;
 			},
 
 			findByCode: function(code = ''){
 				return this.findOne({where: {hash: this.hashCode(code)}})
 				.then((oauthCode) => {
 					return oauthCode;
-				}).catch((err) => {
-					throw new this.errorController.errors.DatabaseError({
-						message: err.message
-					});
 				});
 			}
   	},

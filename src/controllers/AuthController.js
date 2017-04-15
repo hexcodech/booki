@@ -7,8 +7,7 @@ class AuthController {
 	constructor(
 		{
 			booki,            config,               i18n,
-			models,           errorController,      passport,
-			getLocale
+			models,           errorController,      passport
 		}
 		){
 
@@ -28,8 +27,6 @@ class AuthController {
 		this.errorController   = errorController;
 
 		this.passport          = passport;
-
-		this.getLocale         = getLocale;
 
 		this.User              = models.User;
 		this.OAuthClient       = models.OAuthClient;
@@ -56,7 +53,7 @@ class AuthController {
 
 				done(new this.errorController.errors.DatabaseError({
 					message: err.message
-				}), null);
+				}));
 			});
 
 		});
@@ -70,7 +67,7 @@ class AuthController {
 					locale			= request.body.locale;
 
 			if(!locale){
-				locale = this.getLocale(null, request);
+				locale = request.getLocale();
 			}
 
 			this.User.register(firstName, email, locale).then(() => {
@@ -98,15 +95,17 @@ class AuthController {
 
 					client.verifySecret(clientSecret).then(() => {
 						return callback(null, client);
-					}).catch((error) => {
-						callback(error, null);
+					}).catch((err) => {
+						return callback(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
 					});
 
 				}).catch((err) => {
 
 					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}), null);
+					}));
 
 				});
 			}
@@ -126,19 +125,21 @@ class AuthController {
 				}).then((user) => {
 
 					if(!user || user.get('passwordHash').length === 0) {
-						return done(new this.errorController.errors.LoginError(), null);
+						return done(new this.errorController.errors.LoginError());
 					}
 
 					user.verifyPassword(password).then((success) => {
 						return done(null, success ? user : null);
-					}).catch((error) => {
-						return done(error, null);
+					}).catch((err) => {
+						return done(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
 					});
 
 				}).catch((err) => {
 					return done(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}), null);
+					}));
 				});
 			}
 		));
@@ -257,10 +258,10 @@ class AuthController {
 				passReqToCallback   : true
 			},
 			(request, accessToken, refreshToken, profile, done) => {
-				//TODO update
+				//FIXME facebook auth
 				return;
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					locale           : this.getLocale(null, request),
+					locale           : request.getLocale(),
 					placeOfResidence : profile.user_location.name,
 
 					facebook          : {
@@ -272,7 +273,7 @@ class AuthController {
 					return done(null, user);
 
 				}).catch((error) => {
-					return done(error, null);
+					return done(error);
 				});
 
 			})
@@ -296,10 +297,10 @@ class AuthController {
 				passReqToCallback   : true
 			},
 			(request, accessToken, refreshToken, profile, done) => {
-				//TODO update
+				//FIXME google auth
 				return;
 				this.User.findOrCreateUserByPassportProfile(profile, {
-					locale					: this.getLocale(null, request),
+					locale					: request.getLocale(),
 					google					: {
 						accessToken				: accessToken,
 						refreshToken			: refreshToken
@@ -308,7 +309,7 @@ class AuthController {
 					return done(null, user);
 
 				}).catch((error) => {
-					return(error, null);
+					return(error);
 				});
 
 			})
@@ -333,7 +334,7 @@ class AuthController {
 			}).catch((err) => {
 				return callback(new this.errorController.errors.DatabaseError({
 					message: err.message
-				}), null);
+				}));
 			});
 
 		});
@@ -370,7 +371,7 @@ class AuthController {
 			}).catch((err) => {
 				return callback(new this.errorController.errors.DatabaseError({
 					message: err.message
-				}), null);
+				}));
 			});
 
 		}));
@@ -426,11 +427,13 @@ class AuthController {
 				}).catch((err) => {
 					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}), null);
+					}));
 				});
 
-			}).catch((error) => {
-				return callback(error);
+			}).catch((err) => {
+				return callback(new this.errorController.errors.DatabaseError({
+					message: err.message
+				}));
 			});
 
 		}));
@@ -486,7 +489,7 @@ class AuthController {
 				this.ejs.renderFile(__dirname + '/../views/OAuthDialog.ejs', {
 					__: (string) => {
 						return this.i18n.__({
-							phrase: string, locale: this.getLocale(request.user, request)
+							phrase: string, locale: request.getLocale()
 						});
 					},
 
@@ -556,7 +559,7 @@ class AuthController {
 			__         : (string) => {
 				return this.i18n.__({
 					phrase : string,
-					locale : this.getLocale(request.user, request)
+					locale : request.getLocale()
 				});
 			},
 
@@ -579,7 +582,7 @@ class AuthController {
 			__         : (string) => {
 				return this.i18n.__({
 					phrase : string,
-					locale : this.getLocale(request.user, request)
+					locale : request.getLocale()
 				});
 			},
 			register    : (request.query.register === 'true' ? true : false),
@@ -666,7 +669,7 @@ class AuthController {
 						'/views/password-reset?email=' + request.body.email
 					);
 				}).catch((error) => {
-					return next(error, null);
+					return next(error);
 				});
 
 			}else{
@@ -678,7 +681,7 @@ class AuthController {
 		}).catch((err) => {
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
-			}), null);
+			}));
 		});
 	}
 
@@ -689,7 +692,7 @@ class AuthController {
 			__         : (string) => {
 				return this.i18n.__({
 					phrase: string,
-					locale: this.getLocale(request.user, request)
+					locale: request.getLocale()
 				});
 			},
 			email       : request.query.email,
@@ -700,7 +703,7 @@ class AuthController {
 			if(err){
 				return next(new this.errorController.errors.RenderError({
 					message: err.message
-				}), null);
+				}));
 			}
 
 			response.setHeader('Content-Type', 'text/html');
@@ -736,7 +739,7 @@ class AuthController {
 		}).catch((err) => {
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
-			}), null);
+			}));
 		});
 	}
 
@@ -758,7 +761,7 @@ class AuthController {
 				__         : (string) => {
 					return this.i18n.__({
 						phrase : string,
-						locale : this.getLocale(request.user, request)
+						locale : request.getLocale()
 					});
 				},
 				error     : error

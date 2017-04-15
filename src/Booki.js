@@ -5,20 +5,101 @@
 class Booki {
 
 	constructor(){
+		const bindAll = require('lodash/bindAll');
+		const path    = require('path');
 
 		this.booki    = this;
 
-		//Setup logging
-		this.winston = require('winston');
-		this.logger  = new (this.winston.Logger)({
+		this.folders  = {
+			uploads: path.resolve(__dirname, '../static/uploads/')
+		};
+
+		this.config   = require('../config.json');
+
+		bindAll(this, []);
+
+		//Loading 'shared' modules
+		this.oauth2orize   = require('oauth2orize');
+		this.passport      = require('passport');
+
+		//setup with dependencies
+		this.setupLogger().then(({winston, logger}) => {
+			this.winston = winston;
+			this.logger  = logger;
+
+			return Promise.all([
+
+				this.setupI18n(logger, this.config).then((i18n) => {
+					this.i18n = i18n;
+
+					return Promise.all([
+
+						this.loadErrorController(i18n).then((errorController) => {
+							this.errorController = errorController;
+						}),
+
+						this.setupHttpServer(
+							logger, this.config, i18n, this.passport
+						).then(({app, server}) => {
+							this.app    = app;
+							this.server = server;
+
+							return Promise.all([
+								this.setupStats(server).then((statsHolder) => {
+									this.statsHolder = statsHolder;
+								})
+							]);
+
+						})
+					]);
+				}),
+
+				this.connectToDatabase(logger, this.config).then((sequelize) => {
+					this.sequelize = sequelize;
+				}),
+				this.connectToSphinx(logger, this.config).then((sphinx) => {
+					this.sphinx = sphinx;
+				}),
+
+			]);
+
+		}).then(() => {
+			return this.loadModels(
+				this.logger,    this.config, this.errorController,
+				this.sequelize, this.sphinx
+			);
+		}).then((models) => {
+			this.models = models;
+		}).then(() => {
+			//sync sequelize
+			this.sequelize.sync();
+		}).then(() => {
+			//Do the routing
+			this.logger.log('info', 'Setting up routes');
+
+			require('./Routing')(this);
+		}).catch((e) => {
+			if(this.logger){
+				this.logger.log('critical', e);
+			}else{
+				console.log("ERROR", e);
+				process.exit(1);
+			}
+		});
+	}
+
+	setupLogger(){
+		let winston = require('winston');
+
+		let logger = new (winston.Logger)({
 			transports: [
-				new (this.winston.transports.Console)({
+				new (winston.transports.Console)({
 					name        : 'console-log',
 					level       : 'debug',
 					colorize    : true,
 					prettyPrint : true
 				}),
-				new (this.winston.transports.File)({
+				new (winston.transports.File)({
 					name        : 'file-log',
 					level       : 'debug',
 					filename    : 'booki.log',
@@ -35,7 +116,7 @@ class Booki {
 			}
 		});
 
-		this.winston.addColors({
+		winston.addColors({
 			critical  : 'red',
 			error     : 'red',
 			warning   : 'yellow',
@@ -43,61 +124,43 @@ class Booki {
 			debug     : 'magenta'
 		});
 
-		//Load modules
-		this.logger.log('info', 'Loading modules...');
+		return Promise.resolve({winston, logger});
+	}
 
-		//TODO chech licenses of packages
+	setupI18n(logger, config){
+		logger.log('info', 'Configuring i18n');
 
-		this.crypto             = require('crypto');
-		this.i18n               = require('i18n');
+		let i18n = require('i18n');
 
-		this.oauth2orize        = require('oauth2orize');
-		this.passport           = require('passport');
-
-		const requestStats      = require('request-stats');
-		const bindAll           = require('lodash/bindAll');
-		const Sequelize         = require('sequelize');
-		const mysql             = require('mysql2/promise');
-		const express           = require('express');
-		const expressSession    = require('express-session');
-		const bodyParser        = require('body-parser');
-		const helmet            = require('helmet');
-		const logger            = this.logger;
-
-		let setupPromises       = [];
-
-		//Load config
-		logger.log('info', 'Loading config..');
-		this.config             = require('../config.json');
-
-		bindAll(this, [
-		 	'getLocale', 'generateRandomString', 'generateHash',
-			'isObject',  'mergeDeep'
-		]);
-
-		//Configure i18n
-		this.i18n.configure({
-			locales        : this.config.LOCALES,
-			defaultLocale  : this.config.LOCALES[0],
+		i18n.configure({
+			locales        : config.LOCALES,
+			defaultLocale  : config.LOCALES[0],
 			directory      : __dirname + '/../locales',
 			autoReload     : true,
 			extension      : '.json',
 			prefix         : 'booki-',
 		});
 
-		//Load error messages
-		this.errorController = new (require(
-			'./controllers/ErrorController')
-		)(this);
+		return Promise.resolve(i18n);
+	}
 
-		//Connect sequelize to the database
+	loadErrorController(i18n){
+		return Promise.resolve(
+			new (require(
+				'./controllers/ErrorController')
+			)(i18n)
+		);
+	}
 
+	connectToDatabase(logger, config){
 		logger.log('info', 'Connecting to the database...');
 
-		this.sequelize = new Sequelize(
-			this.config.DB_NAME,
-			this.config.DB_USERNAME,
-			this.config.DB_PASSWORD,
+		const Sequelize = require('sequelize');
+
+		let sequelize = new Sequelize(
+			config.DB_NAME,
+			config.DB_USERNAME,
+			config.DB_PASSWORD,
 			{
 				host: this.config.DB_HOST,
 				port: this.config.DB_PORT,
@@ -111,57 +174,73 @@ class Booki {
 			}
 		);
 
+		return Promise.resolve(sequelize);
+	}
 
-		//And to the sphinx server
+	connectToSphinx(logger, config){
 		logger.log('info', 'Connecting to sphinx...');
-		setupPromises.push(mysql.createConnection({
+
+		const mysql = require('mysql2/promise');
+
+		return mysql.createConnection({
 			host    : this.config.DB_HOST,
 			port    : this.config.SPHINX_PORT,
 			//charset : 'UTF8MB4_GENERAL_CI'
-		}).then((connection) => {
-			this.sphinx = connection;
-			return connection;
-		}));
+		});
+	}
 
-		//Start the server
-
+	setupHttpServer(logger, config, i18n, passport){
 		logger.log('info', 'Starting express server...');
-		this.app = new express();
 
-		this.server = this.app.listen(this.config.HTTP_PORT, () => {
+		const express           = require('express');
+		const expressSession    = require('express-session');
+		const bodyParser        = require('body-parser');
+		const helmet            = require('helmet');
+
+
+		let app = new express();
+
+		let server = app.listen(config.HTTP_PORT, () => {
 			logger.log('info',
 				'Server running on',
-				this.server.address().address + ':' + this.server.address().port
+				server.address().address + ':' + server.address().port
 			);
 		});
 
 		//Configure the server
 		logger.log('info', 'Configuring express...');
-		this.app.use('/static/',
+
+		//static resources
+		app.use('/static/',
 			express.static(__dirname + '/../static')
 		);
-		this.app.use('/.well-known/',
+		//prove identity
+		app.use('/.well-known/',
 			express.static(__dirname + '/../.well-known')
 		);
 
-		this.app.use(bodyParser.json());
-		this.app.use(bodyParser.urlencoded({
-			extended: true
-		}));
-		this.app.use(expressSession({//OAuth2orize requires it
-			secret            : this.config.SESSION_SECRET,
+		//parse json
+		app.use(bodyParser.json());
+
+		//and enable sessions of oauth2orize
+		app.use(expressSession({
+			secret            : config.SESSION_SECRET,
 			saveUninitialized : true,
 			resave            : true
 		}));
 
-		this.app.use(this.i18n.init);
+		//include i18n middleware
+		app.use(i18n.init);
 
-		this.app.use(this.passport.initialize());
-		this.app.use(this.passport.session());
+		//setup passport for authentication
+		app.use(passport.initialize());
+		app.use(passport.session());
 
-		this.app.use(helmet());
+		//harden express
+		app.use(helmet());
 
-		this.app.use(
+		//set default headers and attach functions
+		app.use(
 			(request, response, next) => {
 
 				response.header('Access-Control-Allow-Origin', '*');
@@ -185,138 +264,75 @@ class Booki {
 			}
 		);
 
-		//add stats
-		this.statsHolder = new (require('./StatsHolder'))(this);
-		requestStats(this.server, this.statsHolder.requestCompleted);
+		return Promise.resolve({app, server});
+	}
 
-		Promise.all(setupPromises).then(() => {
+	setupStats(server){
+		const requestStats = require('request-stats');
+		const statsHolder  = new (require('./StatsHolder'))();
 
-			//Load all Models
-			logger.log('info', 'Loading models...');
-			const modelFiles = [
-				'Person',
-				'Condition', 'Offer', 'File', 'ThumbnailType', 'Thumbnail',
-				'Image', 'Permission', 'OAuthProvider', 'User', 'OAuthRedirectUri',
-				'OAuthClient', 'OAuthCode', 'OAuthAccessToken', 'Book'
-			];
+		requestStats(server, statsHolder.requestCompleted)
 
-			this.models = {};
+		return Promise.resolve(statsHolder);
+	}
 
-			modelFiles.forEach((model) => {
+	loadModels(logger, config, errorController, sequelize, sphinx){
+		logger.log('info', 'Loading models...');
 
-				this.models[model] = require(
-					'./models/' + model
-				)(this);
+		const Sequelize = require('sequelize');
 
-				if(this.models[model].attributes.id){
-					this.models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
-				}
+		const modelFiles = [
+			'Person', //no init dependencies
+			'Condition', //no init dependencies
+			'File', //no init dependencies
+			'ThumbnailType', //no init dependencies
+			'Permission', //no init dependencies
+			'OAuthProvider', //no init dependencies
+			'OAuthRedirectUri', //no init dependencies
 
+			'Offer', //requires 'Condition'
+			'Thumbnail', //requires 'ThumbnailType'
+			'OAuthClient', //requires 'OAuthRedirectUri'
+			'Book', //requires 'Image'
+			'Image', //requires 'File' AND 'Thumbnail'
+			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
+
+			'OAuthCode', //requires 'OAuthClient' AND 'User'
+			'OAuthAccessToken', //requires 'OAuthClient' AND 'User'
+		];
+
+		let models = {};
+
+		modelFiles.forEach((model) => {
+
+			models[model] = require(
+				'./models/' + model
+			)({
+				config,
+				errorController,
+				sequelize,
+				sphinx,
+				models
 			});
 
-			logger.log('info', 'Associating models...');
-			//Add associations
-			for(let modelKey in this.models){
-				if(
-					this.models.hasOwnProperty(modelKey) &&
-					this.models[modelKey].associate
-				){
-					this.models[modelKey].associate(this.models);
-				}
+			if(models[model].attributes.id){
+				models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
 			}
-			//setup tables if needed
-			this.sequelize.sync();
 
-			//Do the routing
-			logger.log('info', 'Setting up routes');
-			require('./Routing')(this);
-		}).catch((e) => {
-			logger.log('critical', e);
 		});
-	}
 
-	getLocale(user = null, request = null){
-		if(user !== null){
-			return user.get('locale');
-		}else if(request !== null){
-			return this.i18n.getLocale(request);
-		}else{
-			return this.config.LOCALES[0]
-		}
-	}
-
-	/**
-	 * Generates (unsafe) random string of characters
-	 * @function generateRandomString
-	 * @param {number} length - Length of the random string.
-	 * @returns {String} A random string of a given length
-	 */
-	 generateRandomString(length){
-		return this.crypto.randomBytes(length)
-					.toString('base64')
-					.slice(0, length);
-	}
-
-	/**
-	 * Hash string using this.HASH_ALGORITHM or the passed algorithm
-	 * @function generateHash
-	 * @param {string} string - The string to be hashed
-	 * @param {string} salt - The salt to be used while hashing
-	 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that
-	 * should be used
-	 * @returns {object} - The hashed string, the generated salt and the
-	 * used hash algorithm {hash: '', salt: '', algorithm: ''}
-	 */
-	generateHash(string, salt = null, algorithm = null){
-
-		if(!algorithm){
-			algorithm = this.config.HASH_ALGORITHM;
-		}
-
-		if(!salt && salt !== false){
-			salt = this.generateRandomString(this.config.SALT_LENGTH);
-		}
-
-			let hmacOrHash;
-
-			if(salt){
-				hmacOrHash = this.crypto.createHmac(algorithm, salt);
-			}else{
-				hmacOrHash = this.crypto.createHash(algorithm);
-			}
-
-			hmacOrHash.update(string);
-
-			return {hash: hmacOrHash.digest('hex'), salt: salt, algorithm: algorithm};
-	}
-
-	/**
-	 * Simple is object check.
-	 * @param item
-	 * @returns {boolean}
-	 */
-	isObject(item) {
-		return (item && typeof item === 'object' && !Array.isArray(item));
-	}
-
-	/**
-	 * Deep merge two objects.
-	 * @param target
-	 * @param source
-	 */
-	mergeDeep(target, source) {
-		if(this.isObject(target) && this.isObject(source)){
-			for (const key in source) {
-				if (this.isObject(source[key])) {
-					if (!target[key]) Object.assign(target, { [key]: {} });
-					this.mergeDeep(target[key], source[key]);
-				} else {
-					Object.assign(target, { [key]: source[key] });
-				}
+		logger.log('info', 'Associating models...');
+		//Add associations
+		for(let modelKey in models){
+			if(
+				models.hasOwnProperty(modelKey) &&
+				models[modelKey].associate
+			){
+				models[modelKey].associate(models);
 			}
 		}
 
-		return target;
+		return Promise.resolve(models);
 	}
 
 };

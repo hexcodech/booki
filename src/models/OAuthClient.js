@@ -1,13 +1,10 @@
-const OAuthClient = ({
-	booki,            config,                 sequelize,
-	errorController,  generateRandomString,   i18n,
-	generateHash,     models
-}) => {
+const OAuthClient = ({config, sequelize, models}) => {
 
-	const pick      = require('lodash/pick');
-	const Sequelize   = require('sequelize');
+	const pick            = require('lodash/pick');
+	const Sequelize       = require('sequelize');
+	const CryptoUtilities = require('../utilities/CryptoUtilities');
 
-	let OAuthClient   = sequelize.define('oauth_client', {
+	let OAuthClient       = sequelize.define('oauth_client', {
 
 		/* Name */
 			name: {
@@ -80,14 +77,16 @@ const OAuthClient = ({
 			},
 
 			generateSecret: function(){
-				return generateRandomString(config.CLIENT_SECRET_LENGTH);
+				return CryptoUtilities.generateRandomString(
+					config.CLIENT_SECRET_LENGTH
+				);
 			},
 
   	},
   	instanceMethods: {
 
 			setSecret: function(secret){
-				let {hash, salt, algorithm} = generateHash(secret);
+				let {hash, salt, algorithm} = CryptoUtilities.generateHash(secret);
 
 				this.set({
 					secretHash      : hash,
@@ -97,15 +96,16 @@ const OAuthClient = ({
 			},
 
 			verifySecret: function(secret){
-				let {hash} = generateHash(
+				let {hash} = CryptoUtilities.generateHash(
 					secret,
 					this.get('secretSalt'),
 					this.get('secretAlgorithm')
 				);
-				let {hash : newHash, algorithm: newAlgorithm}	= generateHash(
-					secret,
-					this.get('secretSalt')
-				);
+
+				let {
+					hash      : newHash,
+					algorithm : newAlgorithm
+				}	= CryptoUtilities.generateHash(secret, this.get('secretSalt'));
 
 				if(this.get('secretHash') && hash === this.get('secretHash')){
 
@@ -120,10 +120,6 @@ const OAuthClient = ({
 
 						return this.save().then(() => {
 							return true;
-						}).catch((err) => {
-							throw new errorController.errors.DatabaseError({
-								message: err.message
-							});
 						});
 
 					}

@@ -2,7 +2,7 @@ class BookController{
 
 	constructor({
 		booki,     config,    sequelize, errorController,
-		getLocale, generateRandomString, models
+		generateRandomString, models
 	}){
 
 		const bindAll                     = require('lodash/bindAll');
@@ -18,7 +18,6 @@ class BookController{
 		this.User                         = models.User;
 		this.Person                       = models.Person;
 
-		this.getLocale                    = getLocale;
 		this.generateRandomString         = generateRandomString;
 
 		bindAll(this, [

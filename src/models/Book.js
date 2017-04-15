@@ -1,5 +1,5 @@
 const Book = ({
-	sequelize, errorController, config, models, sphinx
+	config, errorController, sequelize, sphinx, models
 }) => {
 
 	const get         = require('lodash/get');
@@ -294,8 +294,6 @@ const Book = ({
 			}
 		}
 	});
-
-	//TODO add authors field
 
 	return Book;
 

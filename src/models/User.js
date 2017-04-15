@@ -2,19 +2,17 @@
  * Defines the user structure
  */
 
-const User = ({
-	booki, config,	sequelize, errorController, i18n, generateRandomString,
-	generateHash, models
-}) => {
+const User = ({config, errorController, sequelize, models}) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize		    = require('sequelize');
 	const async           = require('async');
+	const CryptoUtilities = require('../utilities/CryptoUtilities');
 
+	const EmailTemplate   = require('email-templates').EmailTemplate;
 	const mailController  = new (require(
 		'../controllers/MailController'
-	))(booki);
-	const EmailTemplate   = require('email-templates').EmailTemplate;
+	))(config, errorController);
 
 	let User = sequelize.define('user', {
 
@@ -101,6 +99,10 @@ const User = ({
 				{
 					model   : models.Image,
 					as      : 'ProfilePicture'
+				},
+				{
+					model   : models.OAuthProvider,
+					as      : 'OAuthProviders'
 				}
 			]
 		},
@@ -336,13 +338,13 @@ const User = ({
 			},
 
 			verifyPassword: function(password){
-				let {hash} = generateHash(
+				let {hash} = CryptoUtilities.generateHash(
 					password,
 					this.get('passwordSalt'),
 					this.get('passwordAlgorithm')
 				);
 
-				let {hash : newHash, newAlgorithm} = generateHash(
+				let {hash : newHash, newAlgorithm} = CryptoUtilities.generateHash(
 					password,
 					this.get('passwordSalt')
 				);
@@ -358,10 +360,6 @@ const User = ({
 
 					return this.save().then((user) => {
 						return true;
-					}).catch((err) => {
-						throw new errorController.errors.DatabaseError({
-							message: err.message
-						});
 					});
 				}else{
 					return false;
@@ -376,7 +374,9 @@ const User = ({
 
 					if(this.get('passwordResetCodeExpirationDate') >= new Date()){
 
-						let {hash, salt, algorithm} = generateHash(password);
+						let {hash, salt, algorithm} = CryptoUtilities.generateHash(
+							password
+						);
 
 						this.set({
 							passwordHash			: hash,
@@ -405,7 +405,7 @@ const User = ({
 			},
 
 			initPasswordReset: function(){
-				let passwordResetCode	= generateRandomString(
+				let passwordResetCode	= CryptoUtilities.generateRandomString(
 					config.TOKEN_LENGTH
 				);
 				let resetMail = new EmailTemplate(
@@ -448,7 +448,7 @@ const User = ({
 
 			initEmailVerification: function(registration = false){
 
-				let emailVerificationCode	= generateRandomString(
+				let emailVerificationCode	= CryptoUtilities.generateRandomString(
 					config.CONFIRM_TOKEN_LENGTH
 				);
 				let confirmationMail = new EmailTemplate(
@@ -565,7 +565,7 @@ const User = ({
 
 			setPermissionsRaw: function(permissions){
 				return new Promise((resolve, reject) => {
-					
+
 					let permissionInstances = [];
 
 					async.each(permissions,

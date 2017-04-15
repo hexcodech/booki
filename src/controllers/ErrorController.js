@@ -1,6 +1,6 @@
 class ErrorController {
 
-	constructor({i18n}){
+	constructor(i18n){
 
 		this.errors					= require('errors');
 		this.i18n						= i18n;

@@ -1,9 +1,7 @@
-const OAuthAccessToken = ({
-	booki,                  config,       sequelize,
-	generateRandomString,   generateHash, models
-}) => {
+const OAuthAccessToken = ({config, sequelize, models}) => {
 
-	const Sequelize   = require('sequelize');
+	const Sequelize       = require('sequelize');
+	const CryptoUtilities = require('../utilities/CryptoUtilities');
 
 	let OAuthAccessToken = sequelize.define('oauth_access_token', {
 		hash: {
@@ -33,10 +31,10 @@ const OAuthAccessToken = ({
 				});
 			},
 			generateToken: function(){
-				return generateRandomString(config.TOKEN_LENGTH);
+				return CryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
 			},
 			hashToken: function(token){
-				return generateHash(token, false).hash;
+				return CryptoUtilities.generateHash(token, false).hash;
 			},
 			findByToken: function(token){
 				return this.findOne({where: {hash: this.hashToken(token)}});

@@ -6,6 +6,12 @@ const ThumbnailType = ({sequelize}) => {
 	let ThumbnailType = sequelize.define('thumbnail_type', {
 		name: {
       type: Sequelize.STRING
+    },
+		width: {
+      type: Sequelize.INTEGER
+    },
+    height: {
+      type: Sequelize.INTEGER
     }
 	}, {
 		classMethods: {

@@ -59,6 +59,7 @@
     "express-validation": "^1.0.0",
     "helmet": "^3.4.0",
     "i18n": "^0.8.3",
+    "image-size": "^0.5.1",
     "joi": "^8.0.5",
     "lodash": "^4.17.4",
     "mysql": "^2.13.0",
@@ -73,6 +74,7 @@
     "request": "^2.79.0",
     "request-stats": "^2.0.1",
     "sequelize": "^3.30.2",
+    "sharp": "^0.17.3",
     "valid-url": "^1.0.9",
     "winston": "^2.3.1"
   }

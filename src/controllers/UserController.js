@@ -5,7 +5,7 @@
 class UserController {
 
 	constructor({
-		booki, config, app, i18n, errorController, getLocale, models
+		booki, config, app, i18n, errorController, models
 	}){
 
 		const bindAll           = require('lodash/bindAll');
@@ -18,8 +18,6 @@ class UserController {
 		this.app                = app;
 		this.i18n               = i18n;
 		this.errorController    = errorController;
-
-		this.getLocale          = getLocale;
 
 		this.User               = models.User;
 		this.Permission         = models.Permission;

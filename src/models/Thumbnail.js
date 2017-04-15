@@ -1,26 +1,9 @@
-const Thumbnail = ({sequelize, config, models}) => {
+const Thumbnail = ({config, sequelize, models}) => {
 
 	const pick      = require('lodash/pick');
 	const Sequelize = require('sequelize');
 
-	let Thumbnail = sequelize.define('thumbnail', {
-		url: {
-      type          : Sequelize.STRING,
-      default       : config.DEFAULT_BOOK_COVER,
-      validate      : {
-        isUrl         : true
-      }
-		},
-    width: {
-      type          : Sequelize.INTEGER
-    },
-    height: {
-      type          : Sequelize.INTEGER
-    },
-    format: {
-      type          : Sequelize.STRING
-    }
-	},{
+	let Thumbnail = sequelize.define('thumbnail', {},{
     defaultScope: {
       include: [
         {
@@ -57,7 +40,7 @@ const Thumbnail = ({sequelize, config, models}) => {
 				let thumbnail = this.get();
 
 				let json = pick(thumbnail, [
-					'id', 'url', 'width', 'height', 'format', 'createdAt', 'updatedAt'
+					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
 				]);
 
 				if(thumbnail.ThumbnailType){

@@ -62,6 +62,16 @@ const Routing = ({booki, app, config, logger}) => {
 			return request.user && request.user.doesHavePermission(permission);
 		};
 
+		request.getLocale = (user = request.user) => {
+			if(user !== null){
+				return user.get('locale');
+			}else if(request !== null){
+				return i18n.getLocale(request);
+			}else{
+				return config.LOCALES[0]
+			}
+		};
+
 		next();
 	});
 

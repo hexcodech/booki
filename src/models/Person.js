@@ -1,4 +1,4 @@
-const Person = ({sequelize, models, sphinx}) => {
+const Person = ({sequelize, sphinx, models}) => {
 
 	const pick        = require('lodash/pick');
 	const Sequelize   = require('sequelize');

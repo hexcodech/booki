@@ -1,27 +1,29 @@
-const Image = ({sequelize, config, models}) => {
+const Image = ({config, sequelize, models}) => {
 
 	const pick      = require('lodash/pick');
 	const Sequelize = require('sequelize');
 
+	const path      = require('path');
+	const sharp     = require('sharp');
+
 	let Image = sequelize.define('image', {
-		url: {
-      type          : Sequelize.STRING,
-      default       : config.DEFAULT_BOOK_COVER,
-      validate      : {
-        isUrl         : true
-      }
-		},
 		width: {
       type          : Sequelize.INTEGER
     },
     height: {
       type          : Sequelize.INTEGER
     },
-    format: {
+    mimeType: {
       type          : Sequelize.STRING
     }
 	}, {
     defaultScope: {
+			include: [
+				{
+					model   : models.File,
+					as      : 'File'
+				}
+			],
 			include: [
 				{
 					model   : models.Thumbnail,
@@ -53,11 +55,56 @@ const Image = ({sequelize, config, models}) => {
 			}
   	},
   	instanceMethods: {
+			generateThumbnails: function(){
+				return new Promise((resolve, reject) => {
+
+					models.File.create({}).then((file) => {
+						return models.ThumbnailType.findAll({});
+					}).then((thumbnailTypes) => {
+
+						async.each(thumbnailTypes, (thumbnailType, callback) => {
+							let path   = this.get('File').get('path'),
+							    ext    = path.extname(path),
+									w      = thumbnailType.get('width'),
+									h      = thumbnailType.get('height'),
+									saveTo = path.resolve(
+										path.dirname(path),
+										path.basename(path, ext) + '-' + w + 'x' + h + '.' + ext
+									);
+
+							let file      = models.File.build({path: saveTo});
+							let thumbmail = models.Thumbnail.build({
+								image_id          : this.get('id'),
+								file_id           : file.get('id'),
+								thumbnail_type_id : thumbnailType.get('id')
+							});
+
+							sharp(path)
+							.resize(w, h)
+							.toFile(saveTo).then(() => {
+								return file.save();
+							}).then(() => {
+								return thumbnail.save();
+							}).then(() => {
+								callback();
+							}).catch((err) => {
+								callback(err);
+							});
+							
+						}, (err) => {
+							reject(err);
+						});
+					}).catch((err) => {
+						reject(err);
+					});
+				});
+			},
+
     	toJSON: function(options){
 				let image = this.get();
 
 				let json = pick(image, [
-					'id', 'url', 'width', 'height', 'format', 'createdAt', 'updatedAt'
+					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
 				]);
 
 				if(image.Thumbnails){

@@ -5,7 +5,7 @@
 
 class MailController {
 
-	constructor({booki, config, errorController}){
+	constructor(config, errorController){
 
 		const bindAll           = require('lodash/bindAll');
 
