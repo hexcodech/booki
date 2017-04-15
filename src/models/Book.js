@@ -1,13 +1,22 @@
 const Book = ({
-	sequelize, errorController, config, models
+	sequelize, errorController, config, models, sphinx
 }) => {
 
-	const get       = require('lodash/get');
-	const pick      = require('lodash/pick');
+	const get         = require('lodash/get');
+	const pick        = require('lodash/pick');
 
-	const Sequelize = require('sequelize');
-	const request   = require('request');
-	const async     = require('async');
+	const Sequelize   = require('sequelize');
+	const request     = require('request');
+	const async       = require('async');
+
+	const sphinxUtils = require('../utilities/SphinxUtilities');
+
+	const amazon      = require('amazon-product-api');
+	const amzClient   = amazon.createClient({
+		awsId     : 'AKIAJ5VWP7D44KOSUT3A',
+		awsSecret : '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',
+		awsTag    : 'bookime-21'
+	});
 
 	let Book					= sequelize.define('book', {
 
@@ -53,7 +62,7 @@ const Book = ({
 			type         : Sequelize.INTEGER,
 		},
 
-		approved: {
+		verified: {
 			type         : Sequelize.BOOLEAN,
 			default      : false
 		},
@@ -86,73 +95,83 @@ const Book = ({
 				});
 			},
 
-			lookupByIsbn: function(isbn = '', page = 0){
-				let {errorController} = this;
+			lookup: function(text = '', page = 0){
 
-				isbn = isbn.replace(/(-|\s)/g, ''); //remove spaces and dashes
+				return new Promise((resolve, reject) => {
 
-				if(isbn.length === 10){ //convert isbn10 to isbn13
-					isbn = '978' + isbn;
-				}
+					//sphinx search
+					sphinx.query(
+						'SELECT id FROM books WHERE MATCH(?) OPTION field_weights=' +
+						'(isbn13=100, title=5, subitle=3, desciption=1)',
+						['@* *' + sphinxUtils.escape(text) + '*']
+					).then((results) => {
 
-				//even tought this function shouldn't even be called if the
-				//book is already present, we double check
-				return this.findAll({where: {isbn13: isbn}}).then((books) => {
+						let dbBooks = [];
 
-					if(books){
-						//the isbn is already in our database
-						return resolve(books);
+						async.each(results[0], (book, callback) => {
+							this.findById(book.id).then((instance) => {
+								if(instance){
+									dbBooks.push(instance);
+								}
+								callback();
+							}).catch((err) => {
+								callback(err);
+							});
+						}, (err) => {
+							if(err){
+								reject(err);
+							}
 
-					}else{
+							let amazonBooks = [];
 
-						let promises = [];
+							//combine with external sources
+							amzClient.itemSearch({
+							  keywords      : text,
+							  searchIndex   : 'Books',
+							  responseGroup : 'ItemAttributes,Offers,Images',
+								domain        : 'webservices.amazon.de'
+							}).then((results) => {
+							  amazonBooks = results.map((result) => {
+									let attr = result.ItemAttributes[0];
 
-						//use the amazon product advertising api
+									if(!attr.ISBN || !attr.ISBN[0]){
+										return null;
+									}
 
-						Promises.all(promises).then((bookArrays) => {
+									return {
+										isbn13          : attr.ISBN[0].length == 10 ?
+										                  '978' + attr.ISBN[0] :
+																			attr.ISBN[0],
+										title           : attr.Title[0],
+										subtitle        : attr.Title[1] ? attr.Title[1] : '',
+										language        : attr.Languages
+										                  [0].Language.Name,
+										description     : '',
+										publisher       : attr.Publisher[0],
+										publicationDate : attr.PublicationDate ?
+										                  attr.PublicationDate[0] : 0,
+										pageCount       : attr.NumberOfPages ?
+										                  attr.NumberOfPages[0] : 0,
+										verified        : false,
 
-							resolve([].concat.apply([], bookArrays)); //flatten array
+										url             : result.DetailPageURL[0],
+										authors         : attr.Author,
+										thumbnail       : result.LargeImage[0].URL,
 
-						}).catch((error) => {
-							reject(error);
+									};
+								}).filter(e => e); //removes falsy elements
+
+								return resolve({
+									db       : dbBooks,
+									external : amazonBooks
+								});
+
+							}).catch((err) => {
+							  return reject(err);
+							});
 						});
-					}
-
-				}).catch((err) => {
-					reject(new errorController.errors.DatabaseError({
-						message: err.message
-					}));
-				});
-			},
-
-			lookupByTitle: function(title = '', page = 0){
-				let likeQuery = '%' + title.replace('_', '\_').replace('%', '\%') + '%';
-
-				return this.findAll({where: {$or: [
-					{title     : likeQuery},
-					{subtitle  : likeQuery}
-				]}}).then((books) => {
-
-					let promises = [];
-
-					promises.push(this.findOnGoogle(
-						title, 'title', 10 * page, 10, 'all', 'relevance', ''
-					));
-
-					return Promise.all(promises).then((bookArrays) => {
-
-						return [].concat.apply(books, bookArrays); //flatten array
-
-					}).catch((error) => {
-						throw error;
-					});
-
-				}).catch((err) => {
-					throw new errorController.errors.DatabaseError({
-						message: err.message
 					});
 				});
-
 			}
   	},
   	instanceMethods: {
@@ -165,51 +184,67 @@ const Book = ({
 					async.each(authors, (author, callback) => {
 
 						if(isNan(author)){
-							let parts = author.split(' ');
 
-							if(parts.length === 0 || parts.length > 4){
-								return;
-							}
+							models.Person.searchByExactName(author).then((results) => {
+								if(results[0].length === 1){//perfect match
+									models.Person.findById(results[0][0].id).then((author) => {
+										authorInstances.push(author);
+										callback();
 
-
-							let author = models.Person.build();
-
-							switch(parts.length){
-								case 1:
-									author.set({
-										'nameLast' : parts[0]
+									}).catch((err) => {
+										callback(err);
 									});
-									break;
-								case 2:
-									author.set({
-										'nameFirst': parts[0],
-										'nameLast' : parts[1]
+								}else{
+									let parts = author.split(' ');
+
+									if(parts.length === 0 || parts.length > 4){
+										return;
+									}
+
+									let author = models.Person.build();
+
+									switch(parts.length){
+										case 1:
+											author.set({
+												'nameLast' : parts[0]
+											});
+											break;
+										case 2:
+											author.set({
+												'nameFirst': parts[0],
+												'nameLast' : parts[1]
+											});
+											break;
+										case 3:
+											author.set({
+												'nameFirst'  : parts[0],
+												'nameMiddle' : parts[1],
+												'nameLast'   : parts[2]
+											});
+											break;
+
+										case 4:
+										default:
+											author.set({
+												'nameTitle'  : parts[0],
+												'nameFirst'  : parts[1],
+												'nameMiddle' : parts[2],
+												'nameLast'   : parts[3]
+											});
+											break;
+									}
+
+									author.set('verified', false);
+
+									author.save().then(() => {
+
+										authorInstances.push(author);
+										callback();
+
+									}).catch((err) => {
+										callback(err);
 									});
-									break;
-								case 3:
-									author.set({
-										'nameFirst'  : parts[0],
-										'nameMiddle' : parts[1],
-										'nameLast'   : parts[2]
-									});
-									break;
-
-								case 4:
-								default:
-									author.set({
-										'nameTitle'  : parts[0],
-										'nameFirst'  : parts[1],
-										'nameMiddle' : parts[2],
-										'nameLast'   : parts[3]
-									});
-									break;
-							}
-
-							author.save().then(() => {
-
-								authorInstances.push(author);
-								callback();
-
+								}
 							}).catch((err) => {
 								callback(err);
 							});
@@ -245,9 +280,9 @@ const Book = ({
 				let book = this.get(); //invoking virtual getters
 
 				let json = pick(book, [
-					'id',          'title',     'subtitle',        'language',
-					'description', 'publisher', 'publicationDate', 'pageCount',
-					'approved',    'createdAt', 'updatedAt'
+					'id',        'isbn13',      'title',     'subtitle',
+					'language',  'description', 'publisher', 'publicationDate',
+					'pageCount', 'verified',    'createdAt', 'updatedAt'
 				]);
 
 				json.coverImage = '';

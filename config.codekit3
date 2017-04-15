@@ -7,7 +7,7 @@
 		"uuidString": "8FD20BD1-890E-45B3-8DCA-F384EB641ED2"
 		}
 	],
-"creatorBuild": "25704",
+"creatorBuild": "25813",
 "files": {
 	"\/.gitignore": {
 		"ft": 8192,
@@ -1137,12 +1137,6 @@
 		"oAP": "\/build\/node_modules",
 		"oF": 0
 		},
-	"\/npm-debug.log": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/npm-debug.log",
-		"oF": 0
-		},
 	"\/package.json": {
 		"ft": 524288,
 		"oA": 1,
@@ -1200,11 +1194,12 @@
 	"\/static\/res\/img\/cover\/book-cover.png": {
 		"ft": 32768,
 		"iS": 21932,
-		"l": 1,
 		"oA": 1,
 		"oAP": "\/static\/res\/img\/cover\/min\/book-cover.min.png",
 		"oF": 0,
+		"oIPL": 0,
 		"opt": 1,
+		"oT": 1,
 		"q": 100
 		},
 	"\/static\/res\/img\/cover\/book-cover.psd": {
@@ -2871,6 +2866,10 @@
 			"active": 0,
 			"optionString": ""
 			},
+		"no-prototype-builtins": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-redeclare": {
 			"active": 1,
 			"optionString": "{'builtinGlobals': false}"
@@ -3695,14 +3694,6 @@
 		"orderOutput": 0,
 		"outputStyle": 1
 		},
-	"languageDefaultsJSX": {
-		"autoOutputAction": 0,
-		"autoOutputPathFilenamePattern": "*.js",
-		"autoOutputPathRelativePath": "",
-		"autoOutputPathReplace1": "jsx",
-		"autoOutputPathReplace2": "js",
-		"autoOutputPathStyle": 0
-		},
 	"languageDefaultsKIT": {
 		"autoOutputAction": 0,
 		"autoOutputPathFilenamePattern": "*.html",
@@ -3765,7 +3756,7 @@
 		"autoOutputPathReplace1": "",
 		"autoOutputPathReplace2": "",
 		"autoOutputPathStyle": 2,
-		"enableLossy": 1,
+		"optimizerType": 1,
 		"quality": 100
 		},
 	"languageDefaultsPUG": {

@@ -99,24 +99,27 @@ class Booki {
 			this.config.DB_USERNAME,
 			this.config.DB_PASSWORD,
 			{
-			host: this.config.DB_HOST,
-			port: this.config.DB_PORT,
-			dialect: 'mysql',
-			pool: {
-				max  : 5,
-				min  : 0,
-				idle : 10000
-			},
-			logging: null
-		});
+				host: this.config.DB_HOST,
+				port: this.config.DB_PORT,
+				dialect: 'mysql',
+				pool: {
+					max  : 5,
+					min  : 0,
+					idle : 10000
+				},
+				logging: null
+			}
+		);
 
 
 		//And to the sphinx server
+		logger.log('info', 'Connecting to sphinx...');
 		setupPromises.push(mysql.createConnection({
-			host: this.config.DB_HOST,
-			port: this.config.SPHINX_PORT
+			host    : this.config.DB_HOST,
+			port    : this.config.SPHINX_PORT,
+			//charset : 'UTF8MB4_GENERAL_CI'
 		}).then((connection) => {
-			this.dbConnection = connection;
+			this.sphinx = connection;
 			return connection;
 		}));
 
@@ -186,44 +189,44 @@ class Booki {
 		this.statsHolder = new (require('./StatsHolder'))(this);
 		requestStats(this.server, this.statsHolder.requestCompleted);
 
-
-		//Load all Models
-		logger.log('info', 'Loading models...');
-		const modelFiles = [
-			'Person',
-			'Condition', 'Offer', 'File', 'ThumbnailType', 'Thumbnail',
-			'Image', 'Permission', 'OAuthProvider', 'User', 'OAuthRedirectUri',
-			'OAuthClient', 'OAuthCode', 'OAuthAccessToken', 'Book'
-		];
-
-		this.models = {};
-
-		modelFiles.forEach((model) => {
-
-			this.models[model] = require(
-				'./models/' + model
-			)(this);
-
-			if(this.models[model].attributes.id){
-				this.models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
-			}
-
-		});
-
-		logger.log('info', 'Associating models...');
-		//Add associations
-		for(let modelKey in this.models){
-			if(
-				this.models.hasOwnProperty(modelKey) &&
-				this.models[modelKey].associate
-			){
-				this.models[modelKey].associate(this.models);
-			}
-		}
-		//setup tables if needed
-		this.sequelize.sync();
-
 		Promise.all(setupPromises).then(() => {
+
+			//Load all Models
+			logger.log('info', 'Loading models...');
+			const modelFiles = [
+				'Person',
+				'Condition', 'Offer', 'File', 'ThumbnailType', 'Thumbnail',
+				'Image', 'Permission', 'OAuthProvider', 'User', 'OAuthRedirectUri',
+				'OAuthClient', 'OAuthCode', 'OAuthAccessToken', 'Book'
+			];
+
+			this.models = {};
+
+			modelFiles.forEach((model) => {
+
+				this.models[model] = require(
+					'./models/' + model
+				)(this);
+
+				if(this.models[model].attributes.id){
+					this.models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
+				}
+
+			});
+
+			logger.log('info', 'Associating models...');
+			//Add associations
+			for(let modelKey in this.models){
+				if(
+					this.models.hasOwnProperty(modelKey) &&
+					this.models[modelKey].associate
+				){
+					this.models[modelKey].associate(this.models);
+				}
+			}
+			//setup tables if needed
+			this.sequelize.sync();
+
 			//Do the routing
 			logger.log('info', 'Setting up routes');
 			require('./Routing')(this);

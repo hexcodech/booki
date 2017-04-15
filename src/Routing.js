@@ -66,23 +66,23 @@ const Routing = ({booki, app, config, logger}) => {
 	});
 
 	const localLoginValidation = require(
-		'./validation/LocalLoginValidation'
+		'./validation/authentication/LocalLoginValidation'
 	)(booki);
 
 	const initPasswordResetValidation	= require(
-		'./validation/InitPasswordResetValidation'
+		'./validation/authentication/InitPasswordResetValidation'
 	)(booki);
 
 	const passwordResetValidation = require(
-		'./validation/PasswordResetValidation'
+		'./validation/authentication/PasswordResetValidation'
 	)(booki);
 
 	const localRegistrationValidation	= require(
-		'./validation/LocalRegistrationValidation'
+		'./validation/authentication/LocalRegistrationValidation'
 	)(booki);
 
 	const verifyMailValidation = require(
-		'./validation/VerifyMailValidation'
+		'./validation/authentication/VerifyMailValidation'
 	)(booki);
 
 	app.get('/views/login',
@@ -180,10 +180,10 @@ const Routing = ({booki, app, config, logger}) => {
 	)(booki);
 
 	const postUserValidation           = require(
-		'./validation/PostUserValidation.js'
+		'./validation/user/PostUserValidation.js'
 	)(booki);
 	const putUserValidation            = require(
-		'./validation/PutUserValidation.js'
+		'./validation/user/PutUserValidation.js'
 	)(booki);
 
 	app.get('/v1/user',
@@ -225,11 +225,11 @@ const Routing = ({booki, app, config, logger}) => {
 
 
 	const postOAuthClientValidation = require(
-		'./validation/PostOAuthClientValidation'
+		'./validation/oauth-client/PostOAuthClientValidation'
 	)(booki);
 
 	const putOAuthClientValidation = require(
-		'./validation/PutOAuthClientValidation'
+		'./validation/oauth-client/PutOAuthClientValidation'
 	)(booki);
 
 
@@ -267,13 +267,13 @@ const Routing = ({booki, app, config, logger}) => {
 	))(booki);
 
 	const postBookValidation = require(
-		'./validation/PostBookValidation'
+		'./validation/book/PostBookValidation'
 	)(booki);
 	const putBookValidation = require(
-		'./validation/PutBookValidation'
+		'./validation/book/PutBookValidation'
 	)(booki);
 	const lookupBookValidation = require(
-		'./validation/LookupBookValidation'
+		'./validation/book/LookupBookValidation'
 	)(booki);
 
 	app.get('/v1/book/lookup',
@@ -304,6 +304,21 @@ const Routing = ({booki, app, config, logger}) => {
 	app.delete('/v1/book/:bookId',
 		authController.isBearerAuthenticated(['admin.book.delete']),
 		bookController.deleteBook
+	);
+
+	//People
+
+	const personController = new (require(
+		'./controllers/PersonController'
+	))(booki);
+
+	const lookupPersonValidation = require(
+		'./validation/person/LookupPersonValidation'
+	)(booki);
+
+	app.get('/v1/person/lookup',
+		validate(lookupPersonValidation),
+		personController.lookupPerson
 	);
 
 	//last error catch

@@ -23,7 +23,7 @@ class BookController{
 
 		bindAll(this, [
 			'getBook', 'getBookById', 'postBook',
-			'putBook', 'deleteBook',  'lookupBook', 'lookupAuthor'
+			'putBook', 'deleteBook', 'lookupBook'
 		]);
 
 	}
@@ -299,55 +299,33 @@ class BookController{
 
 	}
 
-	lookupAuthor(request, response, next){
-
-	}
-
 	lookupBook(request, response, next){
 
-		if(request.query.isbn){
+		return this.Book.lookup(request.query.search)
+		.then((books) => {
 
-			return this.Book.lookupByIsbn(request.query.isbn)
-			.then((books) => {
+			let {db, external} = books;
 
-				if(request.hasPermission('admin.book.hiddenData.read')){
-					response.json(books.map((book) => {
-						return book.toJSON({hiddenData: true});
-					}));
-				}else{
-					response.json(books.map((book) => {
-						return book.toJSON();
-					}));
-				}
+			if(request.hasPermission('admin.book.hiddenData.read')){
+				db = db.map((book) => {
+					return book.toJSON({hiddenData: true});
+				});
+			}else{
+				db = db.map((book) => {
+					return book.toJSON();
+				});
+			}
 
-				return response.end();
-
-			}).catch((error) => {
-				return next(error);
+			response.json({
+				db,
+				external
 			});
 
-		}else if(request.query.title){
+			return response.end();
 
-			return this.Book.lookupByTitle(request.query.title)
-			.then((books) => {
-				if(request.hasPermission('admin.book.hiddenData.read')){
-					response.json(books.map((book) => {
-						return book.toJSON({hiddenData: true});
-					}));
-				}else{
-					response.json(books.map((book) => {
-						return book.toJSON();
-					}));
-				}
-
-				return response.end();
-			}).catch((error) => {
-				return next(error);
-			});
-
-		}
-
-		return next(new this.errorController.errors.NotFoundError());
+		}).catch((error) => {
+			return next(error);
+		});
 
 	}
 

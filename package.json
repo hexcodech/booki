@@ -43,10 +43,12 @@
   },
   "homepage": "http://booki.me",
   "dependencies": {
+    "amazon-product-api": "^0.4.3",
     "async": "^2.1.5",
     "body-parser": "^1.15.2",
     "bootstrap": "^4.0.0-alpha.5",
     "bourbon": "^4.2.7",
+    "busboy": "^0.2.14",
     "crypto": "0.0.3",
     "ejs": "^2.5.2",
     "email-templates": "^2.4.1",

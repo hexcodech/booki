@@ -1,7 +1,9 @@
-const Person = ({sequelize, models}) => {
+const Person = ({sequelize, models, sphinx}) => {
 
-	const pick      = require('lodash/pick');
-	const Sequelize = require('sequelize');
+	const pick        = require('lodash/pick');
+	const Sequelize   = require('sequelize');
+
+	const sphinxUtils = require('../utilities/SphinxUtilities');
 
 	let Person = sequelize.define('person', {
 		nameTitle: {
@@ -16,6 +18,11 @@ const Person = ({sequelize, models}) => {
     nameLast: {
       type          : Sequelize.STRING
 		},
+
+		verified: {
+			type          : Sequelize.BOOLEAN,
+			default       : false
+		}
 
 	}, {
     getterMethods   : {
@@ -38,6 +45,24 @@ const Person = ({sequelize, models}) => {
 					through    : 'author_relations'
 				});
 
+			},
+
+			searchByExactName: function(name){
+				return sphinx.query(
+					'SELECT * FROM people WHERE MATCH(?)',
+					['@name \'' + sphinxUtils.escape(name) + '\'']
+				).then((results) => {
+					return results;
+				});
+			},
+
+			lookupByName: function(name){
+				return sphinx.query(
+					'SELECT * FROM people WHERE MATCH(?)',
+					['@name *' + sphinxUtils.escape(name) + '*']
+				).then((results) => {
+					return results;
+				});
 			}
   	},
   	instanceMethods: {
