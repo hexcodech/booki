@@ -34,7 +34,6 @@ class ImageController{
       if(
         mimetype.startsWith('image/') &&
         file.byteLength <= 1024 * 1024 * 2
-        //                 1KB    1MB    2 MB
       ){
 
         this.File.create({}).then((fileInstance) => {
@@ -47,8 +46,7 @@ class ImageController{
             d.getMonth() + 1,
             //prevent the use as public image hosting api
             fileInstance.get('id') + '-' +
-            CryptoUtilities.generateRandomString(3),
-
+            CryptoUtilities.generateRandomString(3) +
             '.png'
           );
 
