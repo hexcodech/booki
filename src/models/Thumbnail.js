@@ -49,6 +49,12 @@ const Thumbnail = ({config, sequelize, models}) => {
 
 				return json;
 			}
+		},
+
+		hooks: {
+			beforeDestroy: (thumbnail) => {
+				return thumbnail.get('File').destroy();
+			}
 		}
 	});
 

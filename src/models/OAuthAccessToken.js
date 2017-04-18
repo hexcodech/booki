@@ -1,7 +1,7 @@
-const OAuthAccessToken = ({config, sequelize, models}) => {
+const OAuthAccessToken = ({config, sequelize, models, cryptoUtilities}) => {
 
 	const Sequelize       = require('sequelize');
-	const CryptoUtilities = require('../utilities/CryptoUtilities');
+	const CryptoUtilities = cryptoUtilities;
 
 	let OAuthAccessToken = sequelize.define('oauth_access_token', {
 		hash: {

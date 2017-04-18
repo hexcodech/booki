@@ -144,7 +144,7 @@ class UserController {
 
 		if(
 			!request.hasPermission('admin.user.editOthers') &&
-			request.params.userId !== request.user._id
+			request.params.userId !== request.user.get('id')
 		){
 			return next(new this.errorController.errors.ForbiddenError());
 		}

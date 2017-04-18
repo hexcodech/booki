@@ -1,9 +1,11 @@
-const Image = ({config, sequelize, models}) => {
+const Image = ({config, sequelize, errorController, models}) => {
 
 	const pick      = require('lodash/pick');
 	const Sequelize = require('sequelize');
 
 	const path      = require('path');
+	const async     = require('async');
+	//const fs        = require('fs');
 	const sharp     = require('sharp');
 
 	let Image = sequelize.define('image', {
@@ -20,14 +22,14 @@ const Image = ({config, sequelize, models}) => {
     defaultScope: {
 			include: [
 				{
-					model   : models.File,
-					as      : 'File'
+					model   : models.Thumbnail,
+					as      : 'Thumbnails'
 				}
 			],
 			include: [
 				{
-					model   : models.Thumbnail,
-					as      : 'Thumbnails'
+					model   : models.File,
+					as      : 'File'
 				}
 			]
 		},
@@ -55,6 +57,55 @@ const Image = ({config, sequelize, models}) => {
 			}
   	},
   	instanceMethods: {
+			cleanThumbnails: function(){
+				let thumbnails = this.get('Thumbnails');
+
+				return Promise.all(thumbnails.map((thumbnail) => {
+					return thumbnail.destroy();
+				}));
+			},
+
+			/*cleanThumbnailsHard: function(){
+
+				let path         = this.get('File').get('path'),
+				    thumbnailDir = path.dirname(path),
+				    ext          = path.extname(path),
+						name         = path.basename(path, ext);
+
+				return new Promise((resolve, reject) => {
+					fs.readdir(thumbnailDir, (err, files) => {
+							if(err){
+								return reject(err);
+							}
+
+							async.each(files, (file, callback) => {
+								if(file.startsWith(name) + '-'){
+
+									fs.unlink(path.resolve(
+										thumbnailDir,
+										file
+									), callback);
+
+								}else{
+									callback();
+								}
+
+							}, (err) => {
+								if(err){
+									return reject(err);
+								}
+
+								resolve();
+							});
+						});
+				}).then(() => {
+					let thumbnails = this.get('Thumbnails');
+
+					return Promise.all(thumbnails.map((thumbnail) => {
+						return thumbnail.destroy();
+					}));
+				});
+			},*/
 			generateThumbnails: function(){
 				return new Promise((resolve, reject) => {
 
@@ -63,23 +114,23 @@ const Image = ({config, sequelize, models}) => {
 					}).then((thumbnailTypes) => {
 
 						async.each(thumbnailTypes, (thumbnailType, callback) => {
-							let path   = this.get('File').get('path'),
-							    ext    = path.extname(path),
+							let p      = this.get('File').get('path'),
+							    ext    = path.extname(p),
 									w      = thumbnailType.get('width'),
 									h      = thumbnailType.get('height'),
 									saveTo = path.resolve(
-										path.dirname(path),
-										path.basename(path, ext) + '-' + w + 'x' + h + '.' + ext
+										path.dirname(p),
+										path.basename(p, ext) + '-' + w + 'x' + h + '.' + ext
 									);
 
 							let file      = models.File.build({path: saveTo});
-							let thumbmail = models.Thumbnail.build({
+							let thumbnail = models.Thumbnail.build({
 								image_id          : this.get('id'),
 								file_id           : file.get('id'),
 								thumbnail_type_id : thumbnailType.get('id')
 							});
 
-							sharp(path)
+							sharp(p)
 							.resize(w, h)
 							.toFile(saveTo).then(() => {
 								return file.save();
@@ -90,9 +141,12 @@ const Image = ({config, sequelize, models}) => {
 							}).catch((err) => {
 								callback(err);
 							});
-							
+
 						}, (err) => {
-							reject(err);
+							if(err){
+								return reject(err);
+							}
+							resolve();
 						});
 					}).catch((err) => {
 						reject(err);
@@ -114,6 +168,12 @@ const Image = ({config, sequelize, models}) => {
 				}
 
 				return json;
+			}
+		},
+		hooks: {
+			beforeDestroy: (image) => {
+				//thumbnails are cascade deleted, the file not
+				return image.get('File').destroy();
 			}
 		}
 	});

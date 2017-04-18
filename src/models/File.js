@@ -3,6 +3,8 @@ const File = ({sequelize, models}) => {
 	const pick      = require('lodash/pick');
 	const Sequelize = require('sequelize');
 
+	const fs        = require('fs');
+
 	let File = sequelize.define('file', {
 		path: {
       type          : Sequelize.STRING
@@ -10,7 +12,7 @@ const File = ({sequelize, models}) => {
 	}, {
 		classMethods: {
     	associate: function({Image}){
-				
+
 			}
   	},
   	instanceMethods: {
@@ -22,6 +24,19 @@ const File = ({sequelize, models}) => {
 				]);
 
 				return json;
+			}
+		},
+		hooks: {
+			beforeDestroy: (file) => {
+				return new Promise((resolve, reject) => {
+					fs.unlink(file.get('path'), (err) => {
+						if(err){
+							return reject(err);
+						}
+
+						resolve();
+					})
+				});
 			}
 		}
 	});

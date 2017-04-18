@@ -2,12 +2,12 @@
  * Defines the user structure
  */
 
-const User = ({config, errorController, sequelize, models}) => {
+const User = ({config, errorController, sequelize, models, cryptoUtilities}) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize		    = require('sequelize');
 	const async           = require('async');
-	const CryptoUtilities = require('../utilities/CryptoUtilities');
+	const CryptoUtilities = cryptoUtilities;
 
 	const EmailTemplate   = require('email-templates').EmailTemplate;
 	const mailController  = new (require(

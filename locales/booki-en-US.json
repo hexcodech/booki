@@ -92,5 +92,10 @@
 	"Do you approve?": "Do you approve?",
 	"Allow": "Allow",
 	"Deny": "Deny",
-	"Continue": "Continue"
+	"Continue": "Continue",
+	"The external api query failed": "The external api query failed",
+	"This email was already registered.": "This email was already registered.",
+	"InvalidImageError": "InvalidImageError",
+	"The uploaded image is invalid.": "The uploaded image is invalid.",
+	"Please check the image you uploaded.": "Please check the image you uploaded."
 }

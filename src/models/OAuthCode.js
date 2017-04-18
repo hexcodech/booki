@@ -1,7 +1,7 @@
-const OAuthCode = ({config, sequelize, models}) => {
+const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
 
 	const Sequelize       = require('sequelize');
-	const CryptoUtilities = require('../utilities/CryptoUtilities');
+	const CryptoUtilities = cryptoUtilities;
 
 	let OAuthCode         = sequelize.define('oauth_code', {
 		hash: {

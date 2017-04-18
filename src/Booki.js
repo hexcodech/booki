@@ -19,8 +19,10 @@ class Booki {
 		bindAll(this, []);
 
 		//Loading 'shared' modules
-		this.oauth2orize   = require('oauth2orize');
-		this.passport      = require('passport');
+		this.oauth2orize      = require('oauth2orize');
+		this.passport         = require('passport');
+		this.cryptoUtilities  = new (require('./utilities/CryptoUtilities'))
+		                        (this.config);
 
 		//setup with dependencies
 		this.setupLogger().then(({winston, logger}) => {
@@ -66,7 +68,7 @@ class Booki {
 		}).then(() => {
 			return this.loadModels(
 				this.logger,    this.config, this.errorController,
-				this.sequelize, this.sphinx
+				this.sequelize, this.sphinx, this.cryptoUtilities
 			);
 		}).then((models) => {
 			this.models = models;
@@ -276,7 +278,9 @@ class Booki {
 		return Promise.resolve(statsHolder);
 	}
 
-	loadModels(logger, config, errorController, sequelize, sphinx){
+	loadModels(
+		logger, config, errorController, sequelize, sphinx, cryptoUtilities
+	){
 		logger.log('info', 'Loading models...');
 
 		const Sequelize = require('sequelize');
@@ -294,7 +298,9 @@ class Booki {
 			'Thumbnail', //requires 'ThumbnailType'
 			'OAuthClient', //requires 'OAuthRedirectUri'
 			'Book', //requires 'Image'
+
 			'Image', //requires 'File' AND 'Thumbnail'
+			
 			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
 
 			'OAuthCode', //requires 'OAuthClient' AND 'User'
@@ -312,7 +318,8 @@ class Booki {
 				errorController,
 				sequelize,
 				sphinx,
-				models
+				models,
+				cryptoUtilities
 			});
 
 			if(models[model].attributes.id){

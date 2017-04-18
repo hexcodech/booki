@@ -327,8 +327,46 @@ const Routing = ({booki, app, config, logger}) => {
 	)(booki);
 
 	app.get('/v1/person/lookup',
+	authController.isBearerAuthenticated(),
 		validate(lookupPersonValidation),
 		personController.lookupPerson
+	);
+
+	//Images
+
+	const imageController = new (require(
+		'./controllers/imageController'
+	))(booki);
+
+
+	const postImageValidation = require(
+		'./validation/image/PostImageValidation'
+	)(booki);
+
+	const putImageValidation = require(
+		'./validation/image/PutImageValidation'
+	)(booki);
+
+	const deleteImageValidation = require(
+		'./validation/image/DeleteImageValidation'
+	)(booki);
+
+	app.post('/v1/image',
+		//authController.isBearerAuthenticated(),
+		validate(postImageValidation),
+		imageController.postImage
+	);
+
+	app.put('/v1/image/:imageId',
+		//authController.isBearerAuthenticated(),
+		validate(putImageValidation),
+		imageController.putImage
+	);
+
+	app.delete('/v1/image/:imageId',
+		//authController.isBearerAuthenticated(),
+		validate(deleteImageValidation),
+		imageController.deleteImage
 	);
 
 	//last error catch

@@ -1,8 +1,8 @@
-const OAuthClient = ({config, sequelize, models}) => {
+const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize       = require('sequelize');
-	const CryptoUtilities = require('../utilities/CryptoUtilities');
+	const CryptoUtilities = cryptoUtilities;
 
 	let OAuthClient       = sequelize.define('oauth_client', {
 

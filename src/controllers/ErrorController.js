@@ -256,15 +256,15 @@ class ErrorController {
 
 			ApiError : {
 				name									: i18n.__('ApiError'),
-				code									: 601,
-				defaultMessage				: i18n.__('The api query failed'),
+				code									: 603,
+				defaultMessage				: i18n.__('The external api query failed'),
 				defaultResponse				: i18n.__('Please try this action again.')
 			},
 
 
 			RenderError : {
 				name									: i18n.__('RenderError'),
-				code									: 603,
+				code									: 604,
 				defaultMessage				: i18n.__('The data could not be rendered'),
 				defaultResponse				:
 						i18n.__('This is probably our fault. Please contact the support.')
@@ -273,10 +273,19 @@ class ErrorController {
 
 			UserAlreadyExistsError : {
 				name									: i18n.__('UserAlreadyExistsError'),
-				code									: 601,
-				defaultMessage				: i18n.__('This email was already registered'),
+				code									: 605,
+				defaultMessage				: i18n.__('This email was already registered.'),
 				defaultResponse				:
 					i18n.__('Verify that you still own this email address.')
+
+			},
+
+			InvalidImageError : {
+				name									: i18n.__('InvalidImageError'),
+				code									: 606,
+				defaultMessage				: i18n.__('The uploaded image is invalid.'),
+				defaultResponse				:
+					i18n.__('Please check the image you uploaded.')
 
 			}
 

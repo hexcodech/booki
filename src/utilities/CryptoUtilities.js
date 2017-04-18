@@ -1,12 +1,17 @@
 class CryptoUtilities{
 
+  constructor(config){
+    this.config = config;
+    this.crypto = require('crypto');
+  }
+
   /**
 	 * Generates random string of characters
 	 * @function generateRandomString
 	 * @param {number} length - Length of the random string.
 	 * @returns {String} A random string of a given length
 	 */
-	 static generateRandomString(length){
+	 generateRandomString(length){
 
 		 return this.crypto.randomBytes(length)
 		        .toString('base64')
@@ -23,7 +28,7 @@ class CryptoUtilities{
 	 * @returns {object} - The hashed string, the generated salt and the
 	 * used hash algorithm {hash: '', salt: '', algorithm: ''}
 	 */
-	static generateHash(string, salt = null, algorithm = null){
+	generateHash(string, salt = null, algorithm = null){
 
 		if(!algorithm){
 			algorithm = this.config.HASH_ALGORITHM;
@@ -51,7 +56,7 @@ class CryptoUtilities{
 	 * @param item
 	 * @returns {boolean}
 	 */
-	static isObject(item) {
+	isObject(item) {
 		return (item && typeof item === 'object' && !Array.isArray(item));
 	}
 
@@ -60,7 +65,7 @@ class CryptoUtilities{
 	 * @param target
 	 * @param source
 	 */
-	static mergeDeep(target, source) {
+	mergeDeep(target, source) {
 		if(this.isObject(target) && this.isObject(source)){
 			for (const key in source) {
 				if (this.isObject(source[key])) {
