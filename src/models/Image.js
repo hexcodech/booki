@@ -24,9 +24,7 @@ const Image = ({config, sequelize, errorController, models}) => {
 				{
 					model   : models.Thumbnail,
 					as      : 'Thumbnails'
-				}
-			],
-			include: [
+				},
 				{
 					model   : models.File,
 					as      : 'File'
@@ -109,53 +107,58 @@ const Image = ({config, sequelize, errorController, models}) => {
 			generateThumbnails: function(){
 				return new Promise((resolve, reject) => {
 
-					models.File.create({}).then((file) => {
-						return models.ThumbnailType.findAll({});
-					}).then((thumbnailTypes) => {
+					return models.File.create({}).then((file) => {
+						models.ThumbnailType.findAll({}).then((thumbnailTypes) => {
+							async.each(thumbnailTypes, (thumbnailType, callback) => {
 
-						async.each(thumbnailTypes, (thumbnailType, callback) => {
-							let p      = this.get('File').get('path'),
-							    ext    = path.extname(p),
-									w      = thumbnailType.get('width'),
-									h      = thumbnailType.get('height'),
-									saveTo = path.resolve(
-										path.dirname(p),
-										path.basename(p, ext) + '-' + w + 'x' + h + '.' + ext
-									);
+								let p      = this.get('File').get('path'),
+								    ext    = path.extname(p),
+										w      = thumbnailType.get('width'),
+										h      = thumbnailType.get('height'),
+										saveTo = path.resolve(
+											path.dirname(p),
+											path.basename(p, ext) + '-' + w + 'x' + h + ext
+										);
+								file.set({path: saveTo});
 
-							let file      = models.File.build({path: saveTo});
-							let thumbnail = models.Thumbnail.build({
-								image_id          : this.get('id'),
-								file_id           : file.get('id'),
-								thumbnail_type_id : thumbnailType.get('id')
+								let thumbnail = models.Thumbnail.build({
+									image_id          : this.get('id'),
+									file_id           : file.get('id'),
+									thumbnail_type_id : thumbnailType.get('id')
+								});
+
+								sharp(p)
+								.resize(w, h)
+								.toFile(saveTo).then(() => {
+									return file.save();
+								}).then(() => {
+									return thumbnail.save();
+								}).then(() => {
+									callback();
+								}).catch((err) => {
+									file.destroy().then(() => {
+										callback(err);
+									}).catch((err) => {
+										callback(err);
+									});
+								});
+
+							}, (err) => {
+								if(err){
+									return reject(err);
+								}
+								resolve();
 							});
-
-							sharp(p)
-							.resize(w, h)
-							.toFile(saveTo).then(() => {
-								return file.save();
-							}).then(() => {
-								return thumbnail.save();
-							}).then(() => {
-								callback();
-							}).catch((err) => {
-								callback(err);
-							});
-
-						}, (err) => {
-							if(err){
-								return reject(err);
-							}
-							resolve();
+						}).catch((err) => {
+							reject(err);
 						});
-					}).catch((err) => {
-						reject(err);
 					});
 				});
 			},
 
     	toJSON: function(options){
 				let image = this.get();
+				console.log(image);
 
 				let json = pick(image, [
 					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'

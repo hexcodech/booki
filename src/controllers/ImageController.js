@@ -29,9 +29,7 @@ class ImageController{
 
 			let d = new Date();
 
-
 			return this.path.resolve(
-
 				this.folders.uploads,
 				d.getFullYear() + '',
 				(d.getMonth() + 1) + '',
@@ -49,12 +47,21 @@ class ImageController{
 
 			let busboy = new this.Busboy({ headers: request.headers });
 			busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+
+				//'file' is a stream
+
+				let buffers = [];
 				file.on('data', (data) => {
+					buffers.push(data);
+				});
+				file.on('end', () => {
+
+					let data = Buffer.concat(buffers);
+
 					if(
 		        mimetype.startsWith('image/') &&
-		        data.length <= 1024 * 1024 * 2
+		        data.length <= 1024 * 1024 * 2 //TODO move to config
 		      ){
-						//FIXME 2 file entries are created
 		        this.File.create({}).then((fileInstance) => {
 
 		        	let dim    = this.sizeOf(data),
@@ -126,57 +133,68 @@ class ImageController{
 					let busboy = new this.Busboy({ headers: request.headers });
 					busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
 
-			      if(
-			        mimetype.startsWith('image/') &&
-			        file.byteLength <= 1024 * 1024 * 2
-			      ){
+						let buffers = [];
 
-							//create new file
-							this.File.create({}).then((fileInstance) => {
+						file.on('data', (data) => {
+							buffers.push(data);
+						});
 
-								let dim    = this.sizeOf(file),
-									  saveTo = this.generatePath(fileInstance.get('id'));
+						file.on('end', () => {
 
-								//set file props
-								fileInstance.set('path', saveTo);
+							let data = Buffer.concat(buffers);
 
-								//update reference(s)
-								image.set({
-									width    : dim.width,
-									height   : dim.height,
-									mimeType : 'image/png',
-									file_id  : fileInstance.get('id')
+							if(
+				        mimetype.startsWith('image/') &&
+				        file.byteLength <= 1024 * 1024 * 2
+				      ){
+
+								//create new file
+								this.File.create({}).then((fileInstance) => {
+
+									let dim    = this.sizeOf(file),
+										  saveTo = this.generatePath(fileInstance.get('id'));
+
+									//set file props
+									fileInstance.set('path', saveTo);
+
+									//update reference(s)
+									image.set({
+										width    : dim.width,
+										height   : dim.height,
+										mimeType : 'image/png',
+										file_id  : fileInstance.get('id')
+									});
+
+									return fileInstance.save();
+
+								}).then(() => {
+									return image.save();
+								}).then(() => {
+									//remove old thumbnails
+									return image.cleanThumbnails();
+								}).then(() => {
+									return image.generateThumbnails();
+								}).then(() => {
+									return image.reload();
+								}).then(() => {
+									if(request.hasPermission('admin.image.hiddenData.read')){
+			      				response.json(image.toJSON({hiddenData: true}));
+			      			}else{
+			      				response.json(image.toJSON());
+			      			}
+			            response.end();
+
+								}).catch((err) => {
+									return next(
+										new this.errorController.errors.InternalServerError({
+											message: err.message
+										})
+									);
 								});
-
-								return fileInstance.save();
-
-							}).then(() => {
-								return image.save();
-							}).then(() => {
-								//remove old thumbnails
-								return image.cleanThumbnails();
-							}).then(() => {
-								return image.generateThumbnails();
-							}).then(() => {
-								return image.reload();
-							}).then(() => {
-								if(request.hasPermission('admin.image.hiddenData.read')){
-		      				response.json(image.toJSON({hiddenData: true}));
-		      			}else{
-		      				response.json(image.toJSON());
-		      			}
-		            response.end();
-
-							}).catch((err) => {
-								return next(
-									new this.errorController.errors.InternalServerError({
-										message: err.message
-									})
-								);
-							});
-			      }else{
-			        return next(new this.errorController.errors.InvalidImageError());
-			      }
+				      }else{
+				        return next(new this.errorController.errors.InvalidImageError());
+				      }
+						});
 			    });
 
 					request.pipe(busboy);
