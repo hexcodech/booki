@@ -443,22 +443,19 @@ class AuthController {
 
 		this.authorization = [
 			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
-
-				this.OAuthClient.findById(clientId)
-				.then((client) => {
+				this.OAuthClient.findById(clientId).then((client) => {
 
 					if(client && client.verifyRedirectUri(redirectUri)){
 						return callback(null, client, redirectUri);
 					}else{
 						return callback(
-							new this.errorController.errors.InvalidRedirectUriError(), false
+							new this.errorController.errors.InvalidRedirectUriError()
 						);
 					}
-
 				}).catch((err) => {
 					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
-					}), false);
+					}));
 				});
 			}),
 			(request, response, next) => {
@@ -564,9 +561,8 @@ class AuthController {
 			},
 
 		}, {}, (err, str) => {
-
 			if(err){
-				return next(new errorController.errors.RenderError({
+				return next(new this.errorController.errors.RenderError({
 					message: err.message
 				}));
 			}

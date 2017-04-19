@@ -53,7 +53,6 @@ class OfferController{
     this.Offer.findById(request.params.offerId).then((offer) => {
 
 			if(offer){
-
 				if(request.hasPermission('admin.offer.hiddenData.read')){
 					response.json(offer.toJSON({hiddenData: true}));
 				}else{
@@ -77,17 +76,13 @@ class OfferController{
 
 			if(offers){
 				if(request.hasPermission('admin.offer.hiddenData.read')){
-
 					response.json(offers.map((offer) => {
 						return offer.toJSON({hiddenData: true});
 					}));
-
 				}else{
-
 					response.json(offers.map((offer) => {
 						return offer.toJSON();
 					}));
-
 				}
 				return response.end();
 			}
@@ -178,19 +173,25 @@ class OfferController{
 						if(book){
 							return this.Condition.findById(request.body.offer.conditionId);
 						}else{
-							return Promise.reject(new this.errorController.errors.NotFoundError());
+							return Promise.reject(
+								new this.errorController.errors.NotFoundError()
+							);
 						}
 					}).then((condition) => {
 						if(condition){
 							return this.User.findById(userId);
 						}else{
-							return Promise.reject(new this.errorController.errors.NotFoundError());
+							return Promise.reject(
+								new this.errorController.errors.NotFoundError()
+							);
 						}
 					}).then((user) => {
 						if(user){
 							return;
 						}else{
-							return Promise.reject(new this.errorController.errors.NotFoundError());
+							return Promise.reject(
+								new this.errorController.errors.NotFoundError()
+							);
 						}
 					}).then(() => {
 						offer.set({
@@ -206,9 +207,11 @@ class OfferController{
 						}
 
 						return offer.save().catch((err) => {
-							return Promise.reject(new this.errorController.errors.DatabaseError({
-								message: err.message
-							}));
+							return Promise.reject(
+								new this.errorController.errors.DatabaseError({
+									message: err.message
+								})
+							);
 						});
 					}).then((offer) => {
 						if(request.hasPermission('admin.offer.hiddenData.read')){

@@ -129,13 +129,6 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 					hooks      : true
 				});
 
-				this.hasMany(OAuthClient, {
-					as         : 'OAuthProviders',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
-				});
-
 				this.hasMany(OAuthAccessToken, {
 					as         : 'OAuthAccessTokens',
 					foreignKey : 'user_id',
@@ -145,6 +138,13 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OAuthClient, {
+					as         : 'OAuthClients',
 					foreignKey : 'user_id',
 					onDelete   : 'cascade',
 					hooks      : true

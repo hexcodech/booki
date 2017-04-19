@@ -2,7 +2,7 @@
  * Manages the REST routing
  */
 
-const Routing = ({booki, app, config, logger}) => {
+const Routing = ({booki, app, config, logger, i18n}) => {
 
 	const express_validation = require('express-validation');
 	const fs                 = require('fs');
@@ -63,7 +63,7 @@ const Routing = ({booki, app, config, logger}) => {
 		};
 
 		request.getLocale = (user = request.user) => {
-			if(user !== null){
+			if(user && user.get){
 				return user.get('locale');
 			}else if(request !== null){
 				return i18n.getLocale(request);

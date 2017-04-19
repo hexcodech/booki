@@ -223,6 +223,7 @@ class Booki {
 
 		//parse json
 		app.use(bodyParser.json());
+		app.use(bodyParser.urlencoded({extended: true}));
 
 		//and enable sessions of oauth2orize
 		app.use(expressSession({
@@ -295,7 +296,6 @@ class Booki {
 			'OAuthRedirectUri', //no init dependencies
 
 			'Offer', //requires 'Condition'
-			'OAuthClient', //requires 'OAuthRedirectUri'
 			'Book', //requires 'Image'
 
 			'Thumbnail', //requires 'File' AND 'ThumbnailType'
@@ -303,6 +303,8 @@ class Booki {
 			'Image', //requires 'File' AND 'Thumbnail'
 
 			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
+
+			'OAuthClient', //requires 'OAuthRedirectUri' AND 'User'
 
 			'OAuthCode', //requires 'OAuthClient' AND 'User'
 			'OAuthAccessToken', //requires 'OAuthClient' AND 'User'
