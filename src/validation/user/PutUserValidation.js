@@ -5,13 +5,13 @@ module.exports      = function({config}){
 	return {
 
 		params: {
-			userId: Joi.number().required()
+			userId: Joi.number().integer().positive().required()
 		},
 
 		body: {
 
 			user: {
-				id                                : Joi.number(),
+				id                                : Joi.number().integer().positive(),
 
 				nameDisplay                       : Joi.string().regex(/[A-z]+/)
 				                                    .max(511),

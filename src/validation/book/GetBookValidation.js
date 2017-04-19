@@ -4,8 +4,8 @@ module.exports = () => {
 
 	return {
 
-		query: {
-			search: Joi.string().min(1),
+		body: {
+			search            : Joi.string().allow(''),
 		}
 	}
 

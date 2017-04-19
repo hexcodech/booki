@@ -47,7 +47,7 @@ const Book = ({
 		},
 
 		description: {
-			type         : Sequelize.STRING,
+			type         : Sequelize.STRING(2000),
 		},
 
 		publisher: {
@@ -122,55 +122,57 @@ const Book = ({
 								reject(err);
 							}
 
-							let amazonBooks = [];
+							return resolve(dbBooks);
 
-							//combine with external sources
-							amzClient.itemSearch({
-							  keywords      : text,
-							  searchIndex   : 'Books',
-							  responseGroup : 'ItemAttributes,Offers,Images',
-								domain        : 'webservices.amazon.de'
-							}).then((results) => {
-							  amazonBooks = results.map((result) => {
-									let attr = result.ItemAttributes[0];
-
-									if(!attr.ISBN || !attr.ISBN[0]){
-										return null;
-									}
-
-									return {
-										isbn13          : attr.ISBN[0].length == 10 ?
-										                  '978' + attr.ISBN[0] :
-																			attr.ISBN[0],
-										title           : attr.Title[0],
-										subtitle        : attr.Title[1] ? attr.Title[1] : '',
-										language        : attr.Languages
-										                  [0].Language.Name,
-										description     : '',
-										publisher       : attr.Publisher[0],
-										publicationDate : attr.PublicationDate ?
-										                  attr.PublicationDate[0] : 0,
-										pageCount       : attr.NumberOfPages ?
-										                  attr.NumberOfPages[0] : 0,
-										verified        : false,
-
-										url             : result.DetailPageURL[0],
-										authors         : attr.Author,
-										thumbnail       : result.LargeImage[0].URL,
-
-									};
-								}).filter(e => e); //removes falsy elements
-
-								return resolve({
-									db       : dbBooks,
-									external : amazonBooks
-								});
-
-							}).catch((err) => {
-							  return reject(err);
-							});
 						});
 					});
+				});
+			},
+
+			lookupExternal: function(text = '', page = 0){
+				let amazonBooks = [];
+
+				//combine with external sources
+				amzClient.itemSearch({
+					keywords      : text,
+					searchIndex   : 'Books',
+					responseGroup : 'ItemAttributes,Offers,Images',
+					domain        : 'webservices.amazon.de'
+				}).then((results) => {
+					amazonBooks = results.map((result) => {
+						let attr = result.ItemAttributes[0];
+
+						if(!attr.ISBN || !attr.ISBN[0]){
+							return null;
+						}
+
+						return {
+							isbn13          : attr.ISBN[0].length == 10 ?
+																'978' + attr.ISBN[0] :
+																attr.ISBN[0],
+							title           : attr.Title[0],
+							subtitle        : attr.Title[1] ? attr.Title[1] : '',
+							language        : attr.Languages
+																[0].Language.Name,
+							description     : '',
+							publisher       : attr.Publisher[0],
+							publicationDate : attr.PublicationDate ?
+																attr.PublicationDate[0] : 0,
+							pageCount       : attr.NumberOfPages ?
+																attr.NumberOfPages[0] : 0,
+							verified        : false,
+
+							url             : result.DetailPageURL[0],
+							authors         : attr.Author,
+							thumbnail       : result.LargeImage[0].URL,
+
+						};
+					}).filter(e => e); //removes falsy elements
+
+					return resolve(amazonBooks);
+
+				}).catch((err) => {
+					return reject(err);
 				});
 			}
   	},

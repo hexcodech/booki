@@ -5,7 +5,7 @@ const Offer = ({sequelize, models}) => {
 
 	let Offer = sequelize.define('offer', {
 		description: {
-			type: Sequelize.STRING,
+			type: Sequelize.STRING(2000),
 		},
 		price: {
 			type: Sequelize.FLOAT,
@@ -15,7 +15,7 @@ const Offer = ({sequelize, models}) => {
 			include: [
 				{
 					model    : models.Condition,
-					as      : 'Condition'
+					as       : 'Condition'
 				}
 			]
 		},
@@ -47,7 +47,7 @@ const Offer = ({sequelize, models}) => {
 				let offer = this.get(); //invoking virtual getters
 
 				let json = pick(offer, [
-					'description', 'price', 'createdAt', 'updatedAt'
+					'id', 'description', 'price', 'createdAt', 'updatedAt'
 				]);
 
 				if(offer.Condition){

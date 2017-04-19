@@ -29,7 +29,7 @@ const ThumbnailType = ({sequelize}) => {
 				let type = this.get();
 
 				let json = pick(type, [
-					'id', 'name'
+					'id', 'name', 'width', 'height'
 				]);
 
 				return json;

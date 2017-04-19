@@ -53,5 +53,7 @@ this file has to be renamed to config.json and this comment needs to be removed
 	"GOOGLEBOOKS_API_KEY"						: "",
 
 	"DEFAULT_PROFILE_PICTURE_URL"		: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
-	"DEFAULT_BOOK_COVER"						: "http://localhost/static/res/img/cover/book-cover.png"
+	"DEFAULT_BOOK_COVER"						: "http://localhost/static/res/img/cover/book-cover.png",
+
+	"MAX_UPLOAD_FILE_SIZE"          : 2097152
 }

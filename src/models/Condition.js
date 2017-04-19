@@ -26,7 +26,7 @@ const Condition = ({sequelize, models}) => {
 				let condition = this.get();
 
 				let json = pick(condition, [
-					'key', 'priceFactor'
+					'id', 'key', 'priceFactor'
 				]);
 
 				return json;

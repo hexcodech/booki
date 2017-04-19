@@ -5,13 +5,13 @@ module.exports = () => {
 	return {
 
 		params: {
-			bookId: Joi.number().required(),
+			bookId: Joi.number().integer().positive().required(),
 		},
 
 		body: {
 
 			book: {
-				id                : Joi.number(),
+				id                : Joi.number().integer().positive(),
 
 				isbn13            : Joi.string().required(),
 
@@ -28,18 +28,6 @@ module.exports = () => {
 				publicationDate   : Joi.date().allow(''),
 
 				pageCount         : Joi.number().min(1).required(),
-
-				images            : Joi.object().keys({
-					original          : Joi.string().uri({scheme: ['http', 'https']})
-					                    .allow(''),
-
-					sizes             : Joi.array().items(Joi.object().keys({
-						width             : Joi.number(),
-						height            : Joi.number(),
-						type              : Joi.string(),
-						url               : Joi.string().uri({scheme: ['http', 'https']})
-					}))
-				}),
 
 				approved          : Joi.boolean(),
 				dateCreated       : Joi.date().allow(''),

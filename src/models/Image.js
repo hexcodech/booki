@@ -158,11 +158,15 @@ const Image = ({config, sequelize, errorController, models}) => {
 
     	toJSON: function(options){
 				let image = this.get();
-				console.log(image);
 
 				let json = pick(image, [
 					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
 				]);
+
+				//generateUrl
+				/*if(image.File){
+					json.url = '/static/' + image.File.get('path').split('/static/')[1];
+				}*/
 
 				if(image.Thumbnails){
 					json.thumbnails = image.Thumbnails.map((thumbnail) => {

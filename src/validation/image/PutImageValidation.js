@@ -5,8 +5,12 @@ module.exports = () => {
 	return {
 
 		params: {
-			imageId: Joi.number().required(),
+			imageId: Joi.number().integer().positive().required(),
 		},
+
+		body: {
+			id: Joi.number().integer().positive().required().allow()
+		}
 
 	}
 

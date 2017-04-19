@@ -6,7 +6,7 @@ module.exports = () => {
 		body: {
 
 			book: {
-				id                : Joi.number(),
+				id                : Joi.number().integer().positive(),
 
 				isbn13            : Joi.string().required(),
 
@@ -22,13 +22,13 @@ module.exports = () => {
 				publisher         : Joi.string().max(256).allow('', null),
 				publicationDate   : Joi.date().allow('', null),
 
-				pageCount         : Joi.number().min(1).required(),
+				pageCount         : Joi.number().integer().positive().required(),
 
-				coverId           : Joi.number(),
+				coverId           : Joi.number().integer().positive(),
 
 				approved          : Joi.boolean(),
 				dateCreated       : Joi.date().allow('', null),
-				userId            : Joi.number().allow('', null)
+				userId            : Joi.number().integer().positive().allow('', null)
 
 			}
 

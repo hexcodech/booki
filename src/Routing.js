@@ -185,15 +185,21 @@ const Routing = ({booki, app, config, logger}) => {
 
 	//User
 
-	const userController               = new (require(
+	const userController = new (require(
 		'./controllers/UserController')
 	)(booki);
 
-	const postUserValidation           = require(
+	const getUserByIdValidation = require(
+		'./validation/user/GetUserByIdValidation.js'
+	)(booki);
+	const postUserValidation = require(
 		'./validation/user/PostUserValidation.js'
 	)(booki);
-	const putUserValidation            = require(
+	const putUserValidation = require(
 		'./validation/user/PutUserValidation.js'
+	)(booki);
+	const deleteUserValidation = require(
+		'./validation/user/DeleteUserValidation.js'
 	)(booki);
 
 	app.get('/v1/user',
@@ -207,6 +213,8 @@ const Routing = ({booki, app, config, logger}) => {
 	);
 
 	app.get('/v1/user/:userId',
+		authController.isBearerAuthenticated(),
+		validate(getUserByIdValidation),
 		userController.getUserById
 	);
 
@@ -224,6 +232,7 @@ const Routing = ({booki, app, config, logger}) => {
 
 	app.delete('/v1/user/:userId',
 		authController.isBearerAuthenticated(['admin.user.delete']),
+		validate(deleteUserValidation),
 		userController.deleteUser
 	);
 
@@ -240,6 +249,10 @@ const Routing = ({booki, app, config, logger}) => {
 
 	const putOAuthClientValidation = require(
 		'./validation/oauth-client/PutOAuthClientValidation'
+	)(booki);
+
+	const deleteOAuthClientValidation = require(
+		'./validation/oauth-client/DeleteOAuthClientValidation'
 	)(booki);
 
 
@@ -267,6 +280,7 @@ const Routing = ({booki, app, config, logger}) => {
 
 	app.delete('/v1/oauth2/client/:clientId',
 		authController.isBearerAuthenticated(),
+		validate(deleteOAuthClientValidation),
 		oauthClientController.deleteOAuthClient
 	);
 
@@ -276,6 +290,9 @@ const Routing = ({booki, app, config, logger}) => {
 		'./controllers/BookController'
 	))(booki);
 
+	const getBookValidation = require(
+		'./validation/book/GetBookValidation'
+	)(booki);
 	const postBookValidation = require(
 		'./validation/book/PostBookValidation'
 	)(booki);
@@ -285,17 +302,24 @@ const Routing = ({booki, app, config, logger}) => {
 	const lookupBookValidation = require(
 		'./validation/book/LookupBookValidation'
 	)(booki);
+	const deleteBookValidation = require(
+		'./validation/book/DeleteBookValidation'
+	)(booki);
 
 	app.get('/v1/book/lookup',
+		authController.isBearerAuthenticated(),
 		validate(lookupBookValidation),
 		bookController.lookupBook
 	);
 
 	app.get('/v1/book/:bookId',
+		authController.isBearerAuthenticated(),
 		bookController.getBookById
 	);
 
 	app.get('/v1/book',
+		authController.isBearerAuthenticated(),
+		validate(getBookValidation),
 		bookController.getBook
 	);
 
@@ -313,6 +337,7 @@ const Routing = ({booki, app, config, logger}) => {
 
 	app.delete('/v1/book/:bookId',
 		authController.isBearerAuthenticated(['admin.book.delete']),
+		validate(deleteBookValidation),
 		bookController.deleteBook
 	);
 
@@ -352,22 +377,85 @@ const Routing = ({booki, app, config, logger}) => {
 	)(booki);
 
 	app.post('/v1/image',
-		//authController.isBearerAuthenticated(),
+		authController.isBearerAuthenticated(),
 		validate(postImageValidation),
 		imageController.postImage
 	);
 
 	app.put('/v1/image/:imageId',
-		//authController.isBearerAuthenticated(),
+		authController.isBearerAuthenticated(),
 		validate(putImageValidation),
 		imageController.putImage
 	);
 
 	app.delete('/v1/image/:imageId',
-		//authController.isBearerAuthenticated(),
+		authController.isBearerAuthenticated(),
 		validate(deleteImageValidation),
 		imageController.deleteImage
 	);
+
+	//Offers
+
+	const offerController = new (require(
+		'./controllers/OfferController'
+	))(booki);
+
+	const getOfferValidation = require(
+		'./validation/offer/GetOfferValidation'
+	)(booki);
+	const getOfferByIdValidation = require(
+		'./validation/offer/GetOfferByIdValidation'
+	)(booki);
+	const getOfferByBookIdValidation = require(
+		'./validation/offer/GetOfferByBookIdValidation'
+	)(booki);
+	const postOfferValidation = require(
+		'./validation/offer/postOfferValidation'
+	)(booki);
+	const putOfferValidation = require(
+		'./validation/offer/putOfferValidation'
+	)(booki);
+	const deleteOfferValidation = require(
+		'./validation/offer/deleteOfferValidation'
+	)(booki);
+
+
+	app.get('/v1/offer',
+		authController.isBearerAuthenticated(),
+		validate(getOfferValidation),
+		offerController.getOffer
+	);
+
+	app.get('/v1/offer/:offerId',
+		authController.isBearerAuthenticated(),
+		validate(getOfferByIdValidation),
+		offerController.getOfferById
+	);
+
+	app.get('/v1/offer/:bookId',
+		authController.isBearerAuthenticated(),
+		validate(getOfferByBookIdValidation),
+		offerController.getOfferByBookId
+	);
+
+	app.post('/v1/offer',
+		authController.isBearerAuthenticated(),
+		validate(postOfferValidation),
+		offerController.postOffer
+	);
+
+	app.put('/v1/offer/:offerId',
+		authController.isBearerAuthenticated(),
+		validate(putOfferValidation),
+		offerController.putOffer
+	);
+
+	app.delete('/v1/offer/:offerId',
+		authController.isBearerAuthenticated(),
+		validate(deleteOfferValidation),
+		offerController.deleteOffer
+	);
+
 
 	//last error catch
 

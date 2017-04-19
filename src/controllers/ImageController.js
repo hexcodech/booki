@@ -1,7 +1,7 @@
 class ImageController{
 
 	constructor({
-		booki, models, errorController, folders, cryptoUtilities
+		booki, config, models, errorController, folders, cryptoUtilities
 	}){
 
 		const bindAll               = require('lodash/bindAll');
@@ -15,6 +15,7 @@ class ImageController{
 
 		this.CryptoUtilities        = cryptoUtilities;
 
+		this.config                 = config;
 		this.folders                = folders;
 		this.errorController        = errorController;
 
@@ -60,7 +61,7 @@ class ImageController{
 
 					if(
 		        mimetype.startsWith('image/') &&
-		        data.length <= 1024 * 1024 * 2 //TODO move to config
+		        data.length <= this.config.MAX_UPLOAD_FILE_SIZE
 		      ){
 		        this.File.create({}).then((fileInstance) => {
 
@@ -73,9 +74,13 @@ class ImageController{
 		            width    : dim.width,
 		            height   : dim.height,
 		            mimeType : 'image/png',
-		            user_id  : request.user ? request.user.get('id') : 1,
+		            user_id  : request.user.get('id'),
 		            file_id  : fileInstance.get('id')
 		          });
+
+							if(request.hasPermission('admin.image.hiddenData.write')){
+								image.set('id', request.body.id);
+							}
 
 		          this.mkdirp(this.path.dirname(saveTo)).then(() => {
 								return this.sharp(data).toFile(saveTo);
@@ -98,7 +103,7 @@ class ImageController{
 		            response.end();
 
 		          }).catch((err) => {
-		            return next(new this.errorController.errors.DatabaseError({
+		            return next(new this.errorController.errors.InternalServerError({
 		      				message: err.message
 		      			}));
 		          });
@@ -145,7 +150,7 @@ class ImageController{
 
 							if(
 				        mimetype.startsWith('image/') &&
-				        file.byteLength <= 1024 * 1024 * 2
+				        file.byteLength <= this.config.MAX_UPLOAD_FILE_SIZE
 				      ){
 
 								//create new file
@@ -164,6 +169,10 @@ class ImageController{
 										mimeType : 'image/png',
 										file_id  : fileInstance.get('id')
 									});
+
+									if(request.hasPermission('admin.image.hiddenData.write')){
+										image.set('id', request.body.id);
+									}
 
 									return fileInstance.save();
 
@@ -215,7 +224,7 @@ class ImageController{
 	deleteImage(request, response, next){
 		this.Image.findById(request.query.id).then((image) => {
 			if(
-				request.hasPermission('admin.image.editOthers') ||
+				request.hasPermission('admin.image.deleteOthers') ||
 				image.get('user_id') === request.user.get('id')
 			){
 				image.destroy().then(() => {

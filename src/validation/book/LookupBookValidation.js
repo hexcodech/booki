@@ -5,9 +5,7 @@ module.exports = () => {
 	return {
 
 		query: {
-
 			search           : Joi.string().max(512)
-
 		}
 	}
 

@@ -92,7 +92,7 @@ class UserController {
 
 	postUser(request, response, next){
 
-		//this function is for admins only so we need to accept any fields anyway
+		//this function is for admins only so we can accept any fields
 
 		let user = this.User.build(this.pick(request.body.user, [
 			'id', 'nameDisplay', 'nameFirst', 'nameLast',

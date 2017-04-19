@@ -5,17 +5,17 @@ module.exports = () => {
 	return {
 
 		params: {
-			clientId: Joi.number().required()
+			clientId: Joi.number().integer().positive().required()
 		},
 
 		body: {
 			client: {
-				id                : Joi.number(),
+				id                : Joi.number().integer().positive(),
 				name              : Joi.string().required(),
 				redirectUris      : Joi.array().items(Joi.string()
 				                    .uri({scheme: ['https', 'http']})).required(),
 
-				userId            : Joi.number(),
+				userId            : Joi.number().integer().positive(),
 				trusted           : Joi.boolean().allow(null)
 			}
 		}

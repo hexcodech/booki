@@ -6,7 +6,8 @@ module.exports = ({config}) => {
 		body: {
 
 			user: {
-				id                                : Joi.number().allow(null),
+				id                                : Joi.number().integer()
+				                                    .positive().allow(null),
 
 				nameDisplay                       : Joi.string().regex(/[A-z]+/)
 				                                    .max(511).required(),
