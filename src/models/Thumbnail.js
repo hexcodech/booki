@@ -47,11 +47,10 @@ const Thumbnail = ({config, sequelize, models}) => {
 					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
 				]);
 
-				//generateUrl
-				/*if(thumbnail.File){
+				if(options.hiddenData && thumbnail.File){
 					json.url = '/static/' + thumbnail.File
-					                        .get('path').split('/static/')[1];
-				}*/
+																	.get('path').split('/static/')[1];
+				}
 
 				if(thumbnail.ThumbnailType){
 					json.thumbnailType = thumbnail.ThumbnailType.toJSON(options);

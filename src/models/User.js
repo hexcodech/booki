@@ -153,7 +153,6 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 				this.hasMany(Image, {
 					as         : 'Images',
 					foreignKey : 'user_id',
-					onDelete   : 'cascade',
 					hooks      : true
 				});
 

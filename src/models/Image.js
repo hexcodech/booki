@@ -37,13 +37,11 @@ const Image = ({config, sequelize, errorController, models}) => {
 				this.belongsTo(User, {
 					as         : 'User',
 					foreignKey : 'user_id',
-					onDelete   : 'cascade',
 					hooks      : true
 				});
 				this.belongsTo(File, {
 					as         : 'File',
 					foreignKey : 'file_id',
-					onDelete   : 'cascade',
 					hooks      : true
 				});
 		    this.hasMany(Thumbnail, {
@@ -163,10 +161,12 @@ const Image = ({config, sequelize, errorController, models}) => {
 					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
 				]);
 
-				//generateUrl
-				/*if(image.File){
+				json.userId = image.user_id;
+
+				if(options.hiddenData){
 					json.url = '/static/' + image.File.get('path').split('/static/')[1];
-				}*/
+					json.fileId = image.file_id;
+				}
 
 				if(image.Thumbnails){
 					json.thumbnails = image.Thumbnails.map((thumbnail) => {

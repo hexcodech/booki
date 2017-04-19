@@ -23,7 +23,7 @@ class ImageController{
 		this.Image                  = models.Image;
 
 		bindAll(this, [
-			'postImage', 'putImage', 'deleteImage'
+			'getImage', 'postImage', 'putImage', 'deleteImage'
 		]);
 
 		this.generatePath = (id) => {
@@ -41,6 +41,31 @@ class ImageController{
 			);
 		};
 
+	}
+
+	getImage(request, response, next){
+		this.Image.findAll().then((images) => {
+			if(images){
+
+				if(request.hasPermission('admin.offer.hiddenData.read')){
+					response.json(images.map((image) => {
+						return image.toJSON({hiddenData: true});
+					}));
+				}else{
+					response.json(images.map((image) => {
+						return image.toJSON();
+					}));
+				}
+				return response.end();
+			}
+
+			return next(new this.errorController.errors.UnexpectedQueryResultError());
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
+		});
 	}
 
 	postImage(request, response, next){
@@ -170,9 +195,10 @@ class ImageController{
 										file_id  : fileInstance.get('id')
 									});
 
-									if(request.hasPermission('admin.image.hiddenData.write')){
+									//multipart request, not json
+									/*if(request.hasPermission('admin.image.hiddenData.write')){
 										image.set('id', request.body.id);
-									}
+									}*/
 
 									return fileInstance.save();
 

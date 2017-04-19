@@ -1896,6 +1896,17 @@
 		"oF": 0,
 		"oS": 3,
 		"uL": 1
+		},
+	"\/static\/uploads\/2017\/4\/1-Hr1.png": {
+		"ft": 32768,
+		"iS": 860160,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/1-Hr1.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
 		}
 	},
 "hooks": [

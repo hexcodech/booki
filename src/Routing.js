@@ -376,6 +376,11 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 		'./validation/image/DeleteImageValidation'
 	)(booki);
 
+	app.get('/v1/image',
+		authController.isBearerAuthenticated(['admin.image.list']),
+		imageController.getImage
+	);
+
 	app.post('/v1/image',
 		authController.isBearerAuthenticated(),
 		validate(postImageValidation),

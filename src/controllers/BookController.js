@@ -50,7 +50,6 @@ class BookController{
 		}
 
 		this.Book.findAll({where: query}).then((books) => {
-
 			if(books){
 
 				if(request.hasPermission('admin.book.hiddenData.read')){
@@ -72,6 +71,7 @@ class BookController{
 			return next(new this.errorController.errors.UnexpectedQueryResultError());
 
 		}).catch((err) => {
+			console.log(err);
 			return next(new this.errorController.errors.DatabaseError({
 				message: err.message
 			}));

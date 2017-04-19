@@ -295,12 +295,11 @@ class Booki {
 			'OAuthProvider', //no init dependencies
 			'OAuthRedirectUri', //no init dependencies
 
+			'Thumbnail', //requires 'File' AND 'ThumbnailType'
+			'Image', //requires 'File' AND 'Thumbnail'
+
 			'Offer', //requires 'Condition'
 			'Book', //requires 'Image'
-
-			'Thumbnail', //requires 'File' AND 'ThumbnailType'
-
-			'Image', //requires 'File' AND 'Thumbnail'
 
 			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
 

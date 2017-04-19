@@ -5,7 +5,6 @@ module.exports = () => {
 	return {
 
 		params: {
-			imageId: Joi.number().integer().positive().required(),
 		},
 
 	}
