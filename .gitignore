@@ -49,3 +49,6 @@ config.json
 
 # Scripts in the root folder
 /*.sh
+
+#uploads
+static/uploads

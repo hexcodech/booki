@@ -164,7 +164,9 @@ const Image = ({config, sequelize, errorController, models}) => {
 				json.userId = image.user_id;
 
 				if(options.hiddenData){
-					json.url = '/static/' + image.File.get('path').split('/static/')[1];
+					if(image.File){
+						json.url = '/static/' + image.File.get('path').split('/static/')[1];
+					}
 					json.fileId = image.file_id;
 				}
 

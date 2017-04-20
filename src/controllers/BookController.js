@@ -303,29 +303,34 @@ class BookController{
 		return this.Book.lookup(request.query.search)
 		.then((books) => {
 
-			let {db, external} = books;
-
 			if(request.hasPermission('admin.book.hiddenData.read')){
-				db = db.map((book) => {
+				response.json(books.map((book) => {
 					return book.toJSON({hiddenData: true});
-				});
+				}));
 			}else{
-				db = db.map((book) => {
+				response.json(books.map((book) => {
 					return book.toJSON();
-				});
+				}));
 			}
-
-			response.json({
-				db,
-				external
-			});
 
 			return response.end();
 
 		}).catch((error) => {
 			return next(error);
 		});
+	}
 
+	lookupExternalBook(request, response, next){
+
+		return this.Book.lookupExternal(request.query.search)
+		.then((books) => {
+			
+			response.json(books);
+			return response.end();
+
+		}).catch((error) => {
+			return next(error);
+		});
 	}
 
 }

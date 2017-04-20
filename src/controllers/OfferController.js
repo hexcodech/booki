@@ -154,7 +154,7 @@ class OfferController{
   }
 
   putOffer(request, response, next){
-		this.Offer.findById(request.params.id).then((offer) => {
+		this.Offer.findById(request.params.offerId).then((offer) => {
 			if(offer){
 				if(
 					request.hasPermission('admin.offer.editOthers') ||
@@ -236,7 +236,7 @@ class OfferController{
   }
 
   deleteOffer(request, response, next){
-		this.Offer.findById(request.params.id).then((offer) => {
+		this.Offer.findById(request.params.offerId).then((offer) => {
 			if(offer){
 				if(
 					request.hasPermission('admin.offer.deleteOthers') ||

@@ -306,6 +306,12 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 		'./validation/book/DeleteBookValidation'
 	)(booki);
 
+	app.get('/v1/book/lookup/external',
+		authController.isBearerAuthenticated(),
+		validate(lookupBookValidation),
+		bookController.lookupExternalBook
+	);
+
 	app.get('/v1/book/lookup',
 		authController.isBearerAuthenticated(),
 		validate(lookupBookValidation),
@@ -347,9 +353,55 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 		'./controllers/PersonController'
 	))(booki);
 
+	const getPersonValidation = require(
+		'./validation/Person/GetPersonValidation'
+	)(booki);
+	const getPersonByIdValidation = require(
+		'./validation/Person/GetPersonByIdValidation'
+	)(booki);
+	const postPersonValidation = require(
+		'./validation/Person/postPersonValidation'
+	)(booki);
+	const putPersonValidation = require(
+		'./validation/Person/putPersonValidation'
+	)(booki);
+	const deletePersonValidation = require(
+		'./validation/Person/deletePersonValidation'
+	)(booki);
 	const lookupPersonValidation = require(
 		'./validation/person/LookupPersonValidation'
 	)(booki);
+
+
+	app.get('/v1/person',
+		authController.isBearerAuthenticated(['admin.person.list']),
+		validate(getPersonValidation),
+		personController.getPerson
+	);
+
+	app.get('/v1/person/:personId',
+		authController.isBearerAuthenticated(['admin.person.get']),
+		validate(getPersonByIdValidation),
+		personController.getPersonById
+	);
+
+	app.post('/v1/person',
+		authController.isBearerAuthenticated(['admin.person.create']),
+		validate(postPersonValidation),
+		personController.postPerson
+	);
+
+	app.put('/v1/person/:personId',
+		authController.isBearerAuthenticated(['admin.person.udate']),
+		validate(putPersonValidation),
+		personController.putPerson
+	);
+
+	app.delete('/v1/person/:personId',
+		authController.isBearerAuthenticated(['admin.person.delete']),
+		validate(deletePersonValidation),
+		personController.deletePerson
+	);
 
 	app.get('/v1/person/lookup',
 	authController.isBearerAuthenticated(),
@@ -459,6 +511,112 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 		authController.isBearerAuthenticated(),
 		validate(deleteOfferValidation),
 		offerController.deleteOffer
+	);
+
+	//Conditions
+
+	const conditionController = new (require(
+		'./controllers/ConditionController'
+	))(booki);
+
+	const getConditionValidation = require(
+		'./validation/condition/GetConditionValidation'
+	)(booki);
+	const getConditionByIdValidation = require(
+		'./validation/condition/GetConditionByIdValidation'
+	)(booki);
+	const postConditionValidation = require(
+		'./validation/condition/postConditionValidation'
+	)(booki);
+	const putConditionValidation = require(
+		'./validation/condition/putConditionValidation'
+	)(booki);
+	const deleteConditionValidation = require(
+		'./validation/condition/deleteConditionValidation'
+	)(booki);
+
+
+	app.get('/v1/condition',
+		authController.isBearerAuthenticated(['admin.condition.list']),
+		validate(getConditionValidation),
+		conditionController.getCondition
+	);
+
+	app.get('/v1/condition/:conditionId',
+		authController.isBearerAuthenticated(['admin.condition.get']),
+		validate(getConditionByIdValidation),
+		conditionController.getConditionById
+	);
+
+	app.post('/v1/condition',
+		authController.isBearerAuthenticated(['admin.condition.create']),
+		validate(postConditionValidation),
+		conditionController.postCondition
+	);
+
+	app.put('/v1/condition/:conditionId',
+		authController.isBearerAuthenticated(['admin.condition.udate']),
+		validate(putConditionValidation),
+		conditionController.putCondition
+	);
+
+	app.delete('/v1/condition/:conditionId',
+		authController.isBearerAuthenticated(['admin.condition.delete']),
+		validate(deleteConditionValidation),
+		conditionController.deleteCondition
+	);
+
+	//ThumbnailType
+
+	const thumbnailTypeController = new (require(
+		'./controllers/ThumbnailTypeController'
+	))(booki);
+
+	const getThumbnailTypeValidation = require(
+		'./validation/thumbnailType/GetThumbnailTypeValidation'
+	)(booki);
+	const getThumbnailTypeByIdValidation = require(
+		'./validation/thumbnailType/GetThumbnailTypeByIdValidation'
+	)(booki);
+	const postThumbnailTypeValidation = require(
+		'./validation/thumbnailType/postThumbnailTypeValidation'
+	)(booki);
+	const putThumbnailTypeValidation = require(
+		'./validation/thumbnailType/putThumbnailTypeValidation'
+	)(booki);
+	const deleteThumbnailTypeValidation = require(
+		'./validation/thumbnailType/deleteThumbnailTypeValidation'
+	)(booki);
+
+
+	app.get('/v1/thumbnail-type',
+		authController.isBearerAuthenticated(['admin.thumbnailType.list']),
+		validate(getThumbnailTypeValidation),
+		thumbnailTypeController.getThumbnailType
+	);
+
+	app.get('/v1/thumbnail-type/:thumbnailTypeId',
+		authController.isBearerAuthenticated(['admin.thumbnailType.get']),
+		validate(getThumbnailTypeByIdValidation),
+		thumbnailTypeController.getThumbnailTypeById
+	);
+
+	app.post('/v1/thumbnail-type',
+		authController.isBearerAuthenticated(['admin.thumbnailType.create']),
+		validate(postThumbnailTypeValidation),
+		thumbnailTypeController.postThumbnailType
+	);
+
+	app.put('/v1/thumbnail-type/:thumbnailTypeId',
+		authController.isBearerAuthenticated(['admin.thumbnailType.udate']),
+		validate(putThumbnailTypeValidation),
+		thumbnailTypeController.putThumbnailType
+	);
+
+	app.delete('/v1/thumbnail-type/:thumbnailTypeId',
+		authController.isBearerAuthenticated(['admin.thumbnailType.delete']),
+		validate(deleteThumbnailTypeValidation),
+		thumbnailTypeController.deleteThumbnailType
 	);
 
 

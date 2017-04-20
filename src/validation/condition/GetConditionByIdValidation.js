@@ -6,7 +6,7 @@ module.exports = ({config}) => {
 		body: {
 
 			params: {
-				offerId: Joi.number().integer().positive().required(),
+				conditionId: Joi.number().integer().positive().required(),
 			}
 
 		}

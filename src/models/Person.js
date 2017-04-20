@@ -69,8 +69,9 @@ const Person = ({sequelize, sphinx, models}) => {
     	toJSON: function(options){
 				let person = this.get();
 
-				let json = pick(file, [
-					'id', 'name', 'createdAt', 'updatedAt'
+				let json = pick(person, [
+					'id', 'name', 'nameTitle', 'nameFirst', 'nameMiddle', 'nameLast',
+					'verified', 'createdAt', 'updatedAt'
 				]);
 
 				return json;

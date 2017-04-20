@@ -74,8 +74,6 @@ class ImageController{
 			let busboy = new this.Busboy({ headers: request.headers });
 			busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
 
-				//'file' is a stream
-
 				let buffers = [];
 				file.on('data', (data) => {
 					buffers.push(data);

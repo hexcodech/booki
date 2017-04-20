@@ -6,7 +6,7 @@ module.exports = ({config}) => {
 		body: {
 
 			params: {
-				offerId: Joi.number().integer().positive().required(),
+				personId: Joi.number().integer().positive().required(),
 			}
 
 		}

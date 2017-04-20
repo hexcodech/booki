@@ -5,8 +5,8 @@ module.exports = ({config}) => {
 	return {
 		body: {
 
-			params: {
-				offerId: Joi.number().integer().positive().required(),
+			body: {
+				
 			}
 
 		}
