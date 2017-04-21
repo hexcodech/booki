@@ -573,19 +573,19 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 	))(booki);
 
 	const getThumbnailTypeValidation = require(
-		'./validation/thumbnailType/GetThumbnailTypeValidation'
+		'./validation/thumbnail-type/GetThumbnailTypeValidation'
 	)(booki);
 	const getThumbnailTypeByIdValidation = require(
-		'./validation/thumbnailType/GetThumbnailTypeByIdValidation'
+		'./validation/thumbnail-type/GetThumbnailTypeByIdValidation'
 	)(booki);
 	const postThumbnailTypeValidation = require(
-		'./validation/thumbnailType/postThumbnailTypeValidation'
+		'./validation/thumbnail-type/postThumbnailTypeValidation'
 	)(booki);
 	const putThumbnailTypeValidation = require(
-		'./validation/thumbnailType/putThumbnailTypeValidation'
+		'./validation/thumbnail-type/putThumbnailTypeValidation'
 	)(booki);
 	const deleteThumbnailTypeValidation = require(
-		'./validation/thumbnailType/deleteThumbnailTypeValidation'
+		'./validation/thumbnail-type/deleteThumbnailTypeValidation'
 	)(booki);
 
 
