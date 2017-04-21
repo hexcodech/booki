@@ -60,7 +60,16 @@ const Image = ({config, sequelize, errorController, models}) => {
 					return thumbnail.destroy();
 				}));
 			},
+			getUrl: function(){
+				return '/static/' + this.get('File').get('path').split('/static/')[1];
+			},
+			getThumbnails: function(options){
+				let thumbnails = this.get('Thumbnails');
 
+				return thumbnails.map((thumbnail) => {
+					return thumbnail.toJSON(options);
+				});
+			},
 			/*cleanThumbnailsHard: function(){
 
 				let path         = this.get('File').get('path'),
@@ -165,7 +174,7 @@ const Image = ({config, sequelize, errorController, models}) => {
 
 				if(options.hiddenData){
 					if(image.File){
-						json.url = '/static/' + image.File.get('path').split('/static/')[1];
+						json.url = this.getUrl();
 					}
 					json.fileId = image.file_id;
 				}

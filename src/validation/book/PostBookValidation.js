@@ -1,4 +1,4 @@
-module.exports = () => {
+module.exports = ({config}) => {
 
 	const Joi = require('joi');
 
@@ -7,12 +7,13 @@ module.exports = () => {
 			book: {
 				id                : Joi.number().integer().positive(),
 
-				isbn13            : Joi.string().required(),
+				isbn13            : Joi.string().alphanum().min(13).max(13).required(),
 
 				title             : Joi.string().max(512).required(),
 				subtitle          : Joi.string().max(512).allow('', null),
 
-				language          : Joi.string().min(2).max(4).required(),
+				language          : Joi.string().min(2).max(4).valid(config.LOCALES)
+				                    .required(),
 
 				authors           : Joi.array().items(),
 

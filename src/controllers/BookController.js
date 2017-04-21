@@ -81,11 +81,11 @@ class BookController{
 
 	postBook(request, response, next){
 
-		let book = this.Book.create(this.pick(request.body.book, [
-			'title',           'subtitle',    'language',
-			'description',     'publisher',   'publicationDate',
+		this.Book.create(this.pick(request.body.book, [
+			'isbn13', 'title', 'subtitle', 'language',
+			'description', 'publisher', 'publicationDate',
 			'pageCount'
-		])).then(() => {
+		])).then((book) => {
 			//check whether the cover actually exists
 			this.Image.findById(request.body.book.coverId)
 			.then((image) => {
@@ -102,7 +102,7 @@ class BookController{
 				])){
 
 					book.set(this.pick(request.body.book, [
-						'id', 'approved'
+						'id', 'verified'
 					]));
 
 					if(request.body.book.userId){
@@ -114,6 +114,8 @@ class BookController{
 				}else{
 					book.set('user_id', request.user.get('id'));
 				}
+
+				promises.push(book.save());
 
 				promises.push(book.setAuthorsRaw(request.body.book.authors));
 
@@ -151,22 +153,12 @@ class BookController{
 
 	putBook(request, response, next){
 
-		this.Book.findOne({
-			where   : {id: request.params.bookId},
-			include : [{
-				model   : this.User,
-				as      : 'User'
-			}, {
-				model   : this.Image,
-				as      : 'CoverImage'
-			}]
-		})
-		.then((book) => {
+		this.Book.findById(request.params.bookId).then((book) => {
 
 			if(book){
 
 				if(
-					book.get('user').get('id') !== request.user.get('id') &&
+					/*book.get('user').get('id') !== request.user.get('id') &&*/
 					!request.hasPermission('admin.book.editOthers')
 				){
 					return next(new this.errorController.errors.ForbiddenError());
@@ -182,14 +174,14 @@ class BookController{
 					}
 
 					book.set(this.omitBy(this.pick(request.body.book, [
-						'title',           'subtitle',    'language',
-						'description',     'publisher',   'publicationDate',
+						'title', 'subtitle', 'language',
+						'description', 'publisher', 'publicationDate',
 						'pageCount'
 					]), this.isNil));
 
 					if(request.hasPermission('admin.book.hiddenData.write')){
 						book.set(this.omitBy(this.pick(request.body.book, [
-							'approved'
+							'verified'
 						]), this.isNil));
 
 						if(request.body.book.userId){
@@ -200,7 +192,7 @@ class BookController{
 
 					promises.push(book.save());
 
-					Promise.all(book).then(() => {
+					Promise.all(promises).then(() => {
 
 						if(request.hasPermission('admin.book.hiddenData.read')){
 							response.json(book.toJSON({hiddenData: true}));
@@ -211,6 +203,7 @@ class BookController{
 						return response.end();
 
 					}).catch((err) => {
+						console.log(err);
 						return next(new this.errorController.errors.DatabaseError({
 							message: err.message
 						}));

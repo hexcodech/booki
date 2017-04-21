@@ -33,10 +33,12 @@ const Book = ({
 
 		title: {
 			type         : Sequelize.STRING,
+			default      : ''
 		},
 
 		subtitle: {
 			type         : Sequelize.STRING,
+			default      : ''
 		},
 
 		language: {
@@ -48,6 +50,7 @@ const Book = ({
 
 		description: {
 			type         : Sequelize.STRING(2000),
+			default      : ''
 		},
 
 		publisher: {
@@ -70,6 +73,10 @@ const Book = ({
 	}, {
 		defaultScope: {
 			include: [
+				{
+					model    : models.Person,
+					as       : 'Authors'
+				},
 				{
 					model    : models.Image,
 					as       : 'Cover'
@@ -185,12 +192,13 @@ const Book = ({
 
 					async.each(authors, (author, callback) => {
 
-						if(isNan(author)){
+						if(isNaN(author)){
 
 							models.Person.searchByExactName(author).then((results) => {
-								if(results[0].length === 1){//perfect match
-									models.Person.findById(results[0][0].id).then((author) => {
-										authorInstances.push(author);
+								if(results[0].length === 1){
+									models.Person.findById(results[0][0].id)
+									.then((authorInstance) => {
+										authorInstances.push(authorInstance);
 										callback();
 
 									}).catch((err) => {
@@ -203,22 +211,22 @@ const Book = ({
 										return;
 									}
 
-									let author = models.Person.build();
+									let authorInstance = models.Person.build();
 
 									switch(parts.length){
 										case 1:
-											author.set({
+											authorInstance.set({
 												'nameLast' : parts[0]
 											});
 											break;
 										case 2:
-											author.set({
+											authorInstance.set({
 												'nameFirst': parts[0],
 												'nameLast' : parts[1]
 											});
 											break;
 										case 3:
-											author.set({
+											authorInstance.set({
 												'nameFirst'  : parts[0],
 												'nameMiddle' : parts[1],
 												'nameLast'   : parts[2]
@@ -227,7 +235,7 @@ const Book = ({
 
 										case 4:
 										default:
-											author.set({
+											authorInstance.set({
 												'nameTitle'  : parts[0],
 												'nameFirst'  : parts[1],
 												'nameMiddle' : parts[2],
@@ -236,11 +244,11 @@ const Book = ({
 											break;
 									}
 
-									author.set('verified', false);
+									authorInstance.set('verified', false);
 
-									author.save().then(() => {
+									authorInstance.save().then(() => {
 
-										authorInstances.push(author);
+										authorInstances.push(authorInstance);
 										callback();
 
 									}).catch((err) => {
@@ -287,9 +295,17 @@ const Book = ({
 					'pageCount', 'verified',    'createdAt', 'updatedAt'
 				]);
 
-				json.coverImage = '';
+				json.userId = book.user_id;
+
+				if(book.Authors){
+					json.authors = book.Authors.map((author) => {
+						return author.get('name');
+					});
+				}
+
+				json.thumbnails = [];
 				if(book.CoverImage){
-					json.coverImage = book.CoverImage.toJSON(options);
+					json.thumbnails = book.CoverImage.getThumbnails();
 				}
 
 				return json;

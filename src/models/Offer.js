@@ -6,6 +6,7 @@ const Offer = ({sequelize, models}) => {
 	let Offer = sequelize.define('offer', {
 		description: {
 			type: Sequelize.STRING(2000),
+			default: ''
 		},
 		price: {
 			type: Sequelize.FLOAT,
@@ -61,6 +62,9 @@ const Offer = ({sequelize, models}) => {
 				let json = pick(offer, [
 					'id', 'description', 'price', 'createdAt', 'updatedAt'
 				]);
+
+				json.userId = offer.user_id;
+				json.bookId = offer.book_id;
 
 				if(offer.Condition){
 					json.condition = offer.Condition.toJSON(options);

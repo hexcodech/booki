@@ -178,7 +178,7 @@ class AuthController {
 						// No token found
 						if (!token){
 							return callback(
-								new this.errorController.errors.TokenInvalidError(), false
+								new this.errorController.errors.TokenInvalidError()
 							);
 						}
 

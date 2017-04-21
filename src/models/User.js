@@ -602,25 +602,26 @@ const User = ({
 			},
 
     	toJSON: function(options = {}){
-				let user = this.get(); //invoking virtual getters
+				let user = this.get();
 
 				let json = pick(user, [
-					'id', 'nameDisplay', 'nameFirst', 'nameLast',
+					'id', 'nameDisplay', 'nameFirst', 'nameLast', 'placeOfResidence',
 					'createdAt', 'updatedAt'
 				]);
 
+				json.thumbnails = [];
+
 				if(user.ProfilePicture){
-					json.ProfilePicture = user.ProfilePicture.toJSON();
+					json.thumbnails = book.ProfilePicture.getThumbnails();
 				}
-
+				
 		    json.permissions = this.getPermissionArray();
-
 
 				if(options.hiddenData && options.hiddenData === true){
 					json = Object.assign(json, pick(user, [
 						'emailVerified', 'emailUnverified', 'emailVerificationCode',
 						'passwordAlgorithm', 'passwordResetCode',
-						'passwordResetCodeExpirationDate', 'locale', 'placeOfResidence'
+						'passwordResetCodeExpirationDate', 'locale'
 					]));
 		    }
 

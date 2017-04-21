@@ -40,20 +40,24 @@ const Thumbnail = ({config, sequelize, models}) => {
 			}
   	},
   	instanceMethods: {
+			getUrl: function(){
+				return '/static/' + this.get('File').get('path').split('/static/')[1];
+			},
     	toJSON: function(options){
 				let thumbnail = this.get();
 
 				let json = pick(thumbnail, [
-					'id', 'width', 'height', 'mimeType', 'createdAt', 'updatedAt'
+					'id', 'createdAt', 'updatedAt'
 				]);
 
-				if(options.hiddenData && thumbnail.File){
-					json.url = '/static/' + thumbnail.File
-																	.get('path').split('/static/')[1];
+				if(thumbnail.File){
+					json.url = this.getUrl();
 				}
 
 				if(thumbnail.ThumbnailType){
-					json.thumbnailType = thumbnail.ThumbnailType.toJSON(options);
+					Object.assign(json, pick(thumbnail.ThumbnailType.toJSON(options), [
+						'name', 'width', 'height'
+					]));
 				}
 
 				return json;

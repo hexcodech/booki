@@ -68,7 +68,7 @@ const OfferRequest = ({
 					offer        : this.get('Offer').get(),
 					responseUrl  : config.HOST + '/v1/offer-request/' + this.get('id') +
 					               '/respond?respondKey=' + this.get('respondKey')
-												 
+
 				}, offerer.get('locale')).then((result) => {
 
 					return offerer.sendMail(
@@ -87,8 +87,11 @@ const OfferRequest = ({
 				let offerRequest = this.get();
 
 				let json = pick(offerRequest, [
-					'id', 'message', 'sold', 'responded', 'updatedAt', 'createdAt'
+					'id', 'message', 'sold', 'responded', 'updatedAt', 'createdAt',
 				]);
+
+				json.userId  = offer.user_id;
+				json.offerId = offer.offer_id;
 
 				return json;
 			}
