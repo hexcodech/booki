@@ -2,37 +2,66 @@
 <html>
 	<head>
 		<title><%= __("Booki") %> - <%= __("OAuth Dialog") %></title>
-		
+
 		<meta charset="utf-8">
-		
+
 		<link href="/static/res/css/booki.min.css" rel="stylesheet" type="text/css">
 	</head>
 	<body>
 		<nav class="navbar navbar-dark bg-primary">
-			<a class="navbar-brand" href="#"><img src="/static/res/img/logo.svg"></a>
+			<a class="navbar-brand" href="#">
+				<img src="/static/res/img/logo/logo.svg">
+			</a>
 		</nav>
-		
+
 		<div class="modal static">
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
 					<div class="modal-body">
-						<div <%- trusted ? 'style="display:none"' : ''  %>>
-							<p><%= __("Hi") %> <%= user.name.first %>!</p>
-							<p><b><%= client.name %></b> <%= __("is requesting full access to your account") %>.</p>
+						<div <%- trusted ? 'style="display:none"' : ''  %> >
+							<p><%= __("Hi") %> <%= user.nameFirst %>!</p>
+							<p>
+								<b><%= client.name %></b>
+								<%= __("is requesting full access to your account") %>.
+							</p>
 							<p><%= __("Do you approve?") %></p>
 						</div>
 						<form action="/oauth2/authorize" method="post">
-							<input name="transaction_id" type="hidden" value="<%= transactionID %>">
-							<div <%- trusted ? 'style="display:none"' : ''  %>>
-								<input type="submit" value='<%= __("Allow") %>' class='btn btn-primary' id="allow">
-								<input type="submit" value='<%= __("Deny") %>' class='btn btn-secondary' id="deny" name="cancel">
+							<input
+								name="transaction_id"
+								type="hidden"
+								value="<%= transactionID %>"
+							>
+							<div <%- trusted ? 'style="display:none"' : ''  %> >
+								<input
+									type="submit"
+									value='<%= __("Allow") %>'
+									class='btn btn-primary'
+									id="allow"
+								>
+								<input
+									type="submit"
+									value='<%= __("Deny") %>'
+									class='btn btn-secondary'
+									id="deny"
+									name="cancel"
+								>
 							</div>
 							<noscript>
-								<input type="submit" value='<%= __("Continue") %>' class='btn btn-primary' id="continue">
+								<input
+									type="submit"
+									value='<%= __("Continue") %>'
+									class='btn btn-primary'
+									id="continue"
+								>
 							</noscript>
 						</form>
 						<script>
-							<%- 'document.querySelector(\'form input[type=submit]\').click();'  %>
+							<%-
+								trusted ?
+									'document.querySelector(\'form input[type=submit]\').click();'
+									: 'silence'
+							%>
 						</script>
 					</div>
 				</div>

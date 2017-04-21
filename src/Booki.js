@@ -3,220 +3,349 @@
  */
 
 class Booki {
-	
+
 	constructor(){
-		
-		//Reference to the instance because of http://es6-features.org/#ParameterContextMatching
-		this.booki				= this;
-		
-		//Require modules
-		this.fs					= require("fs");
-		this.os					= require("os");
-		this.requestStats		= require("request-stats");
-		
-		this.mongoose			= require("mongoose");
-		this.mongoose.Promise	= global.Promise; //Use ES6 promises
-		
-		this.ejs				= require("ejs");
-		this.events				= require("events");
-		this.i18n				= require("i18n");
-		this.errors				= require("errors");
-		
-		this.express			= require("express");
-		this.express_session	= require("express-session");
-		this.validate			= require("express-validation");
-		this.bodyParser			= require("body-parser");
-		this.cookieParser		= require("cookie-parser");
-		
-		this.Joi				= require("joi");
-		this.nodemailer			= require("nodemailer");
-		
-		this.crypto				= require("crypto");
-		
-		this.oauth2orize		= require("oauth2orize");
-		this.passport			= require("passport");
-		
-		this.BasicStrategy		= require("passport-http").BasicStrategy
-		this.LocalStrategy		= require("passport-local").Strategy;
-		this.BearerStrategy		= require("passport-http-bearer").Strategy;
-		this.FacebookStrategy	= require("passport-facebook").Strategy;
-		this.GoogleStrategy		= require("passport-google-oauth").OAuth2Strategy;
-		
-		this.bindAll(this, ["bindAll", "getLocale", "generateRandomString", "hash"]);
-		
-		//Store some values
-		this.eventEmitter		= new this.events.EventEmitter();
-		
-		//Load config
-		this.config				= require("../config.json");
-		
-		//Configure i18n
-		this.i18n.configure({
-			locales			: this.config.LOCALES,
-			defaultLocale	: this.config.LOCALES[0],
-			directory		: __dirname + "/../locales",
-			autoReload		: true,
-			extension		: ".json",
-			prefix			: "booki-",
+		const bindAll = require('lodash/bindAll');
+		const path    = require('path');
+
+		this.booki    = this;
+
+		this.folders  = {
+			uploads: path.resolve(__dirname, '../static/uploads/')
+		};
+
+		this.config   = require('../config.json');
+
+		bindAll(this, []);
+
+		//Loading 'shared' modules
+		this.oauth2orize      = require('oauth2orize');
+		this.passport         = require('passport');
+		this.cryptoUtilities  = new (require('./utilities/CryptoUtilities'))
+		                        (this.config);
+
+		//setup with dependencies
+		this.setupLogger().then(({winston, logger}) => {
+			this.winston = winston;
+			this.logger  = logger;
+
+			return Promise.all([
+
+				this.setupI18n(logger, this.config).then((i18n) => {
+					this.i18n = i18n;
+
+					return Promise.all([
+
+						this.loadErrorController(i18n).then((errorController) => {
+							this.errorController = errorController;
+						}),
+
+						this.setupHttpServer(
+							logger, this.config, i18n, this.passport
+						).then(({app, server}) => {
+							this.app    = app;
+							this.server = server;
+
+							return Promise.all([
+								this.setupStats(server).then((statsHolder) => {
+									this.statsHolder = statsHolder;
+								})
+							]);
+
+						})
+					]);
+				}),
+
+				this.connectToDatabase(logger, this.config).then((sequelize) => {
+					this.sequelize = sequelize;
+				}),
+				this.connectToSphinx(logger, this.config).then((sphinx) => {
+					this.sphinx = sphinx;
+				}),
+
+			]);
+
+		}).then(() => {
+			return this.loadModels(
+				this.logger,    this.config, this.errorController,
+				this.sequelize, this.sphinx, this.cryptoUtilities
+			);
+		}).then((models) => {
+			this.models = models;
+		}).then(() => {
+			//sync sequelize
+			this.sequelize.sync();
+		}).then(() => {
+			//Do the routing
+			this.logger.log('info', 'Setting up routes');
+
+			require('./Routing')(this);
+		}).catch((e) => {
+			if(this.logger){
+				this.logger.log('critical', e);
+			}else{
+				console.log("ERROR", e);
+				process.exit(1);
+			}
 		});
-		
-		//Load error messages
-		this.errorController	= new (require("./controllers/ErrorController"))(this.booki);
-		
-		//Connect to to the database
-		this.mongoose.connect("mongodb://" + this.config.DB_USERNAME + ":" + this.config.DB_PASSWORD + "@" + this.config.DB_HOST + ":" + this.config.DB_PORT + "/" + this.config.DB_NAME);
-		
-		//Start the server
-		this.app			= new this.express();
-		
-		this.server = this.app.listen(this.config.HTTP_PORT, () => {
-			this.eventEmitter.emit("Booki::server::init", this.server.address().address, this.server.address().port);
-			console.log("Server running on", this.server.address().address + ":" + this.server.address().port);
+	}
+
+	setupLogger(){
+		let winston = require('winston');
+
+		let logger = new (winston.Logger)({
+			transports: [
+				new (winston.transports.Console)({
+					name        : 'console-log',
+					level       : 'debug',
+					colorize    : true,
+					prettyPrint : true
+				}),
+				new (winston.transports.File)({
+					name        : 'file-log',
+					level       : 'debug',
+					filename    : 'booki.log',
+					colorize    : true,
+					prettyPrint : true
+				})
+			],
+			levels: {
+				critical  : 0,
+				error     : 1,
+				warning   : 2,
+				info      : 3,
+				debug     : 4,
+			}
 		});
-		
+
+		winston.addColors({
+			critical  : 'red',
+			error     : 'red',
+			warning   : 'yellow',
+			info      : 'blue',
+			debug     : 'magenta'
+		});
+
+		return Promise.resolve({winston, logger});
+	}
+
+	setupI18n(logger, config){
+		logger.log('info', 'Configuring i18n');
+
+		let i18n = require('i18n');
+
+		i18n.configure({
+			locales        : config.LOCALES,
+			defaultLocale  : config.LOCALES[0],
+			directory      : __dirname + '/../locales',
+			autoReload     : true,
+			extension      : '.json',
+			prefix         : 'booki-',
+		});
+
+		return Promise.resolve(i18n);
+	}
+
+	loadErrorController(i18n){
+		return Promise.resolve(
+			new (require(
+				'./controllers/ErrorController')
+			)(i18n)
+		);
+	}
+
+	connectToDatabase(logger, config){
+		logger.log('info', 'Connecting to the database...');
+
+		const Sequelize = require('sequelize');
+
+		let sequelize = new Sequelize(
+			config.DB_NAME,
+			config.DB_USERNAME,
+			config.DB_PASSWORD,
+			{
+				host: this.config.DB_HOST,
+				port: this.config.DB_PORT,
+				dialect: 'mysql',
+				pool: {
+					max  : 5,
+					min  : 0,
+					idle : 10000
+				},
+				logging: null
+			}
+		);
+
+		return Promise.resolve(sequelize);
+	}
+
+	connectToSphinx(logger, config){
+		logger.log('info', 'Connecting to sphinx...');
+
+		const mysql = require('mysql2/promise');
+
+		return mysql.createConnection({
+			host    : this.config.DB_HOST,
+			port    : this.config.SPHINX_PORT,
+			//charset : 'UTF8MB4_GENERAL_CI'
+		});
+	}
+
+	setupHttpServer(logger, config, i18n, passport){
+		logger.log('info', 'Starting express server...');
+
+		const express           = require('express');
+		const expressSession    = require('express-session');
+		const bodyParser        = require('body-parser');
+		const helmet            = require('helmet');
+
+
+		let app = new express();
+
+		let server = app.listen(config.HTTP_PORT, () => {
+			logger.log('info',
+				'Server running on',
+				server.address().address + ':' + server.address().port
+			);
+		});
+
 		//Configure the server
-		this.app.use("/static/", this.express.static(__dirname + "/../static"));
-		this.app.use("/.well-known/", this.express.static(__dirname + "/../.well-known"));
-		this.app.use(this.bodyParser.json());
-		this.app.use(this.bodyParser.urlencoded({
-			extended: true
+		logger.log('info', 'Configuring express...');
+
+		//static resources
+		app.use('/static/',
+			express.static(__dirname + '/../static')
+		);
+		//prove identity
+		app.use('/.well-known/',
+			express.static(__dirname + '/../.well-known')
+		);
+
+		//parse json
+		app.use(bodyParser.json());
+		app.use(bodyParser.urlencoded({extended: true}));
+
+		//and enable sessions of oauth2orize
+		app.use(expressSession({
+			secret            : config.SESSION_SECRET,
+			saveUninitialized : true,
+			resave            : true
 		}));
-		this.app.use(this.express_session({//OAuth2orize requires it
-			secret				: this.config.SESSION_SECRET,
-			saveUninitialized	: true,
-			resave				: true
-		}));
-		this.app.use(this.i18n.init);
-		this.app.use(this.passport.initialize());
-		this.app.use(this.passport.session());
-		
-		this.app.use(
+
+		//include i18n middleware
+		app.use(i18n.init);
+
+		//setup passport for authentication
+		app.use(passport.initialize());
+		app.use(passport.session());
+
+		//harden express
+		app.use(helmet());
+
+		//set default headers and attach functions
+		app.use(
 			(request, response, next) => {
-				
-				response.header("Access-Control-Allow-Origin", "*");
-				response.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-				response.header("Access-Control-Allow-Methods", "HEAD, OPTIONS, GET, POST, PUT, DELETE");
-				
-				//UTF 8 JSON all the way EXCEPT /static/
-				if(!request.url.startsWith("/static/")){
-					response.header("Content-Type", "application/json; charset=utf-8");
+
+				response.header('Access-Control-Allow-Origin', '*');
+				response.header(
+					'Access-Control-Allow-Headers',
+					'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+				);
+				response.header(
+					'Access-Control-Allow-Methods',
+					'HEAD, OPTIONS, GET, POST, PUT, DELETE'
+				);
+
+				//UTF-8 JSON all the way EXCEPT /static/
+				if(!request.url.startsWith('/static/')){
+					response.header('Content-Type', 'application/json; charset=utf-8');
 				}else{
-					response.setHeader("charset", "utf-8");
+					response.setHeader('charset', 'utf-8');
 				}
-				
-				if(!request.body.filter){
-					request.body.filter = {};
-				}
-				
+
 				next();
 			}
 		);
-		
-		//add stats
-		this.statsHolder = new (require("./StatsHolder"))(this);
-		
-		this.requestStats(this.server, this.statsHolder.requestCompleted);
-		
-		
-		//Load all Models
-		
-		this.User					= require("./models/User")(this.booki);
-		this.OAuthClient			= require("./models/OAuthClient")(this.booki);
-		this.OAuthAccessToken		= require("./models/OAuthAccessToken")(this.booki);
-		this.OAuthCode				= require("./models/OAuthCode")(this.booki);
-		
-		//Setup the authorization server
-		this.oauth2Server			= this.oauth2orize.createServer();
-		
-		//Do the routing
-		let Routing			= require("./Routing");
-		
-		this.routing		= new Routing(this.booki);
+
+		return Promise.resolve({app, server});
 	}
-	
-	bindAll(object, functions){
-		for(var i=0;i<functions.length;i++){
-			
-			try{
-				object[functions[i]] = object[functions[i]].bind(object);
-			}catch(e){
-				throw new Error("Can't bind method " + (typeof functions[i] === "function" ? functions[i].name : functions[i]) + " to " + (functions[i].name ? functions[i].name : "?"));
+
+	setupStats(server){
+		const requestStats = require('request-stats');
+		const statsHolder  = new (require('./StatsHolder'))();
+
+		requestStats(server, statsHolder.requestCompleted)
+
+		return Promise.resolve(statsHolder);
+	}
+
+	loadModels(
+		logger, config, errorController, sequelize, sphinx, cryptoUtilities
+	){
+		logger.log('info', 'Loading models...');
+
+		const Sequelize = require('sequelize');
+
+		const modelFiles = [
+			'Person', //no init dependencies
+			'Condition', //no init dependencies
+			'File', //no init dependencies
+			'ThumbnailType', //no init dependencies
+			'Permission', //no init dependencies
+			'OAuthProvider', //no init dependencies
+			'OAuthRedirectUri', //no init dependencies
+
+			'Thumbnail', //requires 'File' AND 'ThumbnailType'
+			'Image', //requires 'File' AND 'Thumbnail'
+
+			'Book', //requires 'Image'
+
+			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
+
+			'Offer', //requires 'Condition' AND 'User' AND 'Book'
+			'OfferRequest', //requires 'Offer' AND 'User'
+
+			'OAuthClient', //requires 'OAuthRedirectUri' AND 'User'
+
+			'OAuthCode', //requires 'OAuthClient' AND 'User'
+			'OAuthAccessToken', //requires 'OAuthClient' AND 'User'
+		];
+
+		let models = {};
+
+		modelFiles.forEach((model) => {
+
+			models[model] = require(
+				'./models/' + model
+			)({
+				config,
+				errorController,
+				sequelize,
+				sphinx,
+				models,
+				cryptoUtilities
+			});
+
+			if(models[model].attributes.id){
+				models[model].attributes.id.type = Sequelize.BIGINT.UNSIGNED;
+			}
+
+		});
+
+		logger.log('info', 'Associating models...');
+		//Add associations
+		for(let modelKey in models){
+			if(
+				models.hasOwnProperty(modelKey) &&
+				models[modelKey].associate
+			){
+				models[modelKey].associate(models);
 			}
 		}
+
+		return Promise.resolve(models);
 	}
-	
-	getLocale(user = null, request = null){
-		if(user !== null){
-			return user.locale;
-		}else if(request !== null){
-			return this.i18n.getLocale(request);
-		}else{
-			return this.config.LOCALES[0]
-		}
-	}
-	
-	/**
-	 * Generates (unsafe) random string of characters
-	 * @function generateRandomString
-	 * @param {number} length - Length of the random string.
-	 * @returns {String} A random string of a given length
-	 */
-	 generateRandomString(length){
-		return this.crypto.randomBytes(length)
-        	.toString("base64")
-        	.slice(0, length);
-	}
-	
-	/**
-	 * Hash string using this.HASH_ALGORITHM or the passed algorithm
-	 * @function hash
-	 * @param {string} string - The string to be hashed
-	 * @param {string} salt - The salt to be used while hashing
-	 * @param {string} [algorithm=this.HASH_ALGORITHM] - The hash algorithm that should be used
-	 * @returns {object} - The hashed string, the generated salt and the used hash algorithm {hash: '', salt: '', algorithm: ''}
-	 */
-	hash(string, salt = null, algorithm = null){
-		
-		if(!algorithm){
-			algorithm = this.config.HASH_ALGORITHM;
-		}
-		
-		if(!salt && salt !== false){
-			salt = this.generateRandomString(this.config.SALT_LENGTH);
-		}
-		
-	    let hmacOrHash;
-	    
-	    if(salt){
-		    hmacOrHash = this.crypto.createHmac(algorithm, salt);    
-	    }else{
-		    hmacOrHash = this.crypto.createHash(algorithm);
-	    }
-	    
-	    hmacOrHash.update(string);
-	    
-	    return {hash: hmacOrHash.digest("hex"), salt: salt, algorithm: algorithm};
-	}
-	
-	/**
-	 * Creates an object with all defined keys of the 'keys' param in the 'originalObject' param
-	 * @function createObjectWithOptionalKeys
-	 * @param {Object} originalObject - The object containing the data to be copied
-	 * @param {Array} keys - The keys thath should - if defined - be copied to the new object
-	 * @returns {Object} - The new object containing all defined keys
-	*/
-	createObjectWithOptionalKeys(originalObject = {}, keys = []){
-		let obj;
-		
-		for(let i=0;i<keys.length;i++){
-			if(typeof originalObject[keys[i]]){
-				obj[keys[i]] = originalObject[keys[i]];
-			}
-		}
-		
-		return Object.assign({}, obj);
-	}
-	
+
 };
 
 module.exports = Booki;

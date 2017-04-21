@@ -12,7 +12,7 @@
 	
 	<body>
 		<nav class="navbar navbar-dark bg-primary">
-			<a class="navbar-brand" href="#"><img src="/static/res/img/logo.svg"></a>
+			<a class="navbar-brand" href="#"><img src="/static/res/img/logo/logo.svg"></a>
 		</nav>
 		
 		<div class="modal static">
@@ -21,7 +21,7 @@
 					<div class="modal-body">
 						<form id="login" method="POST" action="/v1/auth/local/verify-email">
 							<div class="form-group">
-								<label for="verificationCode"><%= __("Email") %></label>
+								<label for="email"><%= __("Email") %></label>
 								<input type="text" class="form-control" id="email" name="email" value="<%= email %>">
 							</div>
 							<div class="form-group">

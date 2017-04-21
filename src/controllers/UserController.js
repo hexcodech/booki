@@ -3,199 +3,273 @@
  */
 
 class UserController {
-	
-	constructor({booki, config, app, i18n, mongoose, errorController, getLocale, createObjectWithOptionalKeys}){
-	
+
+	constructor({
+		booki, config, app, i18n, errorController, models
+	}){
+
+		const bindAll           = require('lodash/bindAll');
+		this.pick               = require('lodash/pick');
+		this.omitBy             = require('lodash/omitBy');
+		this.isNil              = require('lodash/isNil');
+
 		//store passed parameters
-		this.config							= config;
-		this.app							= app;
-		this.i18n							= i18n;
-		this.mongoose						= mongoose;
-		this.errorController				= errorController;
-		
-		this.getLocale						= getLocale;
-		this.createObjectWithOptionalKeys	= createObjectWithOptionalKeys;
-		
-		this.User							= this.mongoose.model("User");
-		
-		booki.bindAll(this, ["getCurrentUser", "getUser", "getUserById", "postUser", "putUser", "deleteUser"]);
+		this.config             = config;
+		this.app                = app;
+		this.i18n               = i18n;
+		this.errorController    = errorController;
+
+		this.User               = models.User;
+		this.Permission         = models.Permission;
+
+		bindAll(this, [
+			'getCurrentUser', 'getUser', 'getUserById',
+			'postUser',       'putUser', 'deleteUser'
+		]);
 	}
-	
+
 	getCurrentUser(request, response){
 		response.json(request.user.toJSON());
 		response.end();
 	}
-	
+
 	getUser(request, response, next){
-		
-		let filter;
-		
-		if(request.user.hasCapability("use-arbitrary-filters")){
-			
-			filter = request.body.filter;
-			
+
+		let query = {};
+
+		if(request.hasPermission('admin.user.query')){
+			query = request.body.query;
 		}else{
-			
-			filter = {
-				name: request.body.filter.name
-			};
-			
+			query.name = request.body.query.name;
 		}
-		
-		this.User.find(filter, (err, users) => { //I'm sure there's a way to exploit this.. I don't like it
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
-			}
-			
-			if(request.user.hasCapability("access-raw-data")){
-				
+
+		this.User.findAll({
+			where: query
+		}).then((users) => {
+
+			if(request.hasPermission('admin.user.hiddenData.read')){
+
 				response.json(users.map((user) => {
-					return user.toJSON({rawData: true});
+					return user.toJSON({hiddenData: true});
 				}));
-				
+
 			}else{
-				
+
 				response.json(users.map((user) => {
 					return user.toJSON();
 				}));
-				
+
 			}
-			
+
 			response.end();
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
 	}
-	
+
 	getUserById(request, response, next){
-		
-		this.User.findById(request.params.userId, (err, user) => {
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
-			}
-			
-			if(request.user.hasCapability("access-raw-data")){
-				response.json(user.toJSON({rawData: true}));
+
+		this.User.findById(request.params.userId).then((user) => {
+
+			if(request.hasPermission('admin.user.hiddenData.read')){
+				response.json(user.toJSON({hiddenData: true}));
 			}else{
 				response.json(user.toJSON());
 			}
-			
+
 			response.end();
-			
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
-		
+
 	}
-	
+
 	postUser(request, response, next){
-		let user = new this.User(request.user);
-		
-		user.save((err, user) => {
-			if(err){
+
+		//this function is for admins only so we can accept any fields
+
+		let user = this.User.build(this.pick(request.body.user, [
+			'id', 'nameDisplay', 'nameFirst', 'nameLast',
+			'emailVerified', 'emailUnverified', 'emailVerificationCode',
+			'locale', 'placeOfResidence'
+		]));
+
+		user.save().then(() => {
+
+			//and add the permissions as well
+			if(
+				!request.body.user.permissions ||
+				!Array.isArray(request.body.user.permissions)
+			){
+				request.body.user.permissions = [];
+			}
+
+			user.setPermissionsRaw(request.body.user.permissions).then(() => {
+				//added relations, refreshing the user instance in order to include the
+				//newly added permissions
+
+				user.reload().then(() => {
+
+					if(request.hasPermission('admin.user.hiddenData.read')){
+						response.json(user.toJSON({hiddenData: true}));
+					}else{
+						response.json(user.toJSON());
+					}
+
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+			}).catch((err) => {
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
-				}), null);
-			}
-			
-			if(request.user.hasCapability("access-raw-data")){
-				response.json(user.toJSON({rawData: true}));
-			}else{
-				response.json(user.toJSON());
-			}
-			
-			response.end();
+				}));
+			});
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
+
 	}
-	
+
 	putUser(request, response, next){
-		
-		if(request.user.hasCapabilities(["edit-other-users", "access-raw-data"])){
-			
-			this.User.findByIdAndUpdate(request.params.userId, request.body.user, {new: true}, (err, user) => {
-			
-				if(err){
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				response.json(user.toJSON({rawData: true}));
-				
-				response.end();
-			});
-			
-		}else if(request.params.userId === request.user._id){
-			
-			let newUserData = createObjectWithOptionalKeys(request.body.user, ["name", "locale", "placeOfResidence", "profilePictureUrl"]);
-			
-			if(newEmail){
-				newUserData.email = {
-					unverified: newEmail
-				};
-			}
-			
-			//email and password are handled seperately
-			
-			this.User.findByIdAndUpdate(request.user._id, newUserData, {new: true}, (err, user) => {
-				
-				if(err){
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				let {newPassword, newEmail} = request.body.user;
-				
-				if(newPassword === true){
-					user.initPasswordReset((error, success) => { //async
-						if(error){
-							console.log(error);
-						}
-						
-					});
-				}
-				
-				if(newEmail && user.email.unverified !== ""){
-					user.initEmailVerification((error, success) => { //async
-						if(error){
-							console.log(error);
-						}
-						
-					});
-				}
-				
-				if(request.user.hasCapability("access-raw-data")){
-					response.json(user.toJSON({rawData: true}));
-				}else{
-					response.json(user.toJSON());
-				}
-				
-				response.end();
-				
-			});
-			
-			
-		}else{
-			//not allowed
-			next(new this.errorController.errors.ForbiddenError());
+
+		if(
+			!request.hasPermission('admin.user.editOthers') &&
+			request.params.userId !== request.user.get('id')
+		){
+			return next(new this.errorController.errors.ForbiddenError());
 		}
-	}
-	
-	deleteUser(request, response, next){
-		this.User.findByIdAndRemove(request.params.userId, (err) => {
-			
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
+
+		this.User.findById(request.params.userId).then((user) => {
+
+			if(!user){
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			
-			reponse.json({success: true});
-			response.end();
+
+
+			let promises = [];
+
+			//add normal fields
+
+			user.set(this.omitBy(this.pick(request.body.user, [
+				'nameDisplay', 'nameFirst', 'nameLast',
+				'locale', 'placeOfResidence'
+			]), this.isNil));
+
+
+			//check for email / password change
+			if(request.body.user.newEmail){
+				user.set('emailUnverified', request.body.user.newEmail);
+
+				promises.push(user.initEmailVerification());
+			}
+
+			if(request.body.user.newPassword === true){
+				promises.push(user.initPasswordReset());
+			}
+
+			//update other fields as well if the user is allowed to
+			if(request.hasPermission('admin.user.hiddenData.write')){
+				//if the user has this permission we need to update more fields
+
+				user.set(this.omitBy(this.pick(request.body.user, [
+					'emailVerified', 'emailUnverified', 'emailVerificationCode'
+				]), this.isNil));
+
+				if(
+					!request.body.user.permissions ||
+					!Array.isArray(request.body.user.permissions)
+				){
+					request.body.user.permissions = [];
+				}
+
+				if(!request.hasPermission('admin.user.permissions.change')){
+					 //this will skip the permision changes
+					request.body.user.permissions = [];
+				}
+
+				Promise.all([
+					user.save(),
+					user.setPermissionsRaw(request.body.user.permissions)
+				]).then(() => {
+					//added relations, refreshing the user instance in order to include
+					//the newly added permissions
+
+					user.reload().then(() => {
+
+						if(request.hasPermission('admin.user.hiddenData.read')){
+							response.json(user.toJSON({hiddenData: true}));
+						}else{
+							response.json(user.toJSON());
+						}
+
+					}).catch((err) => {
+						return next(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
+					});
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+
+			}else{
+				//if not return
+
+				promises.push(user.save());
+
+				Promise.all(promises).then(() => {
+
+					//no need to reload() as all changes were made directly on the user
+					//instance
+
+					if(request.hasPermission('admin.user.hiddenData.read')){
+						response.json(user.toJSON({hiddenData: true}));
+					}else{
+						response.json(user.toJSON());
+					}
+
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+
+			}
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
+
 	}
-	
+
+	deleteUser(request, response, next){
+
+		this.User.destroy({where: {id: request.params.userId}}).then(() => {
+
+			response.json({success: true});
+			response.end();
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
+		});
+
+	}
+
 };
 
 module.exports = UserController;

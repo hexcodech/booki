@@ -1,47 +1,59 @@
-/* has to be renamed to config.json and this comment has to be removed*/
+
+
+this file has to be renamed to config.json and this comment needs to be removed
+
+
+
 {
-	"DB_HOST"					: "localhost",
-	"DB_PORT"					: "27017",
-	"DB_NAME"					: "booki",
-	"DB_USERNAME"				: "booki",
-	"DB_PASSWORD"				: "password",
+	"DB_HOST"												: "localhost",
+	"DB_PORT"                       : 3306,
+	"SPHINX_PORT"                   : 9306,
+	"DB_NAME"												: "booki",
+	"DB_USERNAME"										: "",
+	"DB_PASSWORD"										: "",
 
-	"HTTP_PORT"					: 8101,
-	"SESSION_SECRET"			: "",
-	
-	"HASH_ALGORITHM"			: "sha512",
-	"SALT_LENGTH"				: 30,
-	
-	"CLIENT_ID_LENGTH"			: 30,
-	"CLIENT_SECRET_LENGTH"		: 30,
-	
-	"TOKEN_LENGTH"				: 30,
-	"CONFIRM_TOKEN_LENGTH"		: 6,
-	
-	"AUTH_CODE_LIFETIME"		: 600,
-	"ACCESS_TOKEN_LIFETIME"		: 172800,
-	
-	"HOST"						: "http://localhost:8101",
-	"LOCALES"					: ["en"],
-	
-	"MAIL_HOST"					: "smtp.domain.tld",
-	"MAIL_PORT"					: 465,
-	"MAIL_USER"					: "",
-	"MAIL_PASSWORD"				: "",
-	
-	"MAIL_FROM_NAME"			: "Booki",
-	
-	"FACEBOOK_APP_ID"			: "",
-	"FACEBOOK_APP_SECRET"		: "",
-	"FACEBOOK_CALLBACK_PATH"	: "/auth/facebook/callback",
-	
-	"TWITTER_CONSUMER_KEY"		: "",
-	"TWITTER_CONSUMER_SECRET"	: "",
-	"TWITTER_CALLBACK_PATH"		: "/auth/twitter/callback",
-	
-	"GOOGLE_CLIENT_ID"			: "",
-	"GOOGLE_CLIENT_SECRET"		: "",
-	"GOOGLE_CALLBACK_PATH"		: "/auth/google/callback",
+	"HTTP_PORT"											: 8101,
+	"SESSION_SECRET"								: "",
 
-	"GOOGLEBOOKS_API_KEY"		: ""
+	"HASH_ALGORITHM"								: "sha512",
+	"SALT_LENGTH"										: 30,
+
+	"CLIENT_ID_LENGTH"							: 30,
+	"CLIENT_SECRET_LENGTH"					: 30,
+
+	"TOKEN_LENGTH"									: 30,
+	"CONFIRM_TOKEN_LENGTH"					: 6,
+
+	"AUTH_CODE_LIFETIME"						: 600,
+	"ACCESS_TOKEN_LIFETIME"					: 172800,
+	"RESET_CODE_LIFETIME"						: 1200,
+
+	"HOST"													: "http://localhost:8101",
+	"LOCALES"												: [	"en-US" ],
+
+	"MAIL_HOST"											: "",
+	"MAIL_PORT"											: 0,
+	"MAIL_USER"											: "",
+	"MAIL_PASSWORD"									: "",
+
+	"MAIL_FROM_NAME"								: "Booki",
+
+	"FACEBOOK_APP_ID"								: "",
+	"FACEBOOK_APP_SECRET"						: "",
+	"FACEBOOK_CALLBACK_PATH"				: "/auth/facebook/callback",
+
+	"TWITTER_CONSUMER_KEY"					: "",
+	"TWITTER_CONSUMER_SECRET"				: "",
+	"TWITTER_CALLBACK_PATH"					: "/auth/twitter/callback",
+
+	"GOOGLE_CLIENT_ID"							: "",
+	"GOOGLE_CLIENT_SECRET"					: "",
+	"GOOGLE_CALLBACK_PATH"					: "/auth/google/callback",
+
+	"GOOGLEBOOKS_API_KEY"						: "",
+
+	"DEFAULT_PROFILE_PICTURE_URL"		: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
+	"DEFAULT_BOOK_COVER"						: "http://localhost/static/res/img/cover/book-cover.png",
+
+	"MAX_UPLOAD_FILE_SIZE"          : 2097152
 }

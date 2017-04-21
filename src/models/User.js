@@ -1,568 +1,637 @@
 /**
  * Defines the user structure
  */
- 
-function User({booki, config, mongoose, errorController, generateRandomString, hash}){
-	
-	
-	//setup some values
-	var userSchema = new mongoose.Schema({
-		name						: {
-			display						: {type: String, required: true},
-			first						: {type: String, required: true},
-			last						: {type: String, required: false},
-		},
-		
-		email						: {
-			verified					: {type: String, unique: true, required: false},
-			unverified					: {type: String, unique: false, required: false},
-			verificationCode			: {type: String, "default": "", required: false},
-		},
-		
-		password					: {
-			hash						: {type: String, "default": "", required: false},
-			salt						: {type: String, "default": "", required: false},
-			algorithm					: {type: String, "default": "", required: false},
-			
-			resetCode					: {type: String, "default": "", required: false},
-		},
-		
-		capabilities				: {type: Array, "default": [], required: false},
-		
-		locale						: {type: String, "default": "en", required: true},
-		placeOfResidence			: {type: String, required: false},
-		
-		created						: {type: Date, "default": Date.now, required: true},
-		
-		profilePictureUrl			: {
-			type: String,
-			"default": "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
-			required: true
-			//https://de.gravatar.com/site/implement/images/
-		},
-		
-		facebook					: {
-			friends						: {type: Array, required: false},
-			
-			accessToken					: {type: String, "default": "", required: false},
-			refreshToken				: {type: String, "default": "", required: false},
-		},
-		
-		google						: {
-			accessToken					: {type: String, "default": "", required: false},
-			refreshToken				: {type: String, "default": "", required: false},
-		},
-	});
-	
-	userSchema.statics.config				= config;
-	userSchema.statics.errorController		= errorController;
-	userSchema.statics.generateRandomString	= generateRandomString;
-	userSchema.statics.hash					= hash;
-	
-	userSchema.statics.mailController		= new (require("../controllers/MailController"))(booki);
-	userSchema.statics.EmailTemplate		= require("email-templates").EmailTemplate;
-	
-	
-	/**
-	 * Finds a matching user to the passed passport profile
-	 * @function getUserByPassportProfile
-	 * @param {Object} profile - The passport profile to base the new user on
-	 * @param {Function} callback - The function to execute when this function found a user
-	 * @returns {undefined} - The data is returned with the callback parameter
-	 */
-	userSchema.statics.getUserByPassportProfile = function(profile, callback){
-		
-		const iterateMails = (emails, index) => {
-			
-			this.findOne({"email.verified": emails[index].value}, (err, user) => {
-				
-				if(err){
-					return callback(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				if(user){
-					return callback(null, user);
-				}
-				
-				index++;
-				
-				if(index < emails.length){
-					iterateMails(emails, index);
-				}else{
-					callback(null, null);
-				}
-				
-			});
-			
-		}
-		
-		iterateMails(profile.emails, 0);
-	}
-	
-	/**
-	 * Registers a new user
-	 * @function register
-	 * @param {Object} profile - The passport profile to base the new user on
-	 * @param {Function} callback - The function to execute when this function found a user
-	 * @returns {undefined} - The data is returned with the callback parameter
-	 */
-	userSchema.statics.register = function(firstName, email, locale, callback){
-		
-		let lastName = "";
-		let names = firstName.split(" ");
-		
-		if(names.length === 2){
-			firstName	= names[0];
-			lastName	= names[1];
-		}
-		
-		var userData = {
-			name						: {
-				display						: firstName,
-				first						: firstName
+
+const User = ({
+	config, errorController, sequelize, models, cryptoUtilities
+}) => {
+
+	const pick            = require('lodash/pick');
+	const Sequelize		    = require('sequelize');
+	const async           = require('async');
+
+	const EmailTemplate   = require('email-templates').EmailTemplate;
+	const mailController  = new (require(
+		'../controllers/MailController'
+	))(config, errorController);
+
+	let User = sequelize.define('user', {
+
+		/* Name */
+
+			nameDisplay: {
+				type        : Sequelize.STRING,
 			},
-			
-			capabilities				: [],
-			
-			email						: {
-				unverified					: email,
-				verificationCode			: ""
+			nameFirst: {
+				type        : Sequelize.STRING,
 			},
-			
-			locale						: locale,
-			
-		};
-		
-		var user = new this(userData);
-		
-		this.find({$or: [{"email.verified": email}, {"email.unverified": email}]}, (err, users) => {
-			
-			if(err){
-				return callback(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
-			}
-			
-			if(users && users.length > 0){
-				
-				return callback(new this.errorController.errors.UserAlreadyExistsError(), null);
-				
-			}else{
-				user.save((err2) => {
-					
-					if(err2){
-						return callback(new this.errorController.errors.DatabaseError({
-							message: err2.message
-						}), null);
-					}
-					
-					user.initEmailVerification((error, success) => {
-						if(error){
-							return callback(error, false);
-						}
-						return callback(null, user);
-						
-					}, true);
+			nameLast: {
+				type        : Sequelize.STRING,
+			},
+
+		/* Email */
+
+			emailVerified: {
+				type         : Sequelize.STRING,
+				unique       : true,
+				validate     : {
+					isEmail      : true
+				}
+			},
+
+			emailUnverified: {
+				type          : Sequelize.STRING,
+				unique        : true,
+				validate      : {
+					isEmail       : true
+				}
+			},
+
+			emailVerificationCode: {
+				type         : Sequelize.STRING,
+			},
+
+		/* Password */
+
+			passwordHash: {
+				type          : Sequelize.STRING,
+			},
+
+			passwordSalt: {
+				type          : Sequelize.STRING,
+			},
+
+			passwordAlgorithm: {
+				type          : Sequelize.STRING,
+			},
+
+			passwordResetCode: {
+				type          : Sequelize.STRING,
+			},
+
+			passwordResetCodeExpirationDate: {
+				type          : Sequelize.DATE,
+			},
+
+		/* Locale */
+			locale: {
+				type          : Sequelize.STRING,
+				default       : 'en-US',
+				validate      : {
+					isIn          : [config.LOCALES],
+				}
+			},
+
+		/* Meta */
+
+			placeOfResidence: {
+				type          : Sequelize.STRING,
+				default       : 'The milky way'
+			},
+
+
+	}, {
+		defaultScope: {
+			include: [
+				{
+					model   : models.Permission,
+					as      : 'Permissions'
+				},
+				{
+					model   : models.Image,
+					as      : 'ProfilePicture'
+				},
+				{
+					model   : models.OAuthProvider,
+					as      : 'OAuthProviders'
+				}
+			]
+		},
+
+		classMethods: {
+    	associate: function({
+				Permission,   OAuthProvider, OAuthAccessToken,
+				OAuthCode,    OAuthClient,   Image,
+				Book,         Offer
+			}){
+				this.belongsToMany(Permission, {
+					as          : 'Permissions',
+					foreignKey  : 'user_id',
+					otherKey    : 'permission_id',
+					through     : 'permission_relations',
+					onDelete    : 'cascade',
+					hooks       : true
 				});
-			}
-		});
-	}
-	
-	/**
-	 * Finds or creates a matching user to the passed passport profile
-	 * @function findOrCreateUserByPassportProfile
-	 * @param {Object} profile - The passport profile to base the new user on
-	 * @param {Object} customKeysAndVals The custom keys and values used to find or create the user
-	 * @param {Function} callback - The function to execute when this function found a user
-	 * @returns {undefined} - The data is returned with the callback parameter
-	 */
-	userSchema.statics.findOrCreateUserByPassportProfile = function(profile, customKeysAndVals, callback){
-		
-		this.getUserByPassportProfile(profile, (errorObj, user) => {
-			
-			if(errorObj){
-				return callback(errorObj, null);
-			}
-			
-			if(user){
-				//update values for the current user
-				user.updateFromPassportProfile(profile, customKeysAndVals);
-			}else{
-				//we have to create a new user
-				user = this.createFromPassportProfile(profile, customKeysAndVals);
-			}
-			
-			user.save((err) => {
-				if(err){
-					return callback(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}), null);
-				}
-				
-				return callback(null, user);
-			});
-		});
-	}
-	
-	/**
-	 * Creates an object including the keys and values needed to
-	 * create a new user based on the passed passport object
-	 * @function getPassportUserMappings
-	 * @param {Object} profile - The passport profile to base the new user on
-	 * @returns {Object} - The user keys and values that can be used to create a user
-	 */
-	userSchema.statics.getPassportUserMappings = function(profile){
-		
-		return {
-			name					: {
-				display					: profile.displayName,
-				first					: profile.name.givenName,
-				last					: profile.name.familyName
+
+				this.hasMany(OAuthProvider, {
+					as         : 'OAuthProviders',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OAuthAccessToken, {
+					as         : 'OAuthAccessTokens',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OAuthCode, {
+					as         : 'OAuthCodes',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OAuthClient, {
+					as         : 'OAuthClients',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(Image, {
+					as         : 'Images',
+					foreignKey : 'user_id',
+					hooks      : true
+				});
+
+				this.belongsTo(Image,{
+					as          : 'ProfilePicture',
+					foreignKey  : 'profile_picture_id',
+					constraints : false //otherwise we have a circular dependency
+				});
+
+				this.hasMany(Book, {
+					as         : 'Books',
+					foreignKey : 'user_id',
+				});
+
+				this.hasMany(Offer, {
+					as         : 'Offers',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
 			},
-			
-			/*email					: {
-				verified				: profile.emails[0].value // shouldn't be updated without the user wanting it
-			}*/
-			
-			profilePictureURL		: profile.photos[0].value
-		};
-	}
-	
-	/**
-	 * Creates a new user based on the passed passport profile and the passed custom keys and values
-	 * @function createFromPassportProfile
-	 * @param {Object} profile - The passport profile to base the new user on
-	 * @param {Object} customKeysAndVals The custom keys and values to add to the user
-	 * @returns {Object} - The user object
-	 */
-	userSchema.statics.createFromPassportProfile = function(profile, customKeysAndVals = {}){
-		return new this(Object.assign(this.getPassportUserMappings(profile), customKeysAndVals, {email : {verified: profile.emails[0].value}}));
-	}
-	
-	//User methods
-	
-	
-	/**
-	 * Updates a new user based on the passed passport profile and the passed custom keys and values
-	 * @function updateFromPassportProfile
-	 * @param {Object} profile - The passport profile to update the user from
-	 * @param {Object} customKeysAndVals The custom keys and values to update
-	 * @returns {undefined}
-	 */
-	userSchema.methods.updateFromPassportProfile = function(profile, customKeysAndVals){
-		if(!customKeysAndVals){customKeysAndVals = {};}
-		
-		var obj = Object.assign(this.constructor.getPassportUserMappings(profile), customKeysAndVals);
-		for(var key in obj){
-			if(obj.hasOwnProperty(key)){
-				this[key] = obj[key];
-			}
-		}
-		
-		return this;
-	}
-	
-	/**
-	 * Verifies the password for a specific user
-	 * @function verifyPassword
-	 * @param {string} password - The password to verify
-	 * @param {Function} callback - The function called after verifying the password
-	 * @returns {Boolean} - Whether the password could be verified or not
-	 */
-	userSchema.methods.verifyPassword = function(password, callback){
-		
-		let {hash, salt}							= this.constructor.hash(password, this.password.salt,  this.password.algorithm);
-		let {hash : newHash, newAlgorithm}			= this.constructor.hash(password, this.password.salt);
-		
-		if(hash == this.password.hash){
-			//password is correct, check if the hash algorithm changed
-			
-			if(this.password.algorithm !== newAlgorithm){
-				//yes it did, hash and store the password with the new algorithm one
-				this.password.hash			= newHash;
-				this.password.algorithm		= newAlgorithm;
-			}
-			
-			return this.save((err, user) => {
-				
-				if(err){
-					return callback(new this.constructor.errorController.errors.DatabaseError({
-						message: err.message
-					}), false);
-				}
-				
-				return callback(null, true);
-				
-			});
-		}
-		
-		return callback(null, false);
-	};
-	
-	/**
-	 * Updates the password for a specific user
-	 * @function updatePassword
-	 * @param {string} password - The new password
-	 * @param {string} passwordResetCode - The received reset code that verifies this operation
-	 * @param {Function} callback - The function called after updating the password
-	 * @returns {Boolean} - Whether the update succeeded
-	 */
-	userSchema.methods.updatePassword = function(password, passwordResetCode = null, callback){
-		
-		if((this.password.resetCode && this.password.resetCode === passwordResetCode)){
-			
-			this.password.resetCode		= "";
-			
-			let {hash, salt, algorithm} = this.constructor.hash(password);
-			
-			this.password.hash			= hash;
-			this.password.algorithm		= algorithm;
-			this.password.salt			= salt;
-			
-			return this.save((err, user) => {
-				
-				if(err){
-					return callback(new this.constructor.errorController.errors.DatabaseError({
-						message: err.message
-					}), false);
-				}
-				
-				return callback(null, true);
-				
-			});
-		}
-		
-		return callback(new this.constructor.errorController.errors.PasswordResetCodeInvalidError(), false);
-	};
-	
-	/**
-	 * Sends a mail to the current user with the correct name
-	 * @function sendMail
-	 * @param {String} toEmail - the email of the recipient
-	 * @param {String} subject - The subject of the email
-	 * @param {String} html - The content of the email
-	 * @param {String} text - The text version of the email
-	 * @param {Function} callback - A callback function that will be called after sending the mail or encountering an error
-	 * @param {Array} cc - An array of recipients who will appear in the cc field
-	 * @param {Array} bcc - An array of recipients who won't be displayed
-	 * @param {String} replyTo - A mail address to who the recipients should reply
-	 * @returns {undefined} - The data is returned with the callback parameter
-	 */
-	userSchema.methods.sendMail = function(subject, html, text, callback, toEmail = this.email.verified, cc = [], bcc = [], replyTo = null){
-		this.constructor.mailController.sendMail(['"' + this.name.first + '" <' + toEmail + '>'], subject, html, text, callback, cc, bcc, replyTo);
-	}
-	
-	/**
-	 * Inits a password reset for the current user by generating a reset code and sending it by mail
-	 * @function initPasswordReset
-	 * @param {Function} callback - The function that will be called if the render succeeds or an error occurs
-	 * @returns {undefined} The data is returned with the callback parameter
-	 */
-	userSchema.methods.initPasswordReset = function(callback){
-		var passwordResetCode	= this.constructor.generateRandomString(this.constructor.config.TOKEN_LENGTH);
-		var resetMail			= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/password-reset");
-		
-		resetMail.render(this, this.locale, (err, result) => {
-			if(err){
-				return callback(new this.constructor.errorController.errors.RenderError({
-					message: err.message
-				}), false);
-			}
-			this.sendMail(result.subject, result.html, result.text, (error, success) => {
-				
-				if(error){
-					return callback(error, success);
-				}
-				
-				if(success){
-					this.password.resetCode = passwordResetCode;
-					
-					this.save((err, user) => {
-						if(err){
-							return callback(new this.constructor.errorController.errors.DatabaseError({
-								message: err.message
-							}), false);
-						}
-						
-						return callback(null, success);
-						
-					});
-				}
-				
-				return callback(error, success);
-			});
-		});
-	};
-	
-	/**
-	 * Inits a email confirmation for the current user by generating a code and sending it by mail
-	 * @function initEmailVerification
-	 * @param {Function} callback - The function that will be called if the
-	 * mail was sent successfully or an error occurs
-	 * @returns {undefined} The data is returned with the callback parameter
-	 */
-	userSchema.methods.initEmailVerification = function(callback, registration = false){
-		
-		var emailVerificationCode	= this.constructor.generateRandomString(this.constructor.config.CONFIRM_TOKEN_LENGTH);
-		var confirmationMail		= new this.constructor.EmailTemplate(__dirname + "/../templates/emails/email-confirmation");
-		
-		this.email.verificationCode = emailVerificationCode;
-		
-		confirmationMail.render(
-		{
-			user					: this
-			
-		},
-		
-		this.locale, (err, result) => {
-		
-			if(err){
-				return callback(new this.constructor.errorController.errors.RenderError({
-					message: err.message
-				}), false);
-			}
-			
-			this.sendMail(result.subject, result.html, result.text, (error, success) => {
-				
-				if(error){
-					return callback(error, success);
-				}
-				
-				if(success){
-					
-					this.email.verificationCode	= emailVerificationCode;
-					
-					if(registration){
-						this.password.resetCode	= emailVerificationCode;
+
+			getUserByPassportProfile: function(profile){
+				return this.findOne({
+					where: {emailVerified: {$in: profile.emails} }
+				}).then((user) => {
+
+					if(user){
+						return user;
+					}else{
+						throw new errorController.errors.UnexpectedQueryResultError();
 					}
-					
-					return this.save((err) => {
-						if(err){
-							return callback(new this.constructor.errorController.errors.DatabaseError({
-								message: err.message
-							}), false);
-						}
-						
-						return callback(null, success);
-						
-					});
-				}
-				
-				return callback(error, success);
-			}, this.email.unverified);
-			
-		});
-	};
-	
-	/**
-	 * Verifies the users email
-	 * @function verifyEmail
-	 * @param {string} email - The email to verify
-	 * @param {string} emailVerificationCode - The received verification code that verifies this operation
-	 * @param {Function} callback - The function called after verifying the email
-	 * @returns {Boolean} - Whether the update succeeded
-	 */
-	userSchema.methods.verifyEmail = function(email, emailVerificationCode = null, callback){
-		
-		if(email && emailVerificationCode && this.email.verificationCode === emailVerificationCode && this.email.unverified === email){
-			
-			this.email.verified			= email;
-			this.email.verificationCode	= "";
-			this.email.unverified		= "";
-			
-			return this.save((err, user) => {
-				
-				if(err){
-					return callback(new this.constructor.errorController.errors.DatabaseError({
+
+				}).catch((err) => {
+					throw new errorController.errors.DatabaseError({
 						message: err.message
-					}), false);
+					});
+				});
+			},
+
+			register: function(firstName, email, locale){
+				let lastName	= '';
+				let names		= firstName.split(' ');
+
+				if(names.length === 2){
+					firstName	= names[0];
+					lastName	= names[1];
+				}
+
+				let userData = {
+					nameDisplay: firstName,
+					nameFirst: firstName,
+
+					permission : [],
+
+					emailUnverified: email,
+					emailVerificationCode : '',
+
+					locale: locale,
+
+				};
+
+				return this.findAll({
+					where: { $or: [{emailVerified: email}, {emailUnverified: email}] }
+				}).then((users) => {
+					if(users && users.length > 0){
+
+						throw new errorController.errors.UserAlreadyExistsError();
+
+					}else{
+						return this.create(userData).then((user) => {
+							user.initEmailVerification(true).then(() => {
+								return user;
+							}).catch((error) => {
+								throw error;
+							});
+
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
+							});
+						});
+					}
+
+				});
+			},
+
+			findOrCreateUserByPassportProfile: function(profile){
+				return this.getUserByPassportProfile(profile).then(() => {
+
+					if(user){
+						//update values for the current user
+						user.updateFromPassportProfile(profile, customKeysAndVals);
+					}else{
+						//we have to create a new user
+						user = this.createFromPassportProfile(profile, customKeysAndVals);
+					}
+
+					user.save().then((user) => {
+						return user;
+
+					}).catch((err) => {
+						throw new errorController.errors.DatabaseError({
+							message: err.message
+						});
+					});
+
+				});
+			},
+
+			createFromPassportProfile: function(profile){
+				let user = this.build({
+					nameDisplay       : profile.displayName,
+					nameFirst         : profile.givenName,
+					nameLast          : profile.familyName,
+
+					emailVerified     : profile.emails[0].value
+				});
+
+				//TODO mirror image
+				let profilePicture = new models.Image.build({
+					url: profile.photos[0].value
+				});
+
+				user.set('profilePicture', profilePicture);
+
+				let promises = [];
+				promises.push(profilePicture.save());
+				promises.push(user.save());
+
+				return Promise.all(promises);
+			},
+
+			updateFromPassportProfile: function(profile){
+				this.set({
+					nameDisplay       : profile.displayName,
+					nameFirst         : profile.givenName,
+					nameLast          : profile.familyName,
+				});
+
+				let promises = [];
+
+				//TODO mirror image
+				if(this.get('profilePicture').get('url') !== profile.photos[0].value){
+
+					let profilePicture = new models.Image.build({
+						url: profile.photos[0].value
+					});
+
+					this.setProfilePicture(profilePicture);
+
+					promises.push(this.get('profilePicture').destroy());
+					promises.push(profilePicture.save());
+				}
+
+				promises.push(this.save());
+
+				return Promise.all(promises);
+			},
+
+  	},
+  	instanceMethods: {
+
+			sendMail: function(
+				subject = '',
+				html = '',
+				text = '',
+				toEmail = this.get('emailVerified'),
+				cc = [],
+				bcc = [],
+				replyTo = null
+			){
+				return mailController.sendMail(
+					['"' + this.get('nameFirst') + '" <' + toEmail + '>'],
+					subject,
+					html,
+					text,
+					cc,
+					bcc,
+					replyTo
+				);
+			},
+
+			verifyPassword: function(password){
+				let {hash} = cryptoUtilities.generateHash(
+					password,
+					this.get('passwordSalt'),
+					this.get('passwordAlgorithm')
+				);
+
+				let {hash : newHash, newAlgorithm} = cryptoUtilities.generateHash(
+					password,
+					this.get('passwordSalt')
+				);
+
+				if(hash == this.get('passwordHash')){
+					//password is correct, check if the hash algorithm changed
+
+					if(this.get('passwordAlgorithm') !== newAlgorithm){
+						//yes it did, hash and store the password with the new algorithm one
+						this.set('passwordHash',      newHash);
+						this.set('passwordAlgorithm', newAlgorithm);
+					}
+
+					return this.save().then((user) => {
+						return true;
+					});
+				}else{
+					return false;
+				}
+			},
+
+			updatePassword: function(password, passwordResetCode){
+				if(
+					this.get('passwordResetCode') &&
+					this.get('passwordResetCode') === passwordResetCode
+				){
+
+					if(this.get('passwordResetCodeExpirationDate') >= new Date()){
+
+						let {hash, salt, algorithm} = cryptoUtilities.generateHash(
+							password
+						);
+
+						this.set({
+							passwordHash			: hash,
+							passwordSalt			: salt,
+							passwordAlgorithm	: algorithm,
+							passwordResetCode : ''
+						});
+
+						return this.save().then((user) => {
+							return;
+
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
+							});
+						});
+
+					}else{
+						throw new errorController.errors
+							.PasswordResetCodeExpiredError();
+					}
+				}else{
+						throw new errorController.errors
+						.PasswordResetCodeInvalidError();
+				}
+			},
+
+			initPasswordReset: function(){
+				let passwordResetCode	= cryptoUtilities.generateRandomString(
+					config.TOKEN_LENGTH
+				);
+				let resetMail = new EmailTemplate(
+					__dirname + '/../templates/emails/password-reset'
+				);
+
+				let expirationDate =
+					Date.now() + config.RESET_CODE_LIFETIME * 1000;
+
+				this.set('passwordResetCode', passwordResetCode);
+				this.set('passwordResetCodeExpirationDate', expirationDate);
+
+				return resetMail.render({
+					user: this.get()
+				}, this.get('locale')).then((result) => {
+
+					return this.sendMail(
+						result.subject, result.html, result.text
+					).then(() => {
+
+						return this.save().then(() => {
+							return true;
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
+							});
+						});
+
+					}).catch((error) => {
+						throw error;
+					});
+
+				}).catch((err) => {
+					throw new errorController.errors.RenderError({
+						message: err.message
+					});
+				});
+
+			},
+
+			initEmailVerification: function(registration = false){
+
+				let emailVerificationCode	= cryptoUtilities.generateRandomString(
+					config.CONFIRM_TOKEN_LENGTH
+				);
+				let confirmationMail = new EmailTemplate(
+					__dirname + '/../templates/emails/email-confirmation'
+				);
+
+				this.set('emailVerificationCode', emailVerificationCode);
+
+				return confirmationMail.render({
+					user: this.get()
+				}, this.get('locale')).then((result) => {
+
+					return this.sendMail(
+						result.subject,
+						result.html,
+						result.text,
+						this.get('emailUnverified')
+					).then(() => {
+
+						this.set('emailVerificationCode', emailVerificationCode);
+
+						if(registration){
+							this.set('passwordResetCode', emailVerificationCode);
+							this.set('passwordResetCodeExpirationDate',
+								Date.now() + (config.RESET_CODE_LIFETIME * 1000)
+							);
+						}
+
+						return this.save().then(() => {
+							return true;
+
+						}).catch((err) => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
+							});
+						});
+
+					}).catch((err) => {
+						throw new errorController.errors.InternalServerError({
+							message: err.message
+						});
+					});
+
+				}).catch((err) => {
+					throw new errorController.errors.RenderError({
+						message: err.message
+					});
+				});
+			},
+
+			verifyEmail: function(email = '', emailVerificationCode = null){
+				if(
+					email && emailVerificationCode &&
+					this.get('emailVerificationCode') === emailVerificationCode &&
+					this.get('emailUnverified') === email
+				){
+
+					this.set({
+						emailVerified         : email,
+						emailVerificationCode : '',
+						emailUnverified       : null
+					});
+
+					return this.save().then(() => {
+
+						return true;
+
+					}).catch((err) => {
+						throw new errorController.errors.DatabaseError({
+							message: err.message
+						});
+					});
+
+				}else{
+					return Promise.reject(
+						new errorController.errors.EmailVerificationCodeInvalidError()
+					);
+				}
+			},
+
+			getPermissionArray: function(){
+				return this.get('Permissions').map((permission) => {
+					return permission.get('permission');
+				});
+			},
+
+			doesHavePermissions: function(permissionsNeeded = []){
+				let permissions = this.getPermissionArray();
+
+				let missing = permissionsNeeded.filter((permission) => {
+
+					for(let i=0;i<permissions.length;i++){
+
+						// has exactly this permission or has a higher level permission
+
+						if(
+							permission === permissions[i] ||
+							permission.startsWith(permissions[i] + '.')
+						){
+							return false; //not missing, remove from array
+						}
+					}
+
+					return true; //missing, leave in array
+
+				});
+
+				return missing.length === 0;
+			},
+
+			doesHavePermission: function(permission){
+				return this.hasPermissions([permission]);
+			},
+
+			setPermissionsRaw: function(permissions){
+				return new Promise((resolve, reject) => {
+
+					let permissionInstances = [];
+
+					async.each(permissions,
+						(permission, callback) => {
+
+						models.Permission.findOrCreate({
+							where    : {permission: permission},
+							defaults : {permission: permission}
+						}).then((result) => {
+
+							let promises = [];
+							let permissionInstance = result[0], created = result[1];
+
+							permissionInstances.push(permissionInstance);
+							callback();
+
+						}).catch((err) => {
+							return callback(err);
+						});
+
+					}, (err) => {
+						if(err){
+							throw err;
+						}
+
+						this.setPermissions(permissionInstances).then(() => {
+							resolve(true);
+						}).catch((err) => {
+							reject(err);
+						});
+
+					});
+				});
+			},
+
+    	toJSON: function(options = {}){
+				let user = this.get();
+
+				let json = pick(user, [
+					'id', 'nameDisplay', 'nameFirst', 'nameLast', 'placeOfResidence',
+					'createdAt', 'updatedAt'
+				]);
+
+				json.thumbnails = [];
+
+				if(user.ProfilePicture){
+					json.thumbnails = book.ProfilePicture.getThumbnails();
 				}
 				
-				return callback(null, true);
-				
-			});
-			
-		}
-		
-		return callback(new this.constructor.errorController.errors.EmailVerificationCodeInvalidError(), false);
-	}
-	
-	/**
-	 * Checks whether the current user has said capabilities
-	 * @function hasCapabilities
-	 * @param {Array} capabilities - The array of capabilities to check
-	 * @returns {boolean} Whether the user has all of the given capabilities
-	 */
-	userSchema.methods.hasCapabilities = function(capabilities){
-		
-		//if we require move caps than we have it's already false
-		if(capabilities.length > this.capabilities.length){
-			return false;
-		}
-		
-		//indexOf is too slow, iterates through the whole array
-		this.capabilities.sort();
-		capabilities.sort();
-		
-		//for every element in capabilities we should find a corresponding one in this.capabilities
-		//and because they are sorted, we need to iterate only "once"
-		
-		let found;
-		
-		for(let i=0;i<capabilities.length;i++){
-			
-			found = false;
-			
-			for(let j=i;j<this.capabilities.length;j++){
-				if(capabilities[i] === this.capabilities[j]){
-					i = j;//because the arrays are sorted we can now jump to the index where the corresponding element was found
-					found = true;
-					break;
-				}
-			}
-			
-			if(!found){return false;}
-		}
-		
-		return true;
-	};
-	
-	/**
-	 * Checks whether the current user has said capability
-	 * @function hasCapability
-	 * @param {String} capability - The capability to check
-	 * @returns {boolean} Whether the user has the given capability
-	 */
-	userSchema.methods.hasCapability = function(capability){
-		return this.hasCapabilities([capability]);
-	};
-	
-	
-	userSchema.set("toJSON", {
-	    transform: (doc, ret, options) => {
-		    
-		    if(options.rawData === true){
-			    return ret;
+		    json.permissions = this.getPermissionArray();
+
+				if(options.hiddenData && options.hiddenData === true){
+					json = Object.assign(json, pick(user, [
+						'emailVerified', 'emailUnverified', 'emailVerificationCode',
+						'passwordAlgorithm', 'passwordResetCode',
+						'passwordResetCodeExpirationDate', 'locale'
+					]));
 		    }
-		    
-	        return {
-	        	_id					: ret._id,
-	        	name				: ret.name,
-	        	
-	        	capabilities		: ret.capabilities,
-	        	
-	        	profilePictureUrl	: ret.profilePictureUrl,
-	        	
-	        	/*email				: ret.email.verified,*/
-	        	created				: ret.created
-	        };
-	    }
+
+				return json;
+			}
+		}
 	});
-	
-	return mongoose.model("User", userSchema);
-	
+
+	return User;
+
 }
 
 module.exports = User;

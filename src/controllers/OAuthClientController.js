@@ -1,213 +1,345 @@
 class OAuthClientController{
-	
-	constructor({booki, config, mongoose, errorController, bindAll, getLocale, generateRandomString, createObjectWithOptionalKeys}){
-		
-		this.config							= config;
-		this.mongoose						= mongoose;
-		this.errorController				= errorController;
-		
-		this.getLocale						= getLocale;
-		this.generateRandomString			= generateRandomString;
-		this.createObjectWithOptionalKeys	= createObjectWithOptionalKeys;
-		
-		this.OAuthClient					= this.mongoose.model("OAuthClient");
-		
-		bindAll(this, ["getOAuthClient", "postOAuthClient", "getOAuthClientById", "postOAuthClient", "putOAuthClient", "deleteOAuthClient"]);
-		
+
+	constructor({
+		booki, config, errorController, getLocale, generateRandomString,
+		models
+	}){
+
+		const bindAll                = require('lodash/bindAll');
+		this.pick                    = require('lodash/pick');
+		this.omitBy                  = require('lodash/omitBy');
+		this.isNil                   = require('lodash/isNil');
+
+		this.config                  = config;
+		this.errorController         = errorController;
+
+		this.getLocale               = getLocale;
+		this.generateRandomString    = generateRandomString;
+
+		this.OAuthClient             = models.OAuthClient;
+		this.OAuthRedirectUri        = models.OAuthRedirectUri;
+		this.User                    = models.User;
+
+		bindAll(this, [
+			'getOAuthClient', 'postOAuthClient', 'getOAuthClientById',
+			'putOAuthClient', 'deleteOAuthClient'
+		]);
+
 	}
-	
+
 	getOAuthClient(request, response, next){
-		this.OAuthClient.find({userId: request.user._id}, (err, clients) => {
-			
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			}
-			
+
+		let query = {}, include = [], userId = null;
+
+		if(request.hasPermission('admin.user.query')){
+
+			query = request.body.query;
+
+		}else{
+			query = this.pick(request.body.client, [
+				'id', 'name', 'trusted'
+			]);
+
+			userId = request.user.id;
+		}
+
+		if(
+			request.body.client &&
+			request.body.client.userId &&
+			request.hasPermission('admin.client.filters')
+		){
+
+			userId = request.body.client.userId;
+
+		}
+
+		if(userId){
+			include.push({
+				model : this.User,
+				as    : 'User',
+				where : {id: userId}
+			});
+		}
+
+		this.OAuthClient.findAll({where: query, include: include})
+		.then((clients) => {
+
 			if(clients){
-				
-				if(request.user.hasCapability("access-raw-data")){
-				
+
+				if(request.hasPermission('admin.client.hiddenData.read')){
+
 					response.json(clients.map((client) => {
-						return client.toJSON({rawData: true});
+						return client.toJSON({hiddenData: true});
 					}));
-					
+
 				}else{
-					
+
 					response.json(clients.map((client) => {
 						return client.toJSON();
 					}));
-					
+
 				}
-				
+
 				return response.end();
-				
+
+			}else{
+				return response.end('[]');
 			}
-			
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
-			
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
 	}
-	
+
 	getOAuthClientById(request, response, next){
-		this.OAuthClient.findOne({_id: request.params.clientId, userId: request.user._id}, (err, client) => {
-			
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			}
-			
+		this.OAuthClient.findOne({
+			where   : {id: request.params.clientId},
+			include : [{
+				model   : this.User,
+				as      : 'User',
+				where   : {id: request.user.id}
+			}]
+		}).then((client) => {
+
 			if(client){
-				
-				if(request.user.hasCapability("access-raw-data")){
-				
-					response.json(client.toJSON({rawData: true}));
-					
+
+				if(request.hasPermission('admin.client.hiddenData.read')){
+
+					response.json(client.toJSON({hiddenData: true}));
+
 				}else{
-					
+
 					response.json(client.toJSON());
-					
+
 				}
-				
+
 				return response.end();
-				
+
+			}else{
+				return next(
+					new this.errorController.errors.NotFoundError()
+				);
 			}
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
 	}
-	
-	
+
+
 	postOAuthClient(request, response, next){
-		
-		let secret = this.OAuthClient.generateSecret();
-		
-		let client = new this.OAuthClient({
-			id							: this.generateRandomString(this.config.CLIENT_ID_LENGTH),
-			name						: request.body.name,
-			redirectUris				: request.body.redirectUris,
-			userId						: request.user._id
+
+		const secret = this.OAuthClient.generateSecret();
+		let   promises = [];
+
+		let   client = this.OAuthClient.build({
+			name: request.body.client.name,
+			user_id: request.user.id
 		});
-		
+
 		client.setSecret(secret);
-		
-		client.save((err, client) => {
-			
-			if(err){
+
+		if(
+			request.hasPermissions(
+				['admin.client.create', 'admin.client.hiddenData.write']
+			)
+		){
+
+			if(request.body.client.userId){
+				client.set('user_id', request.body.client.userId);
+			}
+
+			client.set(this.omitBy(this.pick(request.body.client, [
+				'id', 'trusted'
+			]), this.isNil));
+
+		}
+
+		client.save().then(() => {
+
+			let uris = [];
+
+			if(request.body.client.redirectUris){
+
+				request.body.client.redirectUris.forEach((uri) => {
+
+					promises.push(this.OAuthRedirectUri.create({
+						uri: uri,
+						oauth_client_id: client.get('id')
+					}));
+
+				});
+			}
+
+			Promise.all(promises).then(() => {
+
+				client.reload().then(() => {
+					let json = {};
+
+					if(request.hasPermission('admin.client.hiddenData.read')){
+						json = client.toJSON({hiddenData: true});
+					}else{
+						json = client.toJSON();
+					}
+
+					json.secret = secret; //attach secret to response
+					response.json(json);
+
+					return response.end();
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+
+			}).catch((err) => {
 				return next(new this.errorController.errors.DatabaseError({
 					message: err.message
 				}));
-			}
-			
-			if(client){
-				
-				if(request.user.hasCapability("access-raw-data")){
-					response.json(Object.assign(client.toJSON({rawData: true}), {secret: secret}));//add secret to response
-				}else{
-					response.json(Object.assign(client.toJSON(), {secret: secret}));//add secret to response
-				}
-				
-				return response.end();	
-			}
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
+			});
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
-		
 	}
-	
+
 	putOAuthClient(request, response, next){
-		
-		this.OAuthClient.findById(request.params.clientId, (err, client) => {
-			
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
-			}
-			
+
+		this.OAuthClient.findById(request.params.clientId)
+		.then((client) => {
+
 			if(client){
-				
-				if(request.user.hasCapabilities(["edit-other-oauthclients", "access-raw-data"])){
-					
-					this.OAuthClient.findByIdAndUpdate(request.params.clientId, request.body.client, {new: true}, (err2, updatedClient) => {
-			
-						if(err2){
-							return next(new this.errorController.errors.DatabaseError({
-								message: err2.message
-							}), null);
+
+				let promises = [];
+
+				if(request.hasPermissions(
+					['admin.client.editOthers', 'admin.client.hiddenData.write'])
+				){
+
+					client.set(this.omitBy(this.pick(request.body.client, [
+						'trusted'
+					]), this.isNil));
+
+					if(request.body.client.userId){
+						promises.push(client.setUser(request.body.client.userId));
+					}
+
+				}else if(
+					client.userId !== request.user.id &&
+					!request.hasPermission('admin.client.editOthers')
+				){
+					return next(new this.errorController.errors.ForbiddenError());
+				}
+
+				client.set(this.omitBy(this.pick(request.body.client, [
+					'name'
+				]), this.isNil));
+
+				if(request.body.client.redirectUris){
+					const currentUris = client.get('OAuthRedirectUris'),
+					      newUris     = request.body.client.redirectUris;
+
+					//To remove
+					for(let i=0;i<currentUris.length;i++){
+						if(newUris.indexOf(currentUris[i].get('uri')) === -1){
+							promises.push(currentUris[i].destroy());
 						}
-						
-						response.json(updatedClient.toJSON({rawData: true}));
-						response.end();
-						
+					}
+
+					//To add
+					let tempCurrentUris = currentUris.map((uri) => {
+						return uri.get('uri');
 					});
-					
-				}else if(client.userId === request.user._id){
-					
-					let newClientData = this.createObjectWithOptionalKeys(request.body.client, ["name", "redirectUris"]);
-					
-					this.OAuthClient.findByIdAndUpdate(request.params.clientId, newClientData, {new: true}, (err2, updatedClient) => {
-			
-						if(err2){
-							return next(new this.errorController.errors.DatabaseError({
-								message: err2.message
-							}), null);
+
+					for(let i=0;i<newUris.length;i++){
+						if(tempCurrentUris.indexOf(newUris[i]) === -1){
+							let uri = this.OAuthRedirectUri.build({
+								uri: newUris[i],
+								oauth_client_id: client.get('id')
+							});
+
+							promises.push(uri.save());
 						}
-						
-						if(request.user.hasCapability("access-raw-data")){
-							response.json(updatedClient.toJSON({rawData: true}));
+					}
+				}
+
+				promises.push(client.save());
+
+				Promise.all(promises).then(() => {
+					client.reload().then(() => {
+						if(request.hasPermission('admin.client.hiddenData.read')){
+							response.json(client.toJSON({hiddenData: true}));
 						}else{
-							response.json(updatedClient.toJSON());
+							response.json(client.toJSON());
 						}
-						
-						response.end();
-						
+
+						return response.end();
+					}).catch((err) => {
+						return next(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}));
 					});
-					
-				}else{
-					next(new this.errorController.errors.ForbiddenError());
-				}
-				
+				}).catch((err) => {
+					return next(new this.errorController.errors.DatabaseError({
+						message: err.message
+					}));
+				});
+
+			}else{
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			return next(new this.errorController.errors.NotFoundError());
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}), null);
 		});
-		
+
 	}
-	
+
 	deleteOAuthClient(request, response, next){
-		
-		this.OAuthClient.findById(request.params.clientId, (err, client) => {
-			
-			if(err){
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}), null);
-			}
-			
+
+		this.OAuthClient.findById(request.params.clientId)
+		.then((client) => {
+
 			if(client){
-				
-				if(client.userId === request.user._id || request.user.hasCapability("delete-other-clients")){
-					
-					this.OAuthClient.findByIdAndRemove(request.params.clientId, (err) => {
-						
-						if(err){
-							return next(new this.errorController.errors.DatabaseError({
-								message: err.message
-							}), null);
-						}
-						
-						reponse.json({success: true});
+
+				if(
+					client.userId === request.user.id ||
+					request.hasPermission('admin.client.deleteOthers')
+				){
+
+					client.destroy().then(() => {
+
+						response.json({success: true});
 						response.end();
+
+					}).catch((err) => {
+						return next(new this.errorController.errors.DatabaseError({
+							message: err.message
+						}), null);
 					});
-						
+
 				}else{
-					next(new this.errorController.errors.ForbiddenError());
+					return next(new this.errorController.errors.ForbiddenError());
 				}
-				
+
+			}else{
+				return next(new this.errorController.errors.NotFoundError());
 			}
-			return next(new this.errorController.errors.NotFoundError());
+
+		}).catch((err) => {
+			return next(new this.errorController.errors.DatabaseError({
+				message: err.message
+			}));
 		});
-		
+
 	}
 }
 

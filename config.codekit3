@@ -7,7 +7,7 @@
 		"uuidString": "8FD20BD1-890E-45B3-8DCA-F384EB641ED2"
 		}
 	],
-"creatorBuild": "25444",
+"creatorBuild": "25813",
 "files": {
 	"\/.gitignore": {
 		"ft": 8192,
@@ -15,52 +15,10 @@
 		"oAP": "\/.gitignore",
 		"oF": 0
 		},
-	"\/.idea\/booki.iml": {
+	"\/booki.log": {
 		"ft": 8192,
 		"oA": 2,
-		"oAP": "\/.idea\/booki.iml",
-		"oF": 0
-		},
-	"\/.idea\/codeStyleSettings.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/codeStyleSettings.xml",
-		"oF": 0
-		},
-	"\/.idea\/jsLibraryMappings.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/jsLibraryMappings.xml",
-		"oF": 0
-		},
-	"\/.idea\/misc.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/misc.xml",
-		"oF": 0
-		},
-	"\/.idea\/modules.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/modules.xml",
-		"oF": 0
-		},
-	"\/.idea\/vcs.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/vcs.xml",
-		"oF": 0
-		},
-	"\/.idea\/workspace.xml": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.idea\/workspace.xml",
-		"oF": 0
-		},
-	"\/.project": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/.project",
+		"oAP": "\/booki.log",
 		"oF": 0
 		},
 	"\/config-sample.json": {
@@ -79,18 +37,1090 @@
 		"oO": 0,
 		"oS": 1
 		},
-	"\/locales\/booki-de.json": {
+	"\/locales\/booki-af-ZA.json": {
 		"ft": 524288,
 		"oA": 1,
-		"oAP": "\/locales\/booki-de-min.json",
+		"oAP": "\/locales\/booki-af-ZA-min.json",
 		"oF": 0,
 		"oO": 0,
 		"oS": 1
 		},
-	"\/locales\/booki-en.json": {
+	"\/locales\/booki-ar-AE.json": {
 		"ft": 524288,
 		"oA": 1,
-		"oAP": "\/locales\/booki-en-min.json",
+		"oAP": "\/locales\/booki-ar-AE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-BH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-BH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-DZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-DZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-EG.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-EG-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-IQ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-IQ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-JO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-JO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-KW.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-KW-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-LB.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-LB-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-LY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-LY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-MA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-MA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-OM.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-OM-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-QA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-QA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-SA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-SA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-SY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-SY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-TN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-TN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ar-YE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ar-YE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-be-BY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-be-BY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-bg-BG.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-bg-BG-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ca-ES.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ca-ES-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-cs-CZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-cs-CZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Cy-az-AZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Cy-az-AZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Cy-sr-SP.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Cy-sr-SP-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Cy-uz-UZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Cy-uz-UZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-da-DK.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-da-DK-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-de-AT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-de-AT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-de-CH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-de-CH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-de-DE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-de-DE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-de-LI.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-de-LI-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-de-LU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-de-LU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-div-MV.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-div-MV-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-el-GR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-el-GR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-AU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-AU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-BZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-BZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-CA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-CA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-CB.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-CB-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-GB.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-GB-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-IE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-IE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-JM.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-JM-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-NZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-NZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-PH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-PH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-TT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-TT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-US.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-US-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-ZA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-ZA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-en-ZW.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-en-ZW-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-AR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-AR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-BO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-BO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-CL.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-CL-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-CO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-CO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-CR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-CR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-DO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-DO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-EC.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-EC-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-ES.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-ES-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-GT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-GT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-HN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-HN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-MX.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-MX-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-NI.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-NI-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-PA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-PA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-PE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-PE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-PR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-PR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-PY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-PY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-SV.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-SV-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-UY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-UY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-es-VE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-es-VE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-et-EE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-et-EE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-eu-ES.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-eu-ES-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fa-IR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fa-IR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fi-FI.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fi-FI-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fo-FO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fo-FO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-BE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-BE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-CA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-CA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-CH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-CH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-FR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-FR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-LU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-LU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-fr-MC.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-fr-MC-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-gl-ES.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-gl-ES-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-gu-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-gu-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-he-IL.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-he-IL-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-hi-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-hi-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-hr-HR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-hr-HR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-hu-HU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-hu-HU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-hy-AM.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-hy-AM-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-id-ID.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-id-ID-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-is-IS.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-is-IS-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-it-CH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-it-CH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-it-IT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-it-IT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ja-JP.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ja-JP-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ka-GE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ka-GE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-kk-KZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-kk-KZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-kn-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-kn-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ko-KR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ko-KR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-kok-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-kok-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ky-KZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ky-KZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Lt-az-AZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Lt-az-AZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-lt-LT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-lt-LT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Lt-sr-SP.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Lt-sr-SP-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-Lt-uz-UZ.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-Lt-uz-UZ-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-lv-LV.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-lv-LV-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-mk-MK.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-mk-MK-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-mn-MN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-mn-MN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-mr-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-mr-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ms-BN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ms-BN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ms-MY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ms-MY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-nb-NO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-nb-NO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-nl-BE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-nl-BE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-nl-NL.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-nl-NL-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-nn-NO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-nn-NO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-pa-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-pa-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-pl-PL.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-pl-PL-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-pt-BR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-pt-BR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-pt-PT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-pt-PT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ro-RO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ro-RO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ru-RU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ru-RU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sa-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sa-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sk-SK.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sk-SK-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sl-SI.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sl-SI-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sq-AL.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sq-AL-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sv-FI.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sv-FI-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sv-SE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sv-SE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-sw-KE.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-sw-KE-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-syr-SY.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-syr-SY-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ta-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ta-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-te-IN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-te-IN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-th-TH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-th-TH-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-tr-TR.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-tr-TR-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-tt-RU.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-tt-RU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-uk-UA.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-uk-UA-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-ur-PK.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-ur-PK-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-vi-VN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-vi-VN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-CHS.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-CHS-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-CHT.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-CHT-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-CN.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-CN-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-HK.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-HK-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-MO.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-MO-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-SG.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-SG-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-zh-TW.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-zh-TW-min.json",
 		"oF": 0,
 		"oO": 0,
 		"oS": 1
@@ -115,6 +1145,24 @@
 		"oO": 0,
 		"oS": 1
 		},
+	"\/README.md": {
+		"cS": 0,
+		"eF": 1,
+		"eL": 1,
+		"eLB": 0,
+		"ema": 1,
+		"eSQ": 1,
+		"ft": 4096,
+		"oA": 1,
+		"oAP": "\/README.html",
+		"oF": 0,
+		"oFM": 0,
+		"oS": 0,
+		"pHT": 0,
+		"pME": 1,
+		"rFN": 0,
+		"uCM": 0
+		},
 	"\/src": {
 		"ft": 65536,
 		"oA": 1,
@@ -137,11 +1185,700 @@
 		"oAP": "\/static\/res\/css\/booki.min.css.map",
 		"oF": 0
 		},
-	"\/static\/res\/img\/logo.svg": {
+	"\/static\/res\/easteregg.txt": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/easteregg.txt",
+		"oF": 0
+		},
+	"\/static\/res\/img\/cover\/book-cover.png": {
+		"ft": 32768,
+		"iS": 21932,
+		"oA": 1,
+		"oAP": "\/static\/res\/img\/cover\/min\/book-cover.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 1,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/res\/img\/cover\/book-cover.psd": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/img\/cover\/book-cover.psd",
+		"oF": 0
+		},
+	"\/static\/res\/img\/locales\/af-ZA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/af-ZA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ar-AE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ar-AE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ar-MA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ar-MA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/cs-CZ.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/cs-CZ.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/da-DK.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/da-DK.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/de-AT.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/de-AT.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/de-CH.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/de-CH.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/de-DE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/de-DE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/de-LU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/de-LU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/el-GR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/el-GR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-AU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-AU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-CA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-CA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-GB.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-GB.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-IE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-IE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-NZ.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-NZ.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-PH.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-PH.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-US.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-US.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-ZA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-ZA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/en-ZW.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/en-ZW.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-AR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-AR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-CL.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-CL.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-CO.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-CO.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-EC.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-EC.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-ES.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-ES.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-MX.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-MX.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-PE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-PE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/es-PY.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/es-PY.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/et-EE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/et-EE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fi-FI.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fi-FI.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fr-BE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fr-BE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fr-CA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fr-CA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fr-CH.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fr-CH.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fr-FR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fr-FR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/fr-LU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/fr-LU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/he-IL.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/he-IL.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/hr-HR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/hr-HR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/hu-HU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/hu-HU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/id-ID.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/id-ID.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/it-CH.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/it-CH.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/it-IT.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/it-IT.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ja-JP.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ja-JP.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/lt-LT.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/lt-LT.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/Lt-sr-SP.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/Lt-sr-SP.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/lv-LV.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/lv-LV.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ms-MY.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ms-MY.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/nb-NO.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/nb-NO.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/nl-BE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/nl-BE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/nl-NL.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/nl-NL.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/nn-NO.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/nn-NO.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/pl-PL.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/pl-PL.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/pt-BR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/pt-BR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/pt-PT.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/pt-PT.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ro-RO.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ro-RO.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/ru-RU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/ru-RU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/sl-SI.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/sl-SI.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/source.txt": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/static\/res\/img\/locales\/source.txt",
+		"oF": 0
+		},
+	"\/static\/res\/img\/locales\/sv-FI.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/sv-FI.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/sv-SE.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/sv-SE.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/th-TH.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/th-TH.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/tr-TR.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/tr-TR.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/tt-RU.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/tt-RU.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/uk-UA.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/uk-UA.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/vi-VN.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/vi-VN.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/zh-CN.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/zh-CN.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/zh-HK.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/zh-HK.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/zh-SG.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/zh-SG.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/locales\/zh-TW.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/locales\/min\/zh-TW.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
+	"\/static\/res\/img\/logo\/logo.svg": {
 		"ft": 2097152,
 		"miP": 1,
 		"oA": 0,
-		"oAP": "\/static\/res\/img\/min\/logo.min.svg",
+		"oAP": "\/static\/res\/img\/logo\/min\/logo.min.svg",
 		"oF": 0,
 		"opt": 0,
 		"plM": 3758088159,
@@ -160,17 +1897,60 @@
 		"oS": 3,
 		"uL": 1
 		},
-	"\/static\/tests\/local-login.html": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/tests\/local-login.html",
-		"oF": 0
+	"\/static\/uploads\/2017\/4\/5-7G9-300x300.png": {
+		"ft": 32768,
+		"iS": 145743,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/5-7G9-300x300.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
 		},
-	"\/static\/tests\/local-register.html": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/static\/tests\/local-register.html",
-		"oF": 0
+	"\/static\/uploads\/2017\/4\/5-7G9.png": {
+		"ft": 32768,
+		"iS": 843776,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/5-7G9.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/4\/7-UBI-300x300.png": {
+		"ft": 32768,
+		"iS": 118024,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/7-UBI-300x300.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/4\/7-UBI.png": {
+		"ft": 32768,
+		"iS": 347797,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/7-UBI.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/4\/9-2i3.png": {
+		"ft": 32768,
+		"iS": 311296,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/4\/min\/9-2i3.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
 		}
 	},
 "hooks": [
@@ -625,6 +2405,10 @@
 			"active": 0,
 			"optionString": "{'properties': 'always'}"
 			},
+		"capitalized-comments": {
+			"active": 0,
+			"optionString": "'always', {'ignoreInlineComments': false, 'ignoreConsecutiveComments': false}"
+			},
 		"class-methods-use-this": {
 			"active": 0,
 			"optionString": "{'exceptMethods': []}"
@@ -789,6 +2573,10 @@
 			"active": 0,
 			"optionString": "{'max': 10}, {'ignoreTopLevelFunctions': true}"
 			},
+		"max-statements-per-line": {
+			"active": 0,
+			"optionString": "{'max': 1}"
+			},
 		"multiline-ternary": {
 			"active": 0,
 			"optionString": "'always'"
@@ -821,6 +2609,10 @@
 			"active": 0,
 			"optionString": ""
 			},
+		"no-await-in-loop": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-bitwise": {
 			"active": 0,
 			"optionString": "{'allow': ['~'], 'int32Hint': true}"
@@ -839,6 +2631,10 @@
 			},
 		"no-class-assign": {
 			"active": 1,
+			"optionString": ""
+			},
+		"no-compare-neg-zero": {
+			"active": 0,
 			"optionString": ""
 			},
 		"no-cond-assign": {
@@ -1041,6 +2837,10 @@
 			"active": 0,
 			"optionString": ""
 			},
+		"no-multi-assign": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-multi-spaces": {
 			"active": 0,
 			"optionString": "{'exceptions': {'Property': true, 'BinaryExpression': false, 'VariableDeclarator': false, 'ImportDeclaration': false}}"
@@ -1121,6 +2921,10 @@
 			"active": 0,
 			"optionString": ""
 			},
+		"no-prototype-builtins": {
+			"active": 0,
+			"optionString": ""
+			},
 		"no-redeclare": {
 			"active": 1,
 			"optionString": "{'builtinGlobals': false}"
@@ -1152,6 +2956,10 @@
 		"no-return-assign": {
 			"active": 0,
 			"optionString": "'except-parens'"
+			},
+		"no-return-await": {
+			"active": 0,
+			"optionString": ""
 			},
 		"no-script-url": {
 			"active": 0,
@@ -1313,6 +3121,10 @@
 			"active": 0,
 			"optionString": ""
 			},
+		"nonblock-statement-body-position": {
+			"active": 0,
+			"optionString": "'beside'"
+			},
 		"object-curly-newline": {
 			"active": 0,
 			"optionString": "{'ObjectExpression': {'multiline': true}, 'ObjectPattern': {'multiline': true}}"
@@ -1357,9 +3169,17 @@
 			"active": 0,
 			"optionString": "{'destructuring': 'any', 'ignoreReadBeforeAssign': false}"
 			},
+		"prefer-destructuring": {
+			"active": 0,
+			"optionString": "{'array': true, 'object': true}, {'enforceForRenamedProperties': false}"
+			},
 		"prefer-numeric-literals": {
 			"active": 0,
 			"optionString": ""
+			},
+		"prefer-promise-reject-errors": {
+			"active": 0,
+			"optionString": "{'allowEmptyReject': false}"
 			},
 		"prefer-rest-params": {
 			"active": 0,
@@ -1384,6 +3204,10 @@
 		"radix": {
 			"active": 0,
 			"optionString": "'always'"
+			},
+		"require-await": {
+			"active": 0,
+			"optionString": ""
 			},
 		"require-jsdoc": {
 			"active": 0,
@@ -1450,6 +3274,10 @@
 			"optionString": ""
 			},
 		"template-curly-spacing": {
+			"active": 0,
+			"optionString": "'never'"
+			},
+		"template-tag-spacing": {
 			"active": 0,
 			"optionString": "'never'"
 			},
@@ -1896,7 +3724,8 @@
 		"autoOutputPathRelativePath": "min\/",
 		"autoOutputPathReplace1": "",
 		"autoOutputPathReplace2": "",
-		"autoOutputPathStyle": 2
+		"autoOutputPathStyle": 2,
+		"quality": 100
 		},
 	"languageDefaultsJS": {
 		"autoOutputAction": 1,
@@ -1919,14 +3748,6 @@
 		"autoOutputPathStyle": 0,
 		"orderOutput": 0,
 		"outputStyle": 1
-		},
-	"languageDefaultsJSX": {
-		"autoOutputAction": 0,
-		"autoOutputPathFilenamePattern": "*.js",
-		"autoOutputPathRelativePath": "",
-		"autoOutputPathReplace1": "jsx",
-		"autoOutputPathReplace2": "js",
-		"autoOutputPathStyle": 0
 		},
 	"languageDefaultsKIT": {
 		"autoOutputAction": 0,
@@ -1984,12 +3805,14 @@
 		"autoOutputPathStyle": 0
 		},
 	"languageDefaultsPNG": {
-		"autoOutputAction": 0,
+		"autoOutputAction": 1,
 		"autoOutputPathFilenamePattern": "*.min.png",
 		"autoOutputPathRelativePath": "min\/",
 		"autoOutputPathReplace1": "",
 		"autoOutputPathReplace2": "",
-		"autoOutputPathStyle": 2
+		"autoOutputPathStyle": 2,
+		"optimizerType": 1,
+		"quality": 100
 		},
 	"languageDefaultsPUG": {
 		"autoOutputAction": 1,
@@ -2217,6 +4040,10 @@
 			},
 		"space-colon": {
 			"active": 1,
+			"flagValue": -1
+			},
+		"support-ie8": {
+			"active": 0,
 			"flagValue": -1
 			},
 		"toplevel": {

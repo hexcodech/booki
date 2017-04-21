@@ -1,43 +1,84 @@
-function OAuthCode({booki, config, mongoose, generateRandomString, hash}){
-	
-	var OAuthCodeSchema = new mongoose.Schema({
-		hash						: {type: String, required: true},
-		/*salt						: {type: String, required: true}, //not required as the probability of two hashes being the same is extremely low
-		algorithm					: {type: String, required: true}, //not required because changing the algorithm only renders the current codes invalid */
-		
-		clientId					: {type: mongoose.Schema.Types.ObjectId, ref: 'Client', required: true},
-		userId						: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
-		expires						: {type: Date, required: true}
+const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
+
+	const Sequelize       = require('sequelize');
+
+	let OAuthCode         = sequelize.define('oauth_code', {
+		hash: {
+			type       : Sequelize.STRING,
+		},
+		expires: {
+			type       : Sequelize.DATE,
+		}
+	}, {
+		defaultScope: {
+			include: [
+				{
+					model   : models.User,
+					as      : 'User'
+				},
+				{
+					model  : models.OAuthClient,
+					as      : 'OAuthClient'
+				}
+			]
+		},
+
+		classMethods: {
+    	associate: function({User, OAuthClient}){
+				this.belongsTo(User, {
+					as         : 'User',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+				this.belongsTo(OAuthClient, {
+					as         : 'OAuthClient',
+					foreignKey : 'oauth_client_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+			},
+
+			generateCode: function(){
+				return cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
+			},
+
+			hashCode: function(code = ''){
+				return cryptoUtilities.generateHash(code, false).hash;
+			},
+
+			findByCode: function(code = ''){
+				return this.findOne({where: {hash: this.hashCode(code)}})
+				.then((oauthCode) => {
+					return oauthCode;
+				});
+			}
+  	},
+
+  	instanceMethods: {
+    	toJSON: function(options){
+				let code = this.get();
+
+				let json = {
+					id     : code.id,
+					expires: code.expires
+				};
+
+				if(code.User){
+					json.userId = code.User.toJSON();
+				}
+
+				if(code.Client){
+					json.clientId = code.Client.get('id');
+				}
+
+				return json;
+			}
+		}
 	});
-	
-	OAuthCodeSchema.statics.generateRandomString	= generateRandomString;
-	OAuthCodeSchema.statics.hash					= hash;
-	
-	OAuthCodeSchema.statics.generateCode = function(){
-		return this.generateRandomString(config.TOKEN_LENGTH);
-	}
-	
-	OAuthCodeSchema.statics.hashCode = function(code){
-		return this.hash(code, false).hash;
-	}
-	
-	OAuthCodeSchema.statics.findByCode = function(code, callback){
-		this.findOne({hash: this.hashCode(code)}, callback);
-	}
-	
-	OAuthCodeSchema.set("toJSON", {
-	    transform: function(doc, ret, options) {
-	        return {
-	        	clientId			: ret.clientId,
-	        	userId				: ret.userId,
-	        	expires				: ret.expires
-	        };
-	    }
-	});
-				
-	
-	return mongoose.model("OAuthCode", OAuthCodeSchema);
-	
+
+	return OAuthCode;
+
 }
 
 module.exports = OAuthCode;
