@@ -106,25 +106,40 @@ class OfferController{
 								 request.body.offer.userId :
 								 request.user.get('id');
 
-		this.Book.findById(request.body.offer.bookId).then((book) => {
-			if(book){
-				return this.Condition.findById(request.body.offer.conditionId);
-			}else{
-				return Promise.reject(new this.errorController.errors.NotFoundError());
-			}
-		}).then((condition) => {
-			if(condition){
-				return this.User.findById(userId);
-			}else{
-				return Promise.reject(new this.errorController.errors.NotFoundError());
-			}
-		}).then((user) => {
-			if(user){
-				return;
-			}else{
-				return Promise.reject(new this.errorController.errors.NotFoundError());
-			}
-		}).then(() => {
+		let promises = [];
+
+		promises.push(
+			this.User.findById(userId).then((user) => {
+				if(user){
+					return Promise.resolve();
+				}else{
+					return Promise.reject(new this.errorController.errors.NotFoundError());
+				}
+			})
+		);
+
+		promises.push(
+			this.Book.findById(request.body.offer.bookId).then((book) => {
+				if(book){
+					return Promise.resolve();
+				}else{
+					return Promise.reject(new this.errorController.errors.NotFoundError());
+				}
+			})
+		);
+
+		promises.push(
+			this.Condition.findById(request.body.offer.conditionId)
+			.then((condition) => {
+				if(condition){
+					return Promise.resolve();
+				}else{
+					return Promise.reject(new this.errorController.errors.NotFoundError());
+				}
+			})
+		);
+
+		Promise.all(promises).then(() => {
 			offer.set({
 				book_id        : request.body.offer.bookId,
 				user_id        : userId,
@@ -142,6 +157,7 @@ class OfferController{
 					message: err.message
 				}));
 			});
+
 		}).then((offer) => {
 			if(request.hasPermission('admin.offer.hiddenData.read')){
 				response.json(offer.toJSON({hiddenData: true}));
@@ -161,7 +177,7 @@ class OfferController{
 					offer.get('user_id') === request.user.get('id')
 				){
 					offer.set(this.pick(request.body.offer, [
-						'description', 'price'
+						'description', 'price', 'sold'
 					]));
 
 					let userId = request.hasPermission('admin.offer.hiddenData.write') &&
@@ -169,31 +185,50 @@ class OfferController{
 											 request.body.offer.userId :
 											 request.user.get('id');
 
-					this.Book.findById(request.body.offer.bookId).then((book) => {
-						if(book){
-							return this.Condition.findById(request.body.offer.conditionId);
-						}else{
-							return Promise.reject(
-								new this.errorController.errors.NotFoundError()
-							);
-						}
-					}).then((condition) => {
-						if(condition){
-							return this.User.findById(userId);
-						}else{
-							return Promise.reject(
-								new this.errorController.errors.NotFoundError()
-							);
-						}
-					}).then((user) => {
-						if(user){
-							return;
-						}else{
-							return Promise.reject(
-								new this.errorController.errors.NotFoundError()
-							);
-						}
-					}).then(() => {
+					let promises = [];
+
+					promises.push(
+						this.User.findById(userId).then((user) => {
+							if(user){
+								return Promise.resolve();
+							}else{
+								return Promise.reject(
+									new this.errorController.errors.NotFoundError()
+								);
+							}
+						})
+					);
+
+					if(request.body.offer.bookId){
+						promises.push(
+							this.Book.findById(request.body.offer.bookId).then((book) => {
+								if(book){
+									return Promise.resolve();
+								}else{
+									return Promise.reject(
+										new this.errorController.errors.NotFoundError()
+									);
+								}
+							})
+						);
+					}
+
+					if(request.body.offer.conditionId){
+						promises.push(
+							this.Condition.findById(request.body.offer.conditionId)
+							.then((condition) => {
+								if(condition){
+									return Promise.resolve();
+								}else{
+									return Promise.reject(
+										new this.errorController.errors.NotFoundError()
+									);
+								}
+							})
+						);
+					}
+
+					Promise.all(promises).then(() => {
 						offer.set({
 							book_id        : request.body.offer.bookId,
 							user_id        : userId,

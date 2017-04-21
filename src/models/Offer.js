@@ -10,9 +10,21 @@ const Offer = ({sequelize, models}) => {
 		price: {
 			type: Sequelize.FLOAT,
 		},
+		sold: {
+			type: Sequelize.BOOLEAN,
+			default: false
+		},
 	}, {
 		defaultScope: {
 			include: [
+				{
+					model    : models.User,
+					as       : 'User'
+				},
+				{
+					model    : models.Book,
+					as       : 'Book'
+				},
 				{
 					model    : models.Condition,
 					as       : 'Condition'

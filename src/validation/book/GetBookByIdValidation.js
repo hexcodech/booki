@@ -4,11 +4,9 @@ module.exports = ({config}) => {
 
 	return {
 		body: {
-
-			body: {
-				
+			params: {
+				bookId: Joi.number().integer().positive().required(),
 			}
-
 		}
 	}
 

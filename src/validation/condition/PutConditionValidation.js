@@ -10,15 +10,12 @@ module.exports = ({config}) => {
 			},
 
 			body: {
-
 				condition: {
 					id          : Joi.number().integer().positive(),
 					key         : Joi.string().allow('', null),
 					priceFactor : Joi.number().positive()
 				}
-
 			}
-
 		}
 	}
 

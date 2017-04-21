@@ -2,7 +2,6 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize       = require('sequelize');
-	const CryptoUtilities = cryptoUtilities;
 
 	let OAuthClient       = sequelize.define('oauth_client', {
 
@@ -77,7 +76,7 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 			},
 
 			generateSecret: function(){
-				return CryptoUtilities.generateRandomString(
+				return cryptoUtilities.generateRandomString(
 					config.CLIENT_SECRET_LENGTH
 				);
 			},
@@ -86,7 +85,7 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
   	instanceMethods: {
 
 			setSecret: function(secret){
-				let {hash, salt, algorithm} = CryptoUtilities.generateHash(secret);
+				let {hash, salt, algorithm} = cryptoUtilities.generateHash(secret);
 
 				this.set({
 					secretHash      : hash,
@@ -96,7 +95,7 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 			},
 
 			verifySecret: function(secret){
-				let {hash} = CryptoUtilities.generateHash(
+				let {hash} = cryptoUtilities.generateHash(
 					secret,
 					this.get('secretSalt'),
 					this.get('secretAlgorithm')
@@ -105,7 +104,7 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 				let {
 					hash      : newHash,
 					algorithm : newAlgorithm
-				}	= CryptoUtilities.generateHash(secret, this.get('secretSalt'));
+				}	= cryptoUtilities.generateHash(secret, this.get('secretSalt'));
 
 				if(this.get('secretHash') && hash === this.get('secretHash')){
 

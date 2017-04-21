@@ -4,11 +4,9 @@ module.exports = ({config}) => {
 
 	return {
 		body: {
-
 			params: {
 				personId: Joi.number().integer().positive().required(),
 			}
-
 		}
 	}
 

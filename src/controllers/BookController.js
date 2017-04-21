@@ -29,41 +29,17 @@ class BookController{
 
 	getBook(request, response, next){
 
-		let query  = {};
-		let search =  request.body.search;
-
-		if(search){
-			//escape string
-
-			search = search.replace('_', '\_');
-			search = search.replace('%', '\%');
-
-			let likeSearch = {'$like' : '%' + search + '%'};
-
-			query['$or'] = [
-				{isbn13       : likeSearch},
-				{title        : likeSearch},
-				{subtitle     : likeSearch},
-				{description  : likeSearch},
-				{publisher    : likeSearch},
-			];
-		}
-
-		this.Book.findAll({where: query}).then((books) => {
+		this.Book.findAll().then((books) => {
 			if(books){
 
 				if(request.hasPermission('admin.book.hiddenData.read')){
-
 					response.json(books.map((book) => {
 						return book.toJSON({hiddenData: true});
 					}));
-
 				}else{
-
 					response.json(books.map((book) => {
 						return book.toJSON();
 					}));
-
 				}
 				return response.end();
 			}
@@ -324,7 +300,7 @@ class BookController{
 
 		return this.Book.lookupExternal(request.query.search)
 		.then((books) => {
-			
+
 			response.json(books);
 			return response.end();
 

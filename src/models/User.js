@@ -2,12 +2,13 @@
  * Defines the user structure
  */
 
-const User = ({config, errorController, sequelize, models, cryptoUtilities}) => {
+const User = ({
+	config, errorController, sequelize, models, cryptoUtilities
+}) => {
 
 	const pick            = require('lodash/pick');
 	const Sequelize		    = require('sequelize');
 	const async           = require('async');
-	const CryptoUtilities = cryptoUtilities;
 
 	const EmailTemplate   = require('email-templates').EmailTemplate;
 	const mailController  = new (require(
@@ -337,13 +338,13 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 			},
 
 			verifyPassword: function(password){
-				let {hash} = CryptoUtilities.generateHash(
+				let {hash} = cryptoUtilities.generateHash(
 					password,
 					this.get('passwordSalt'),
 					this.get('passwordAlgorithm')
 				);
 
-				let {hash : newHash, newAlgorithm} = CryptoUtilities.generateHash(
+				let {hash : newHash, newAlgorithm} = cryptoUtilities.generateHash(
 					password,
 					this.get('passwordSalt')
 				);
@@ -373,7 +374,7 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 
 					if(this.get('passwordResetCodeExpirationDate') >= new Date()){
 
-						let {hash, salt, algorithm} = CryptoUtilities.generateHash(
+						let {hash, salt, algorithm} = cryptoUtilities.generateHash(
 							password
 						);
 
@@ -404,7 +405,7 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 			},
 
 			initPasswordReset: function(){
-				let passwordResetCode	= CryptoUtilities.generateRandomString(
+				let passwordResetCode	= cryptoUtilities.generateRandomString(
 					config.TOKEN_LENGTH
 				);
 				let resetMail = new EmailTemplate(
@@ -447,7 +448,7 @@ const User = ({config, errorController, sequelize, models, cryptoUtilities}) => 
 
 			initEmailVerification: function(registration = false){
 
-				let emailVerificationCode	= CryptoUtilities.generateRandomString(
+				let emailVerificationCode	= cryptoUtilities.generateRandomString(
 					config.CONFIRM_TOKEN_LENGTH
 				);
 				let confirmationMail = new EmailTemplate(

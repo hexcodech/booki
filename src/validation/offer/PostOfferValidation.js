@@ -4,7 +4,6 @@ module.exports = ({config}) => {
 
 	return {
 		body: {
-
 			offer: {
 				id          : Joi.number().integer().positive().allow(null),
 				description : Joi.string().max(2000).required(),
@@ -14,7 +13,6 @@ module.exports = ({config}) => {
 				userId       : Joi.number().integer().positive(),
 				conditionId  : Joi.number().integer().positive().required(),
 			}
-
 		}
 	}
 

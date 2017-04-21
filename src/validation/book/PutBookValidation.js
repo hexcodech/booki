@@ -9,7 +9,6 @@ module.exports = () => {
 		},
 
 		body: {
-
 			book: {
 				id                : Joi.number().integer().positive(),
 
@@ -32,9 +31,7 @@ module.exports = () => {
 				approved          : Joi.boolean(),
 				dateCreated       : Joi.date().allow(''),
 				createdBy         : Joi.string().allow('')
-
 			}
-
 		}
 	}
 

@@ -4,7 +4,6 @@ module.exports = () => {
 
 	return {
 		body: {
-
 			book: {
 				id                : Joi.number().integer().positive(),
 
@@ -31,7 +30,6 @@ module.exports = () => {
 				userId            : Joi.number().integer().positive().allow('', null)
 
 			}
-
 		}
 	}
 

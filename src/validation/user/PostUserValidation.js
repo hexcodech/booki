@@ -46,9 +46,7 @@ module.exports = ({config}) => {
 					accessToken                     : Joi.string().allow('', null),
 					refreshToken                    : Joi.string().allow('', null),
 				},
-
 			}
-
 		}
 	}
 

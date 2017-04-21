@@ -4,7 +4,6 @@ module.exports = ({config}) => {
 
 	return {
 		body: {
-
 			person: {
 				id          : Joi.number().integer().positive().allow(null),
 				nameTitle   : Joi.string().allow('', null),
@@ -13,7 +12,6 @@ module.exports = ({config}) => {
 				nameLast    : Joi.string().allow('', null),
 				verified    : Joi.boolean().allow(null)
 			}
-
 		}
 	}
 

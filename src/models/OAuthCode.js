@@ -1,7 +1,6 @@
 const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
 
 	const Sequelize       = require('sequelize');
-	const CryptoUtilities = cryptoUtilities;
 
 	let OAuthCode         = sequelize.define('oauth_code', {
 		hash: {
@@ -41,11 +40,11 @@ const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
 			},
 
 			generateCode: function(){
-				return CryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
+				return cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
 			},
 
 			hashCode: function(code = ''){
-				return CryptoUtilities.generateHash(code, false).hash;
+				return cryptoUtilities.generateHash(code, false).hash;
 			},
 
 			findByCode: function(code = ''){

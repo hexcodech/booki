@@ -4,11 +4,9 @@ module.exports = ({config}) => {
 
 	return {
 		body: {
-
 			params: {
 				thumbnailTypeId: Joi.number().integer().positive().required(),
 			}
-
 		}
 	}
 
