@@ -215,7 +215,6 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 	);
 
 	app.get('/v1/user/:userId',
-		authController.isBearerAuthenticated(),
 		validate(getUserByIdValidation),
 		userController.getUserById
 	);
@@ -455,19 +454,16 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 	)(booki);
 
 	app.get('/v1/book/lookup/external',
-		authController.isBearerAuthenticated(),
 		validate(lookupBookValidation),
 		bookController.lookupExternalBook
 	);
 
 	app.get('/v1/book/lookup',
-		authController.isBearerAuthenticated(),
 		validate(lookupBookValidation),
 		bookController.lookupBook
 	);
 
 	app.get('/v1/book/:bookId',
-		authController.isBearerAuthenticated(),
 		validate(getBookByIdValidation),
 		bookController.getBookById
 	);
