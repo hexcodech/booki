@@ -70,6 +70,8 @@ const Offer = ({sequelize, models}) => {
 					json.condition = offer.Condition.toJSON(options);
 				}
 
+				json.conditionId = offer.condition_id;
+
 				return json;
 			}
 		}
