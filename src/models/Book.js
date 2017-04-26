@@ -18,7 +18,7 @@ const Book = ({
 		awsTag    : 'bookime-21'
 	});
 
-	let Book					= sequelize.define('book', {
+	let Book = sequelize.define('book', {
 
 		isbn13: {
 			type        : Sequelize.STRING,
@@ -80,12 +80,16 @@ const Book = ({
 				{
 					model    : models.Image,
 					as       : 'Cover'
-				}
+				},
+				{
+					model    : models.Offer,
+					as       : 'Offers'
+				},
 			]
 		},
 
 		classMethods: {
-    	associate: function({User, Image, Person}){
+    	associate: function({User, Image, Person, Offer}){
 				this.belongsTo(User, {
 					as         : 'User',
 					foreignKey : 'user_id'
@@ -93,6 +97,10 @@ const Book = ({
 				this.belongsTo(Image, {
 					as         : 'Cover',
 					foreignKey : 'cover_image_id'
+				});
+				this.hasMany(Offer, {
+					as         : 'Offers',
+					foreignKey : 'book_id'
 				});
 				this.belongsToMany(Person, {
 					as         : 'Authors',
@@ -109,8 +117,11 @@ const Book = ({
 					//sphinx search
 					sphinx.query(
 						'SELECT id FROM books WHERE MATCH(?) OPTION field_weights=' +
-						'(isbn13=100, title=5, subitle=3, desciption=1)',
-						['@* *' + sphinxUtils.escape(text) + '*']
+						'(isbn13=100, title=5, subitle=3, description=1)',
+						[
+							'@(isbn13,title,subtitle,description) *' +
+							sphinxUtils.escape(text) + '*'
+						]
 					).then((results) => {
 
 						let dbBooks = [];

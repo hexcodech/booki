@@ -23,10 +23,6 @@ const Offer = ({sequelize, models}) => {
 					as       : 'User'
 				},
 				{
-					model    : models.Book,
-					as       : 'Book'
-				},
-				{
 					model    : models.Condition,
 					as       : 'Condition'
 				}

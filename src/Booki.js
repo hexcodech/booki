@@ -298,12 +298,12 @@ class Booki {
 			'Thumbnail', //requires 'File' AND 'ThumbnailType'
 			'Image', //requires 'File' AND 'Thumbnail'
 
-			'Book', //requires 'Image'
-
 			'User', //requires 'Permission' AND 'Image' AND 'OAuthProvider'
 
-			'Offer', //requires 'Condition' AND 'User' AND 'Book'
+			'Offer', //requires 'Condition' AND 'User'
 			'OfferRequest', //requires 'Offer' AND 'User'
+
+			'Book', //requires 'Image' AND 'Person' AND 'Offer'
 
 			'OAuthClient', //requires 'OAuthRedirectUri' AND 'User'
 
