@@ -314,6 +314,12 @@ const Book = ({
 					});
 				}
 
+				if(book.Offers){
+					json.offers = book.Offers.map((offer) => {
+						return offer.toJSON(options);
+					});
+				}
+
 				json.thumbnails = [];
 				if(book.CoverImage){
 					json.thumbnails = book.CoverImage.getThumbnails();

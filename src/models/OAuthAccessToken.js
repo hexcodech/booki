@@ -30,7 +30,11 @@ const OAuthAccessToken = ({config, sequelize, models, cryptoUtilities}) => {
 				});
 			},
 			generateToken: function(){
-				return cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
+				let token = cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
+				//HTTP Headers can only contain ASCII and 19 specific seperators
+				//http://stackoverflow.com/questions/19028068/illegal-characters-in-http-headers
+
+				return token.replace(/[^A-z0-9()<>@,;:\\/"\[\]\?={}]/g, '@');
 			},
 			hashToken: function(token){
 				return cryptoUtilities.generateHash(token, false).hash;
