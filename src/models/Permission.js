@@ -15,11 +15,9 @@ const Permission = ({sequelize}) => {
 					as         : 'Users',
 					foreignKey : 'permission_id',
 					otherKey   : 'user_id',
-					through    : 'permission_relations',
-					onDelete   : 'cascade',
-					hooks      : true,
+					through    : 'permission_relations'
 				});
-				
+
 			}
   	},
   	instanceMethods: {

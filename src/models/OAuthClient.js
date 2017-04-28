@@ -51,9 +51,7 @@ const OAuthClient = ({config, sequelize, models, cryptoUtilities}) => {
 			}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 				this.hasMany(OAuthCode, {
 					as         : 'OAuthCodes',

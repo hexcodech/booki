@@ -42,15 +42,11 @@ const OfferRequest = ({
     	associate: function({Offer, User}){
 				this.belongsTo(Offer, {
 					as         : 'Offer',
-					foreignKey : 'offer_id',
-		      onDelete   : 'cascade',
-		      hooks      : true
+					foreignKey : 'offer_id'
 		    });
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id',
-		      onDelete   : 'cascade',
-		      hooks      : true
+					foreignKey : 'user_id'
 		    });
 			}
   	},

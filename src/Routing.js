@@ -44,12 +44,6 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 	};
 
 
-
-	//Autentication
-
-	const authController = new (require('./controllers/AuthController'))(booki);
-
-
 	//enables unauthenticated users without throwing an error on
 	//'request.user.hasPermission' if 'request.user' is undefined
 	app.use((request, response, next) => {
@@ -74,6 +68,10 @@ const Routing = ({booki, app, config, logger, i18n}) => {
 
 		next();
 	});
+
+	//Authentication
+
+	const authController = new (require('./controllers/AuthController'))(booki);
 
 	//TODO Modularize
 

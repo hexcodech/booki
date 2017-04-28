@@ -11,9 +11,7 @@ const OAuthRedirectUri = ({sequelize}) => {
     	associate: function({OAuthClient}){
 				this.belongsTo(OAuthClient, {
 					as         : 'OAuthClient',
-					foreignKey : 'oauth_client_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'oauth_client_id'
 				});
 			}
   	},

@@ -129,7 +129,7 @@ class ConditionController{
 		this.Condition.findById(request.params.conditionId).then((condition) => {
 			if(condition){
 				condition.destroy().then(() => {
-					reponse.end('{success: true}');
+					response.end('{success: true}');
 				}).catch((err) => {
 					return next(new this.errorController.errors.DatabaseError({
 						message: err.message

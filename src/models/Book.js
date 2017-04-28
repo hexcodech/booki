@@ -96,11 +96,15 @@ const Book = ({
 				});
 				this.belongsTo(Image, {
 					as         : 'Cover',
-					foreignKey : 'cover_image_id'
+					foreignKey : 'cover_image_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.hasMany(Offer, {
 					as         : 'Offers',
-					foreignKey : 'book_id'
+					foreignKey : 'book_id',
+					onDelete   : 'cascade',
+					hooks      : true
 				});
 				this.belongsToMany(Person, {
 					as         : 'Authors',

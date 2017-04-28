@@ -36,12 +36,12 @@ const Image = ({config, sequelize, errorController, models}) => {
     	associate: function({User, File, Thumbnail}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 				this.belongsTo(File, {
 					as         : 'File',
 					foreignKey : 'file_id',
+					onDelete   : 'cascade',
 					hooks      : true
 				});
 		    this.hasMany(Thumbnail, {

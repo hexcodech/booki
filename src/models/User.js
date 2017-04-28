@@ -112,7 +112,7 @@ const User = ({
     	associate: function({
 				Permission,   OAuthProvider, OAuthAccessToken,
 				OAuthCode,    OAuthClient,   Image,
-				Book,         Offer
+				Book,         Offer,         OfferRequest
 			}){
 				this.belongsToMany(Permission, {
 					as          : 'Permissions',
@@ -153,8 +153,7 @@ const User = ({
 
 				this.hasMany(Image, {
 					as         : 'Images',
-					foreignKey : 'user_id',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 
 				this.belongsTo(Image,{
@@ -165,11 +164,18 @@ const User = ({
 
 				this.hasMany(Book, {
 					as         : 'Books',
-					foreignKey : 'user_id',
+					foreignKey : 'user_id'
 				});
 
 				this.hasMany(Offer, {
 					as         : 'Offers',
+					foreignKey : 'user_id',
+					onDelete   : 'cascade',
+					hooks      : true
+				});
+
+				this.hasMany(OfferRequest, {
+					as         : 'OfferRequests',
 					foreignKey : 'user_id',
 					onDelete   : 'cascade',
 					hooks      : true
@@ -536,6 +542,7 @@ const User = ({
 			},
 
 			doesHavePermissions: function(permissionsNeeded = []){
+
 				let permissions = this.getPermissionArray();
 
 				let missing = permissionsNeeded.filter((permission) => {
@@ -560,7 +567,7 @@ const User = ({
 			},
 
 			doesHavePermission: function(permission){
-				return this.hasPermissions([permission]);
+				return this.doesHavePermissions([permission]);
 			},
 
 			setPermissionsRaw: function(permissions){
@@ -614,7 +621,7 @@ const User = ({
 				if(user.ProfilePicture){
 					json.thumbnails = book.ProfilePicture.getThumbnails();
 				}
-				
+
 		    json.permissions = this.getPermissionArray();
 
 				if(options.hiddenData && options.hiddenData === true){

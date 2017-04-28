@@ -27,15 +27,11 @@ const Thumbnail = ({config, sequelize, models}) => {
 				});
 				this.belongsTo(Image, {
 					as         : 'Image',
-					foreignKey : 'image_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'image_id'
 				});
 		    this.belongsTo(ThumbnailType, {
 					as         : 'ThumbnailType',
-					foreignKey : 'thumbnail_type_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'thumbnail_type_id'
 				});
 			}
   	},

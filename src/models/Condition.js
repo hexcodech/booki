@@ -15,9 +15,7 @@ const Condition = ({sequelize, models}) => {
     	associate: function({Offer}){
 				this.hasMany(Offer, {
 					as         : 'Offers',
-					foreignKey : 'condition_id',
-		      onDelete   : 'cascade',
-		      hooks      : true
+					foreignKey : 'condition_id'
 		    });
 			}
   	},

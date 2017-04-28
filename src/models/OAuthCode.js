@@ -27,15 +27,11 @@ const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
     	associate: function({User, OAuthClient}){
 				this.belongsTo(User, {
 					as         : 'User',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'user_id'
 				});
 				this.belongsTo(OAuthClient, {
 					as         : 'OAuthClient',
-					foreignKey : 'oauth_client_id',
-					onDelete   : 'cascade',
-					hooks      : true
+					foreignKey : 'oauth_client_id'
 				});
 			},
 

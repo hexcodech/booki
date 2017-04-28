@@ -223,7 +223,7 @@ class OAuthClientController{
 				){
 
 					client.set(this.omitBy(this.pick(request.body.client, [
-						'trusted'
+						'id', 'trusted'
 					]), this.isNil));
 
 					if(request.body.client.userId){
@@ -307,7 +307,6 @@ class OAuthClientController{
 
 		this.OAuthClient.findById(request.params.clientId)
 		.then((client) => {
-
 			if(client){
 
 				if(
