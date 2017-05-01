@@ -1,10 +1,7 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
-		body: {
-		}
-	}
-
+		body: {}
+	};
 };

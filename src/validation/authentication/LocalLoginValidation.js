@@ -1,12 +1,10 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
 		body: {
-			username      : Joi.string().email().required(),
-			password      : Joi.string().required(),
+			username: Joi.string().email().required(),
+			password: Joi.string().required()
 		}
-	}
-
+	};
 };

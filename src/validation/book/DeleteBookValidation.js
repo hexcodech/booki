@@ -1,11 +1,9 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
 		params: {
-			bookId: Joi.number().integer().positive().required(),
+			bookId: Joi.number().integer().positive().required()
 		}
-	}
-
+	};
 };
