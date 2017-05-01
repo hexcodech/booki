@@ -6,8 +6,8 @@ class AuthController {
 
 	constructor(
 		{
-			booki,            config,               i18n,
-			models,           errorController,      passport
+			booki,   config,           i18n,
+			models,  errorController,  passport
 		}
 		){
 
@@ -102,11 +102,9 @@ class AuthController {
 					});
 
 				}).catch((err) => {
-
 					return callback(new this.errorController.errors.DatabaseError({
 						message: err.message
 					}));
-
 				});
 			}
 		));
