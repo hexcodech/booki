@@ -483,6 +483,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 
 	app.get(
 		"/v1/book/lookup/external",
+		authController.isBearerAuthenticated(),
 		validate(lookupBookValidation),
 		bookController.lookupExternalBook
 	);
