@@ -59,7 +59,7 @@ class OfferController {
 
 	getOfferById(request, response, next) {
 		this.Offer
-			.findById(request.params.offerId)
+			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
 				if (offer) {
 					if (request.hasPermission("admin.offer.hiddenData.read")) {
@@ -130,7 +130,7 @@ class OfferController {
 		let promises = [];
 
 		promises.push(
-			this.User.findById(userId).then(user => {
+			this.User.findOne({ where: { id: userId } }).then(user => {
 				if (user) {
 					return Promise.resolve();
 				} else {
@@ -142,20 +142,22 @@ class OfferController {
 		);
 
 		promises.push(
-			this.Book.findById(request.body.offer.bookId).then(book => {
-				if (book) {
-					return Promise.resolve();
-				} else {
-					return Promise.reject(
-						new this.errorController.errors.NotFoundError()
-					);
-				}
-			})
+			this.Book
+				.findOne({ where: { id: request.body.offer.bookId } })
+				.then(book => {
+					if (book) {
+						return Promise.resolve();
+					} else {
+						return Promise.reject(
+							new this.errorController.errors.NotFoundError()
+						);
+					}
+				})
 		);
 
 		promises.push(
 			this.Condition
-				.findById(request.body.offer.conditionId)
+				.findOne({ where: { id: request.body.offer.conditionId } })
 				.then(condition => {
 					if (condition) {
 						return Promise.resolve();
@@ -203,7 +205,7 @@ class OfferController {
 
 	putOffer(request, response, next) {
 		this.Offer
-			.findById(request.params.offerId)
+			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
 				if (offer) {
 					if (
@@ -223,7 +225,7 @@ class OfferController {
 						let promises = [];
 
 						promises.push(
-							this.User.findById(userId).then(user => {
+							this.User.findOne({ where: { id: userId } }).then(user => {
 								if (user) {
 									return Promise.resolve();
 								} else {
@@ -236,22 +238,24 @@ class OfferController {
 
 						if (request.body.offer.bookId) {
 							promises.push(
-								this.Book.findById(request.body.offer.bookId).then(book => {
-									if (book) {
-										return Promise.resolve();
-									} else {
-										return Promise.reject(
-											new this.errorController.errors.NotFoundError()
-										);
-									}
-								})
+								this.Book
+									.findOne({ where: { id: request.body.offer.bookId } })
+									.then(book => {
+										if (book) {
+											return Promise.resolve();
+										} else {
+											return Promise.reject(
+												new this.errorController.errors.NotFoundError()
+											);
+										}
+									})
 							);
 						}
 
 						if (request.body.offer.conditionId) {
 							promises.push(
 								this.Condition
-									.findById(request.body.offer.conditionId)
+									.findOne({ where: { id: request.body.offer.conditionId } })
 									.then(condition => {
 										if (condition) {
 											return Promise.resolve();
@@ -317,7 +321,7 @@ class OfferController {
 
 	deleteOffer(request, response, next) {
 		this.Offer
-			.findById(request.params.offerId)
+			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
 				if (offer) {
 					if (
@@ -327,7 +331,8 @@ class OfferController {
 						offer
 							.destroy()
 							.then(() => {
-								reponse.end("{success: true}");
+								response.json({ success: true });
+								response.end();
 							})
 							.catch(err => {
 								return next(

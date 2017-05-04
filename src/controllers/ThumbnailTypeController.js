@@ -54,7 +54,7 @@ class ThumbnailTypeController {
 
 	getThumbnailTypeById(request, response, next) {
 		this.ThumbnailType
-			.findById(request.params.thumbnailTypeId)
+			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {
 					if (request.hasPermission("admin.thumbnailType.hiddenData.read")) {
@@ -109,7 +109,7 @@ class ThumbnailTypeController {
 
 	putThumbnailType(request, response, next) {
 		this.ThumbnailType
-			.findById(request.params.thumbnailTypeId)
+			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {
 					thumbnailType.set(
@@ -158,13 +158,14 @@ class ThumbnailTypeController {
 
 	deleteThumbnailType(request, response, next) {
 		this.ThumbnailType
-			.findById(request.params.thumbnailTypeId)
+			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {
 					thumbnailType
 						.destroy()
 						.then(() => {
-							reponse.end("{success: true}");
+							response.json({ success: true });
+							response.end();
 						})
 						.catch(err => {
 							return next(

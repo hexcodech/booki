@@ -78,13 +78,25 @@ class ImageController {
 		try {
 			let busboy = new this.Busboy({ headers: request.headers });
 			busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+				if (!mimetype.startsWith("image/")) {
+					return next(new this.errorController.errors.InvalidImageError());
+				}
+
 				let buffers = [];
+
 				file.on("data", data => {
 					buffers.push(data);
+
+					let tmp = Buffer.concat(buffers);
+					if (tmp.length > this.config.MAX_UPLOAD_FILE_SIZE) {
+						return next(new this.errorController.errors.InvalidImageError());
+					}
 				});
+
 				file.on("end", () => {
 					let data = Buffer.concat(buffers);
 
+					//double check
 					if (
 						mimetype.startsWith("image/") &&
 						data.length <= this.config.MAX_UPLOAD_FILE_SIZE
@@ -160,7 +172,7 @@ class ImageController {
 
 	putImage(request, response, next) {
 		this.Image
-			.findById(request.query.id)
+			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
 				if (
 					request.hasPermission("admin.image.editOthers") ||
@@ -267,16 +279,18 @@ class ImageController {
 
 	deleteImage(request, response, next) {
 		this.Image
-			.findById(request.query.id)
+			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
 				if (
-					request.hasPermission("admin.image.deleteOthers") ||
-					image.get("user_id") === request.user.get("id")
+					image &&
+					(request.hasPermission("admin.image.deleteOthers") ||
+						image.get("user_id") === request.user.get("id"))
 				) {
 					image
 						.destroy()
 						.then(() => {
-							reponse.end("{success: true}");
+							response.json({ success: true });
+							response.end();
 						})
 						.catch(err => {
 							return next(
@@ -290,6 +304,7 @@ class ImageController {
 				}
 			})
 			.catch(err => {
+				console.log(err);
 				return next(
 					new this.errorController.errors.DatabaseError({
 						message: err.message

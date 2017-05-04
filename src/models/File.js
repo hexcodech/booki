@@ -16,7 +16,7 @@ const File = ({ sequelize, models }) => {
 				associate: function({ Image }) {}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let file = this.get();
 
 					let json = pick(file, ["id", "path", "createdAt", "updatedAt"]);

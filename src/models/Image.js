@@ -67,7 +67,7 @@ const Image = ({ config, sequelize, errorController, models }) => {
 				getUrl: function() {
 					return "/static/" + this.get("File").get("path").split("/static/")[1];
 				},
-				getThumbnails: function(options) {
+				getThumbnailsRaw: function(options) {
 					let thumbnails = this.get("Thumbnails");
 
 					return thumbnails.map(thumbnail => {
@@ -178,7 +178,7 @@ const Image = ({ config, sequelize, errorController, models }) => {
 					});
 				},
 
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let image = this.get();
 
 					let json = pick(image, [

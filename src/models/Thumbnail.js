@@ -41,7 +41,7 @@ const Thumbnail = ({ config, sequelize, models }) => {
 				getUrl: function() {
 					return "/static/" + this.get("File").get("path").split("/static/")[1];
 				},
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let thumbnail = this.get();
 
 					let json = pick(thumbnail, ["id", "createdAt", "updatedAt"]);

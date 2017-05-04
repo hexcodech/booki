@@ -41,7 +41,7 @@ const OAuthAccessToken = ({ config, sequelize, models, cryptoUtilities }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let token = this.get();
 
 					let json = {

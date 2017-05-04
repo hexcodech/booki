@@ -55,7 +55,7 @@ class PersonController {
 
 	getPersonById(request, response, next) {
 		this.Person
-			.findById(request.params.personId)
+			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
 					if (request.hasPermission("admin.person.hiddenData.read")) {
@@ -118,7 +118,7 @@ class PersonController {
 
 	putPerson(request, response, next) {
 		this.Person
-			.findById(request.params.personId)
+			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
 					person.set(
@@ -170,13 +170,14 @@ class PersonController {
 
 	deletePerson(request, response, next) {
 		this.Person
-			.findById(request.params.personId)
+			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
 					person
 						.destroy()
 						.then(() => {
-							reponse.end("{success: true}");
+							response.json({ success: true });
+							response.end();
 						})
 						.catch(err => {
 							return next(

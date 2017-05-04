@@ -59,7 +59,7 @@ class OfferRequestController {
 
 	getOfferRequestById(request, response, next) {
 		this.OfferRequest
-			.findById(request.params.offerRequestId)
+			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
 					if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
@@ -130,19 +130,21 @@ class OfferRequestController {
 		let promises = [];
 
 		promises.push(
-			this.Offer.findById(request.body.offerRequest.offerId).then(offer => {
-				if (offer) {
-					return Promise.resolve();
-				} else {
-					return Promise.reject(
-						new this.errorController.errors.NotFoundError()
-					);
-				}
-			})
+			this.Offer
+				.findOne({ where: { id: request.body.offerRequest.offerId } })
+				.then(offer => {
+					if (offer) {
+						return Promise.resolve();
+					} else {
+						return Promise.reject(
+							new this.errorController.errors.NotFoundError()
+						);
+					}
+				})
 		);
 
 		promises.push(
-			this.User.findById(userId).then(user => {
+			this.User.findOne({ where: { id: userId } }).then(user => {
 				if (user) {
 					return Promise.resolve();
 				} else {
@@ -197,7 +199,7 @@ class OfferRequestController {
 
 	putOfferRequest(request, response, next) {
 		this.OfferRequest
-			.findById(request.params.offerRequestId)
+			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
 					if (
@@ -215,7 +217,7 @@ class OfferRequestController {
 						let promises = [];
 
 						promises.push(
-							this.User.findById(userId).then(user => {
+							this.User.findOne({ where: { id: userId } }).then(user => {
 								if (user) {
 									return Promise.resolve();
 								} else {
@@ -229,7 +231,7 @@ class OfferRequestController {
 						if (request.body.offerRequest.offerId) {
 							promises.push(
 								this.Offer
-									.findById(request.body.offerRequest.offerId)
+									.findOne({ where: { id: request.body.offerRequest.offerId } })
 									.then(offer => {
 										if (offer) {
 											return Promise.resolve();
@@ -298,7 +300,7 @@ class OfferRequestController {
 
 	deleteOfferRequest(request, response, next) {
 		this.OfferRequest
-			.findById(request.params.offerRequestId)
+			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
 					if (
@@ -308,7 +310,8 @@ class OfferRequestController {
 						offerRequest
 							.destroy()
 							.then(() => {
-								reponse.end("{success: true}");
+								response.json({ success: true });
+								response.end();
 							})
 							.catch(err => {
 								return next(
@@ -335,7 +338,7 @@ class OfferRequestController {
 
 	respondToOfferRequest(request, response, next) {
 		this.OfferRequest
-			.findById(request.params.offerRequestId)
+			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
 					if (request.get("responseKey") == request.query.responseKey) {

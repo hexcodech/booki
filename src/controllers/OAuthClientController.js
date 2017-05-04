@@ -214,7 +214,7 @@ class OAuthClientController {
 
 	putOAuthClient(request, response, next) {
 		this.OAuthClient
-			.findById(request.params.clientId)
+			.findOne({ where: { id: request.params.clientId } })
 			.then(client => {
 				if (client) {
 					let promises = [];
@@ -320,7 +320,7 @@ class OAuthClientController {
 
 	deleteOAuthClient(request, response, next) {
 		this.OAuthClient
-			.findById(request.params.clientId)
+			.findOne({ where: { id: request.params.clientId } })
 			.then(client => {
 				if (client) {
 					if (

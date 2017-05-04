@@ -27,7 +27,7 @@ const ThumbnailType = ({ sequelize }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let type = this.get();
 
 					let json = pick(type, ["id", "name", "width", "height"]);

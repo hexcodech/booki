@@ -26,7 +26,7 @@ const OAuthProvider = ({ sequelize }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let provider = this.get();
 
 					let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);

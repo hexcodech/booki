@@ -21,7 +21,7 @@ const Permission = ({ sequelize }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					return { id: this.get("id"), permission: this.get("permission") };
 				}
 			}

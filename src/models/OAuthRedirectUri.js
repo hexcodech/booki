@@ -18,7 +18,7 @@ const OAuthRedirectUri = ({ sequelize }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					return { id: this.get("id"), uri: this.get("uri") };
 				}
 			}

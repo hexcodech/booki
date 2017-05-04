@@ -28,7 +28,8 @@ class BookController {
 			"postBook",
 			"putBook",
 			"deleteBook",
-			"lookupBook"
+			"lookupBook",
+			"lookupExternalBook"
 		]);
 	}
 
@@ -69,7 +70,7 @@ class BookController {
 
 	getBookById(request, response, next) {
 		this.Book
-			.findById(request.params.bookId)
+			.findOne({ where: { id: request.params.bookId } })
 			.then(book => {
 				if (book) {
 					if (request.hasPermission("admin.book.hiddenData.read")) {
@@ -111,12 +112,12 @@ class BookController {
 			.then(book => {
 				//check whether the cover actually exists
 				this.Image
-					.findById(request.body.book.coverId)
+					.findOne({ where: { id: request.body.book.coverId } })
 					.then(image => {
 						let promises = [];
 
 						if (image) {
-							promises.push(book.setCoverImage(image));
+							book.set("cover_image_id", request.body.book.coverId);
 						}
 
 						//add additional fields
@@ -187,23 +188,24 @@ class BookController {
 
 	putBook(request, response, next) {
 		this.Book
-			.findById(request.params.bookId)
+			.findOne({ where: { id: request.params.bookId } })
 			.then(book => {
 				if (book) {
+					//if the book isn't verified yet, everyone can edit it
 					if (
-						/*book.get('user').get('id') !== request.user.get('id') &&*/
+						!book.get("verified") ||
 						!request.hasPermission("admin.book.editOthers")
 					) {
 						return next(new this.errorController.errors.ForbiddenError());
 					}
 
 					this.Image
-						.findById(request.body.book.coverId)
+						.findOne({ where: { id: request.body.book.coverId } })
 						.then(image => {
 							let promises = [];
 
 							if (image) {
-								promises.push(book.setCoverImage(image));
+								book.set("cover_image_id", request.body.book.coverId);
 							}
 
 							book.set(
@@ -220,6 +222,9 @@ class BookController {
 									this.isNil
 								)
 							);
+
+							//if a user updated
+							book.set("user_id", request.user.id);
 
 							if (request.hasPermission("admin.book.hiddenData.write")) {
 								book.set(
@@ -323,7 +328,7 @@ class BookController {
 	}
 
 	lookupBook(request, response, next) {
-		return this.Book
+		this.Book
 			.lookup(request.query.search)
 			.then(books => {
 				if (request.hasPermission("admin.book.hiddenData.read")) {
@@ -348,7 +353,7 @@ class BookController {
 	}
 
 	lookupExternalBook(request, response, next) {
-		return this.Book
+		this.Book
 			.lookupExternal(request.query.search)
 			.then(books => {
 				response.json(books);

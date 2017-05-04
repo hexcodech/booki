@@ -54,7 +54,7 @@ class ConditionController {
 
 	getConditionById(request, response, next) {
 		this.Condition
-			.findById(request.params.conditionId)
+			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {
 					if (request.hasPermission("admin.condition.hiddenData.read")) {
@@ -109,7 +109,7 @@ class ConditionController {
 
 	putCondition(request, response, next) {
 		this.Condition
-			.findById(request.params.conditionId)
+			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {
 					condition.set(
@@ -153,13 +153,14 @@ class ConditionController {
 
 	deleteCondition(request, response, next) {
 		this.Condition
-			.findById(request.params.conditionId)
+			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {
 					condition
 						.destroy()
 						.then(() => {
-							response.end("{success: true}");
+							response.json({ success: true });
+							response.end();
 						})
 						.catch(err => {
 							return next(

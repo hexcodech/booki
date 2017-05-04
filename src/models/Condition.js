@@ -22,7 +22,7 @@ const Condition = ({ sequelize, models }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let condition = this.get();
 
 					let json = pick(condition, ["id", "key", "priceFactor"]);

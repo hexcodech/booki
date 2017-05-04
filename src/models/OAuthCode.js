@@ -55,7 +55,7 @@ const OAuthCode = ({ config, sequelize, models, cryptoUtilities }) => {
 			},
 
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let code = this.get();
 
 					let json = {

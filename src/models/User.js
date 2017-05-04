@@ -635,7 +635,7 @@ const User = ({
 					json.thumbnails = [];
 
 					if (user.ProfilePicture) {
-						json.thumbnails = book.ProfilePicture.getThumbnails();
+						json.thumbnails = book.ProfilePicture.getThumbnailsRaw();
 					}
 
 					json.permissions = this.getPermissionArray();

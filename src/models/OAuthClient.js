@@ -137,7 +137,7 @@ const OAuthClient = ({ config, sequelize, models, cryptoUtilities }) => {
 					return false;
 				},
 
-				toJSON: function(options = { hiddenData: false }) {
+				toJSON: function(options = {}) {
 					let client = this.get();
 
 					let json = pick(client, [

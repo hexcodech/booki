@@ -65,7 +65,7 @@ const Person = ({ sequelize, sphinx, models }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let person = this.get();
 
 					let json = pick(person, [

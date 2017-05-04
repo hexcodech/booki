@@ -131,7 +131,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 								async.each(
 									results[0],
 									(book, callback) => {
-										this.findById(book.id)
+										this.findOne({ where: { id: book.id } })
 											.then(instance => {
 												if (instance) {
 													dbBooks.push(instance);
@@ -158,7 +158,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 					let amazonBooks = [];
 
 					//combine with external sources
-					amzClient
+					return amzClient
 						.itemSearch({
 							keywords: text,
 							searchIndex: "Books",
@@ -196,10 +196,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 								})
 								.filter(e => e); //removes falsy elements
 
-							return resolve(amazonBooks);
-						})
-						.catch(err => {
-							return reject(err);
+							return amazonBooks;
 						});
 				}
 			},
@@ -217,7 +214,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 										.then(results => {
 											if (results[0].length === 1) {
 												models.Person
-													.findById(results[0][0].id)
+													.findOne({ where: { id: results[0][0].id } })
 													.then(authorInstance => {
 														authorInstances.push(authorInstance);
 														callback();
@@ -283,7 +280,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 										});
 								} else {
 									this.Person
-										.findById(author)
+										.findOne({ where: { id: author } })
 										.then(instance => {
 											if (instance) {
 												authorInstances.push(instance);
@@ -313,7 +310,7 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 						);
 					});
 				},
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let book = this.get(); //invoking virtual getters
 
 					let json = pick(book, [
@@ -331,6 +328,10 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 						"updatedAt"
 					]);
 
+					if (options.hiddenData) {
+						json.coverId = book.cover_image_id;
+					}
+
 					json.userId = book.user_id;
 
 					if (book.Authors) {
@@ -346,8 +347,8 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 					}
 
 					json.thumbnails = [];
-					if (book.CoverImage) {
-						json.thumbnails = book.CoverImage.getThumbnails();
+					if (book.Cover) {
+						json.thumbnails = book.Cover.getThumbnailsRaw();
 					}
 
 					return json;

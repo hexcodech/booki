@@ -91,7 +91,7 @@ const OfferRequest = ({
 							});
 						});
 				},
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let offerRequest = this.get();
 
 					let json = pick(offerRequest, [

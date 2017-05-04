@@ -48,7 +48,7 @@ const Offer = ({ sequelize, models }) => {
 				}
 			},
 			instanceMethods: {
-				toJSON: function(options) {
+				toJSON: function(options = {}) {
 					let offer = this.get(); //invoking virtual getters
 
 					let json = pick(offer, [
