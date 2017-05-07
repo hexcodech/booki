@@ -76,26 +76,29 @@ class ImageController {
 
 	postImage(request, response, next) {
 		try {
+			//FIXME somewhere there's a bug
 			let busboy = new this.Busboy({ headers: request.headers });
+
+			console.log(request.headers);
+
 			busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+				console.log(mimetype);
+
 				if (!mimetype.startsWith("image/")) {
 					return next(new this.errorController.errors.InvalidImageError());
 				}
 
-				let buffers = [];
+				let data = Buffer.from([]);
 
-				file.on("data", data => {
-					buffers.push(data);
+				file.on("data", newData => {
+					data = Buffer.concat([data, newData]);
 
-					let tmp = Buffer.concat(buffers);
-					if (tmp.length > this.config.MAX_UPLOAD_FILE_SIZE) {
+					if (data.length > this.config.MAX_UPLOAD_FILE_SIZE) {
 						return next(new this.errorController.errors.InvalidImageError());
 					}
 				});
 
 				file.on("end", () => {
-					let data = Buffer.concat(buffers);
-
 					//double check
 					if (
 						mimetype.startsWith("image/") &&

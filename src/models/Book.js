@@ -197,6 +197,18 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 								.filter(e => e); //removes falsy elements
 
 							return amazonBooks;
+						})
+						.catch(errors => {
+							for (let i = 0; i < errors.length; i++) {
+								if (
+									errors[i].Error[0].Code[0] ===
+									"AWS.ECommerceService.NoExactMatches"
+								) {
+									return [];
+								}
+							}
+
+							return errors;
 						});
 				}
 			},

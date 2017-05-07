@@ -59,8 +59,11 @@ const Offer = ({ sequelize, models }) => {
 						"updatedAt"
 					]);
 
-					json.userId = offer.user_id;
 					json.bookId = offer.book_id;
+
+					if (offer.User) {
+						json.user = offer.User.toJSON(options);
+					}
 
 					if (offer.Condition) {
 						json.condition = offer.Condition.toJSON(options);

@@ -186,14 +186,19 @@ class Booki {
 	}
 
 	connectToSphinx(logger, config) {
-		logger.log("info", "Connecting to sphinx...");
+		return new Promise((resolve, reject) => {
+			logger.log("info", "Connecting to sphinx...");
 
-		const mysql = require("mysql2/promise");
+			const mysql = require("mysql2/promise");
 
-		return mysql.createConnection({
-			host: this.config.DB_HOST,
-			port: this.config.SPHINX_PORT
-			//charset : 'UTF8MB4_GENERAL_CI'
+			resolve(
+				mysql.createPool({
+					host: this.config.DB_HOST,
+					port: this.config.SPHINX_PORT,
+					connectionLimit: 5
+					//charset : 'UTF8MB4_GENERAL_CI'
+				})
+			);
 		});
 	}
 

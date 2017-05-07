@@ -333,6 +333,13 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	);
 
 	app.get(
+		"/v1/person/lookup",
+		authController.isBearerAuthenticated(),
+		validate(lookupPersonValidation),
+		personController.lookupPerson
+	);
+
+	app.get(
 		"/v1/person/:personId",
 		authController.isBearerAuthenticated(["admin.person.get"]),
 		validate(getPersonByIdValidation),
@@ -358,13 +365,6 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 		authController.isBearerAuthenticated(["admin.person.delete"]),
 		validate(deletePersonValidation),
 		personController.deletePerson
-	);
-
-	app.get(
-		"/v1/person/lookup",
-		authController.isBearerAuthenticated(),
-		validate(lookupPersonValidation),
-		personController.lookupPerson
 	);
 
 	//ThumbnailType
@@ -546,11 +546,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 		booki
 	);
 
-	app.get(
-		"/v1/condition",
-		authController.isBearerAuthenticated(["admin.condition.list"]),
-		conditionController.getCondition
-	);
+	app.get("/v1/condition", conditionController.getCondition);
 
 	app.get(
 		"/v1/condition/:conditionId",

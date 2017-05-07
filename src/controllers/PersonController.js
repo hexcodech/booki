@@ -66,9 +66,7 @@ class PersonController {
 					return response.end();
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return next(new this.errorController.errors.NotFoundError());
 			})
 			.catch(err => {
 				return next(
@@ -201,7 +199,7 @@ class PersonController {
 
 	lookupPerson(request, response, next) {
 		this.Person
-			.lookupByName(request.query.name)
+			.lookupByName(request.query.search)
 			.then(results => {
 				response.end(
 					JSON.stringify(

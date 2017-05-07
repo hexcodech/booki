@@ -5,7 +5,7 @@ module.exports = ({ config }) => {
 		body: {
 			offer: {
 				id: Joi.number().integer().positive().allow(null),
-				description: Joi.string().max(2000).required(),
+				description: Joi.string().max(2000).allow(null, ""),
 				price: Joi.number().positive().required(),
 
 				bookId: Joi.number().integer().positive().required(),
