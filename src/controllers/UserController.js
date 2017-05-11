@@ -16,7 +16,12 @@ class UserController {
 		this.errorController = errorController;
 
 		this.User = models.User;
+
 		this.Permission = models.Permission;
+		this.Image = models.Image;
+		this.OAuthProvider = models.OAuthProvider;
+		this.Offer = models.Offer;
+		this.OfferRequest = models.OfferRequest;
 
 		bindAll(this, [
 			"getCurrentUser",
@@ -28,9 +33,44 @@ class UserController {
 		]);
 	}
 
-	getCurrentUser(request, response) {
-		response.json(request.user.toJSON());
-		response.end();
+	getCurrentUser(request, response, next) {
+		this.User
+			.find({
+				where: { id: request.user.get("id") },
+				include: [
+					{
+						model: this.Permission,
+						as: "Permissions"
+					},
+					{
+						model: this.Image,
+						as: "ProfilePicture"
+					},
+					{
+						model: this.OAuthProvider,
+						as: "OAuthProviders"
+					},
+					{
+						model: this.Offer,
+						as: "Offers"
+					},
+					{
+						model: this.OfferRequest,
+						as: "OfferRequests"
+					}
+				]
+			})
+			.then(user => {
+				response.json(user.toJSON());
+				response.end();
+			})
+			.catch(err => {
+				return next(
+					new this.errorController.errors.DatabaseError({
+						message: err.message
+					})
+				);
+			});
 	}
 
 	getUser(request, response, next) {
@@ -73,6 +113,10 @@ class UserController {
 	}
 
 	getUserById(request, response, next) {
+		if (request.user.get("id") === request.params.userId) {
+			return this.getCurrentUser(request, response, next);
+		}
+
 		this.User
 			.findOne({ where: { id: request.params.userId } })
 			.then(user => {
@@ -109,6 +153,10 @@ class UserController {
 				"placeOfResidence"
 			])
 		);
+
+		if (request.body.user.profilePictureId) {
+			user.profile_picture_id = request.body.user.profilePictureId;
+		}
 
 		user
 			.save()
@@ -170,7 +218,31 @@ class UserController {
 		}
 
 		this.User
-			.findOne({ where: { id: request.params.userId } })
+			.findOne({
+				where: { id: request.params.userId },
+				include: [
+					{
+						model: this.Permission,
+						as: "Permissions"
+					},
+					{
+						model: this.Image,
+						as: "ProfilePicture"
+					},
+					{
+						model: this.OAuthProvider,
+						as: "OAuthProviders"
+					},
+					{
+						model: this.Offer,
+						as: "Offers"
+					},
+					{
+						model: this.OfferRequest,
+						as: "OfferRequests"
+					}
+				]
+			})
 			.then(user => {
 				if (!user) {
 					return next(new this.errorController.errors.NotFoundError());
@@ -192,6 +264,10 @@ class UserController {
 						this.isNil
 					)
 				);
+
+				if (request.body.user.profilePictureId) {
+					user.profile_picture_id = request.body.user.profilePictureId;
+				}
 
 				//check for email / password change
 				if (request.body.user.newEmail) {

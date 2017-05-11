@@ -55,6 +55,7 @@ const Offer = ({ sequelize, models }) => {
 						"id",
 						"description",
 						"price",
+						"sold",
 						"createdAt",
 						"updatedAt"
 					]);

@@ -80,11 +80,9 @@ class BookController {
 					}
 
 					return response.end();
+				} else {
+					next(new this.errorController.errors.NotFoundError());
 				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
 			})
 			.catch(err => {
 				return next(

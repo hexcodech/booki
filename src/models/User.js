@@ -25,13 +25,16 @@ const User = ({
 			/* Name */
 
 			nameDisplay: {
-				type: Sequelize.STRING
+				type: Sequelize.STRING,
+				default: ""
 			},
 			nameFirst: {
-				type: Sequelize.STRING
+				type: Sequelize.STRING,
+				default: ""
 			},
 			nameLast: {
-				type: Sequelize.STRING
+				type: Sequelize.STRING,
+				default: ""
 			},
 
 			/* Email */
@@ -635,7 +638,19 @@ const User = ({
 					json.thumbnails = [];
 
 					if (user.ProfilePicture) {
-						json.thumbnails = book.ProfilePicture.getThumbnailsRaw();
+						json.thumbnails = user.ProfilePicture.getThumbnailsRaw();
+					}
+
+					if (user.Offers) {
+						json.offers = user.Offers.map(offer => {
+							return offer.toJSON(options);
+						});
+					}
+
+					if (user.OfferRequests) {
+						json.offerRequests = user.OfferRequests.map(offerRequest => {
+							return offerRequest.toJSON(options);
+						});
 					}
 
 					json.permissions = this.getPermissionArray();

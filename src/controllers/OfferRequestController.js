@@ -134,7 +134,7 @@ class OfferRequestController {
 				.findOne({ where: { id: request.body.offerRequest.offerId } })
 				.then(offer => {
 					if (offer) {
-						return Promise.resolve();
+						return Promise.resolve(offer);
 					} else {
 						return Promise.reject(
 							new this.errorController.errors.NotFoundError()
@@ -146,7 +146,7 @@ class OfferRequestController {
 		promises.push(
 			this.User.findOne({ where: { id: userId } }).then(user => {
 				if (user) {
-					return Promise.resolve();
+					return Promise.resolve(user);
 				} else {
 					return Promise.reject(
 						new this.errorController.errors.NotFoundError()
@@ -156,9 +156,11 @@ class OfferRequestController {
 		);
 
 		Promise.all(promises)
-			.then(() => {
+			.then(values => {
+				const offer = values[0], user = values[1];
+
 				offerRequest.set({
-					offer_id: request.body.offerRequest.bookId,
+					offer_id: request.body.offerRequest.offerId,
 					user_id: userId
 				});
 
@@ -171,19 +173,33 @@ class OfferRequestController {
 					);
 				}
 
-				offerRequest.set("respondKey", this.OfferRequest.generateResponseKey());
+				offerRequest.set(
+					"responseKey",
+					this.OfferRequest.generateResponseKey()
+				);
 
-				//send email and then save it (in case sending the mail fails)
-				return offerRequest.sendMail();
-			})
-			.then(() => {
-				return offerRequest.save().catch(err => {
-					return Promise.reject(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				return offerRequest
+					.save()
+					.then(offerRequest => {
+						return offerRequest.reload();
+					})
+					.then(offerRequest => {
+						return offerRequest.sendMail().then(() => {
+							return Promise.resolve(offerRequest);
+						});
+					})
+					.then(() => {
+						//if everything worked, mark offer as sold
+						offer.set("sold", true);
+						return offer.save();
+					})
+					.catch(err => {
+						return Promise.reject(
+							new this.errorController.errors.DatabaseError({
+								message: err.message
+							})
+						);
+					});
 			})
 			.then(offerRequest => {
 				if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
@@ -341,13 +357,13 @@ class OfferRequestController {
 			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
-					if (request.get("responseKey") == request.query.responseKey) {
-						request.set("responded", true);
-						request
+					if (offerRequest.get("responseKey") == request.query.responseKey) {
+						offerRequest.set("responded", true);
+						offerRequest
 							.save()
-							.then(() => {
+							.then(offerRequest => {
 								return response.redirect(
-									"mailto:" + request.get("User").get("emaiVerified")
+									"mailto:" + offerRequest.get("User").get("emailVerified")
 								);
 							})
 							.catch(err => {

@@ -1,4 +1,10 @@
-const Image = ({ config, sequelize, errorController, models }) => {
+const Image = ({
+	config,
+	sequelize,
+	errorController,
+	models,
+	cryptoUtilities
+}) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
@@ -117,20 +123,27 @@ const Image = ({ config, sequelize, errorController, models }) => {
 			},*/
 				generateThumbnails: function() {
 					return new Promise((resolve, reject) => {
-						return models.File.create({}).then(file => {
-							models.ThumbnailType
-								.findAll({})
-								.then(thumbnailTypes => {
-									async.each(
-										thumbnailTypes,
-										(thumbnailType, callback) => {
+						models.ThumbnailType
+							.findAll({})
+							.then(thumbnailTypes => {
+								async.each(
+									thumbnailTypes,
+									(thumbnailType, callback) => {
+										models.File.create({}).then(file => {
 											let p = this.get("File").get("path"),
 												ext = path.extname(p),
 												w = thumbnailType.get("width"),
 												h = thumbnailType.get("height"),
 												saveTo = path.resolve(
 													path.dirname(p),
-													path.basename(p, ext) + "-" + w + "x" + h + ext
+													path.basename(p, ext) +
+														"-" +
+														cryptoUtilities.generateRandomString(3) +
+														"-" +
+														w +
+														"x" +
+														h +
+														ext
 												);
 											file.set({ path: saveTo });
 
@@ -162,19 +175,19 @@ const Image = ({ config, sequelize, errorController, models }) => {
 															callback(err);
 														});
 												});
-										},
-										err => {
-											if (err) {
-												return reject(err);
-											}
-											resolve();
+										});
+									},
+									err => {
+										if (err) {
+											return reject(err);
 										}
-									);
-								})
-								.catch(err => {
-									reject(err);
-								});
-						});
+										resolve();
+									}
+								);
+							})
+							.catch(err => {
+								reject(err);
+							});
 					});
 				},
 

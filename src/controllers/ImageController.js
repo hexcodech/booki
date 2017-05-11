@@ -35,7 +35,8 @@ class ImageController {
 				d.getFullYear() + "",
 				d.getMonth() + 1 + "",
 				//prevent the use as public image hosting api
-				id + "-" + this.CryptoUtilities.generateRandomString(3) + ".png"
+				this.CryptoUtilities.generateRandomString(3).replace(/[^A-z0-9]/g, "z"),
+				id + ".png"
 			);
 		};
 	}

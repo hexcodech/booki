@@ -9,10 +9,12 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 	const sphinxUtils = require("../utilities/SphinxUtilities");
 
 	const amazon = require("amazon-product-api");
+
+	//TODO change secret
 	const amzClient = amazon.createClient({
-		awsId: "AKIAJ5VWP7D44KOSUT3A",
-		awsSecret: "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",
-		awsTag: "bookime-21"
+		awsId: config.AWS_ID,
+		awsSecret: config.AWS_SECRET,
+		awsTag: config.AWS_TAG
 	});
 
 	let Book = sequelize.define(

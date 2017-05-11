@@ -38,6 +38,10 @@ this file has to be renamed to config.json and this comment needs to be removed
 
 	"MAIL_FROM_NAME"								: "Booki",
 
+	"AWS_ID"                        : "",
+	"AWS_SECRET"                    : "",
+	"AWS_TAG"                       : "",
+
 	"FACEBOOK_APP_ID"								: "",
 	"FACEBOOK_APP_SECRET"						: "",
 	"FACEBOOK_CALLBACK_PATH"				: "/auth/facebook/callback",

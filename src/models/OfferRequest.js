@@ -41,9 +41,9 @@ const OfferRequest = ({
 			},
 			classMethods: {
 				generateResponseKey: function() {
-					return cryptoUtilities.generateRandomString(
-						config.CONFIRM_TOKEN_LENGTH
-					);
+					return cryptoUtilities
+						.generateRandomString(config.CONFIRM_TOKEN_LENGTH)
+						.replace(/[^A-z0-9]/, "$");
 				},
 				associate: function({ Offer, User }) {
 					this.belongsTo(Offer, {
@@ -62,33 +62,43 @@ const OfferRequest = ({
 						__dirname + "/../templates/emails/offer-request"
 					);
 
-					return resetMail
-						.render(
-							{
-								request: this.get(),
-								offerer: this.get("Offer").get("User").get(),
-								requester: this.get("User").get(),
-								book: this.get("Offer").get("Book").get(),
-								offer: this.get("Offer").get(),
-								responseUrl: config.HOST +
-									"/v1/offer-request/" +
-									this.get("id") +
-									"/respond?respondKey=" +
-									this.get("respondKey")
-							},
-							offerer.get("locale")
-						)
-						.then(result => {
-							return offerer
-								.sendMail(result.subject, result.html, result.text)
-								.catch(error => {
-									throw error;
+					const offer = this.get("Offer"),
+						offerer = offer.get("User"),
+						requester = this.get("User");
+
+					return models.Book
+						.findOne({ where: { id: offer.book_id } })
+						.then(book => {
+							return offerRequestMail
+								.render(
+									{
+										request: this.get(),
+										offerer: offerer.get(),
+										requester: requester.get(),
+										book: book.get(),
+										offer: offer.get(),
+										responseUrl: config.HOST +
+											"/v1/offer-request/" +
+											this.get("id") +
+											"/respond?responseKey=" +
+											this.get("responseKey")
+									},
+									offerer.get("locale")
+								)
+								.catch(err => {
+									return Promise.reject(
+										new errorController.errors.RenderError({
+											message: err.message
+										})
+									);
+								})
+								.then(result => {
+									return offerer.sendMail(
+										result.subject,
+										result.html,
+										result.text
+									);
 								});
-						})
-						.catch(err => {
-							throw new errorController.errors.RenderError({
-								message: err.message
-							});
 						});
 				},
 				toJSON: function(options = {}) {
@@ -97,14 +107,18 @@ const OfferRequest = ({
 					let json = pick(offerRequest, [
 						"id",
 						"message",
-						"sold",
 						"responded",
 						"updatedAt",
 						"createdAt"
 					]);
 
-					json.userId = offer.user_id;
-					json.offerId = offer.offer_id;
+					if (offerRequest.user_id) {
+						json.userId = offerRequest.user_id;
+					}
+
+					if (offerRequest.offer_id) {
+						json.offerId = offerRequest.offer_id;
+					}
 
 					return json;
 				}

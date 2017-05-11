@@ -36,7 +36,9 @@ module.exports = ({ config }) => {
 				google: {
 					accessToken: Joi.string().allow("", null),
 					refreshToken: Joi.string().allow("", null)
-				}
+				},
+
+				profilePictureId: Joi.number().integer().positive().allow(null)
 			}
 		}
 	};

@@ -42,6 +42,8 @@ module.exports = function({ config }) {
 					refreshToken: Joi.string().allow("", null)
 				},
 
+				profilePictureId: Joi.number().integer().positive().allow(null),
+
 				newPassword: Joi.string().min(8).max(256).allow("", null),
 
 				newEmail: Joi.string().email().allow("", null)
