@@ -354,9 +354,13 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 					}
 
 					if (book.Offers) {
-						json.offers = book.Offers.map(offer => {
-							return offer.toJSON(options);
-						});
+						json.offers = book.Offers
+							.filter(offer => {
+								return !offer.get("sold");
+							})
+							.map(offer => {
+								return offer.toJSON(options);
+							});
 					}
 
 					json.thumbnails = [];
