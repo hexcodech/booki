@@ -10,7 +10,6 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 
 	const amazon = require("amazon-product-api");
 
-	//TODO change secret
 	const amzClient = amazon.createClient({
 		awsId: config.AWS_ID,
 		awsSecret: config.AWS_SECRET,
