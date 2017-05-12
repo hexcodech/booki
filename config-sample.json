@@ -18,7 +18,6 @@ this file has to be renamed to config.json and this comment needs to be removed
 	"HASH_ALGORITHM"                : "sha512",
 	"SALT_LENGTH"                   : 30,
 
-	"CLIENT_ID_LENGTH"              : 30,
 	"CLIENT_SECRET_LENGTH"          : 30,
 
 	"TOKEN_LENGTH"                  : 30,
@@ -73,8 +72,7 @@ this file has to be renamed to config.json and this comment needs to be removed
 
 	"GOOGLEBOOKS_API_KEY"           : "",
 
-	"DEFAULT_PROFILE_PICTURE_URL"   : "",
-	"DEFAULT_BOOK_COVER"            : "",
+	"DEFAULT_REDIRECT_URI"          : "https://booki.me/login",
 
 	"MAX_UPLOAD_FILE_SIZE"          : 2097152
 }

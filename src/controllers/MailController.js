@@ -6,10 +6,6 @@
 class MailController {
 	constructor(config, errorController) {
 		const bindAll = require("lodash/bindAll");
-
-		//TODO change package because of promises and a strange license
-		//https://github.com/nodemailer/nodemailer
-
 		const nodemailer = require("nodemailer");
 
 		//store the passed parameters

@@ -1,10 +1,10 @@
 class StatsHolder {
-	constructor() {
+	constructor(config) {
 		const bindAll = require("lodash/bindAll");
 
 		//bandwidth
 		this.requests = [];
-		this.bandwidthInterval = 1000 * 60 * 5; //TODO move to config
+		this.bandwidthInterval = config.STATS_BANDWIDTH_INTERVAL;
 
 		bindAll(this, ["requestCompleted", "getBandwidth"]);
 	}

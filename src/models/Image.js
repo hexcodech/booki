@@ -1,4 +1,5 @@
 const Image = ({
+	folders,
 	config,
 	sequelize,
 	errorController,
@@ -9,9 +10,11 @@ const Image = ({
 	const Sequelize = require("sequelize");
 
 	const path = require("path");
+	const mkdirp = require("mkdirp-promise");
 	const async = require("async");
-	//const fs        = require('fs');
+
 	const sharp = require("sharp");
+	const sizeOf = require("image-size");
 
 	let Image = sequelize.define(
 		"image",
@@ -58,6 +61,63 @@ const Image = ({
 						onDelete: "cascade",
 						hooks: true
 					});
+				},
+
+				generatePath: function(id) {
+					let d = new Date();
+
+					return path.resolve(
+						folders.uploads,
+						d.getFullYear() + "",
+						d.getMonth() + 1 + "",
+						//prevent the use as public image hosting api
+						cryptoUtilities.generateRandomString(3).replace(/\//g, "-"),
+						id + ".png"
+					);
+				},
+
+				store: function(imageData, user) {
+					return models.File.create({}).then(fileInstance => {
+						let dim = sizeOf(imageData),
+							saveTo = this.generatePath(fileInstance.get("id"));
+
+						fileInstance.set("path", saveTo);
+
+						let image = models.Image.build({
+							width: dim.width,
+							height: dim.height,
+							mimeType: "image/png",
+							user_id: user.get("id"),
+							file_id: fileInstance.get("id")
+						});
+
+						return mkdirp(path.dirname(saveTo))
+							.then(() => {
+								return sharp(imageData).toFile(saveTo);
+							})
+							.then(() => {
+								return fileInstance.save();
+							})
+							.then(() => {
+								return image.save();
+							})
+							.then(() => {
+								return image.reload(); //include 'File'
+							})
+							.then(() => {
+								return image.generateThumbnails();
+							})
+							.then(() => {
+								return image.reload(); //include 'Thumbnails'
+							})
+							.catch(err => {
+								return next(
+									new this.errorController.errors.InternalServerError({
+										message: err.message
+									})
+								);
+							});
+					});
 				}
 			},
 			instanceMethods: {
@@ -80,47 +140,7 @@ const Image = ({
 						return thumbnail.toJSON(options);
 					});
 				},
-				/*cleanThumbnailsHard: function(){
 
-				let path         = this.get('File').get('path'),
-				    thumbnailDir = path.dirname(path),
-				    ext          = path.extname(path),
-						name         = path.basename(path, ext);
-
-				return new Promise((resolve, reject) => {
-					fs.readdir(thumbnailDir, (err, files) => {
-							if(err){
-								return reject(err);
-							}
-
-							async.each(files, (file, callback) => {
-								if(file.startsWith(name) + '-'){
-
-									fs.unlink(path.resolve(
-										thumbnailDir,
-										file
-									), callback);
-
-								}else{
-									callback();
-								}
-
-							}, (err) => {
-								if(err){
-									return reject(err);
-								}
-
-								resolve();
-							});
-						});
-				}).then(() => {
-					let thumbnails = this.get('Thumbnails');
-
-					return Promise.all(thumbnails.map((thumbnail) => {
-						return thumbnail.destroy();
-					}));
-				});
-			},*/
 				generateThumbnails: function() {
 					return new Promise((resolve, reject) => {
 						models.ThumbnailType

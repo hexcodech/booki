@@ -25,6 +25,7 @@ class AuthController {
 		this.OAuthClient = models.OAuthClient;
 		this.OAuthAccessToken = models.OAuthAccessToken;
 		this.OAuthCode = models.OAuthCode;
+		this.OAuthProvider = models.OAuthProvider;
 
 		bindAll(this, [
 			"loginView",
@@ -225,20 +226,40 @@ class AuthController {
 													});
 											}
 
-											//check whether the user has the required permissions
-											if (
-												request.requiredPermissions &&
-												user.doesHavePermissions(request.requiredPermissions)
-											) {
-												//request.hasPermission not possible yet, as request.user
-												//isn't set yet
-												return callback(null, user);
-											}
-
-											return callback(
-												new this.errorController.errors.ForbiddenError(),
-												false
+											//extend token lifetime
+											token.set(
+												"expires",
+												Date.now() + this.config.ACCESS_TOKEN_LIFETIME * 1000
 											);
+
+											token
+												.save()
+												.then(() => {
+													//check whether the user has the required permissions
+													if (
+														request.requiredPermissions &&
+														user.doesHavePermissions(
+															request.requiredPermissions
+														)
+													) {
+														//request.hasPermission not possible yet, as request.user
+														//isn't set yet
+														return callback(null, user);
+													}
+
+													return callback(
+														new this.errorController.errors.ForbiddenError(),
+														false
+													);
+												})
+												.catch(err => {
+													return callback(
+														new this.errorController.errors.DatabaseError({
+															message: err.message
+														}),
+														false
+													);
+												});
 										})
 										.catch(err => {
 											return callback(
@@ -290,22 +311,39 @@ class AuthController {
 					clientSecret: this.config.FACEBOOK_APP_SECRET,
 					callbackURL: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH,
 
-					profileFields: ["user_friends", "user_location"],
 					passReqToCallback: true
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					//FIXME facebook auth
-					return;
 					this.User
-						.findOrCreateUserByPassportProfile(profile, {
-							locale: request.getLocale(),
-							placeOfResidence: profile.user_location.name,
+						.findOrCreateUserByPassportProfile(profile)
+						.then(user => {
+							user.set("locale", request.getLocale());
+							return user.save().then(user => {
+								return user
+									.getOAuthProviders({ where: { type: "facebook" } })
+									.then(providers => {
+										if (providers.length > 0) {
+											let provider = providers[0];
 
-							facebook: {
-								friends: profile.user_friends,
-								accessToken: accessToken,
-								refreshToken: refreshToken
-							}
+											provider.set({
+												accessToken,
+												refreshToken
+											});
+
+											return provider.save();
+										} else {
+											return this.OAuthProvider
+												.create({
+													type: "facebook",
+													accessToken,
+													refreshToken
+												})
+												.then(provider => {
+													return provider.setUser(user);
+												});
+										}
+									});
+							});
 						})
 						.then(user => {
 							return done(null, user);
@@ -317,11 +355,7 @@ class AuthController {
 			)
 		);
 
-		this.authFacebook = [
-			this.passport.authenticate("facebook", {
-				scope: ["user_friends", "user_location"]
-			})
-		];
+		this.authFacebook = [this.passport.authenticate("facebook")];
 
 		//With Google
 		this.passport.use(
@@ -334,21 +368,42 @@ class AuthController {
 					passReqToCallback: true
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					//FIXME google auth
-					return;
 					this.User
-						.findOrCreateUserByPassportProfile(profile, {
-							locale: request.getLocale(),
-							google: {
-								accessToken: accessToken,
-								refreshToken: refreshToken
-							}
+						.findOrCreateUserByPassportProfile(profile)
+						.then(user => {
+							user.set("locale", request.getLocale());
+							return user.save().then(user => {
+								return user
+									.getOAuthProviders({ where: { type: "google" } })
+									.then(providers => {
+										if (providers.length > 0) {
+											let provider = providers[0];
+
+											provider.set({
+												accessToken,
+												refreshToken
+											});
+
+											return provider.save();
+										} else {
+											return this.OAuthProvider
+												.create({
+													type: "google",
+													accessToken,
+													refreshToken
+												})
+												.then(provider => {
+													return provider.setUser(user);
+												});
+										}
+									});
+							});
 						})
 						.then(user => {
 							return done(null, user);
 						})
 						.catch(error => {
-							return error;
+							return done(error);
 						});
 				}
 			)
@@ -679,6 +734,7 @@ class AuthController {
 
 	auth(request, response, next, err, user, info) {
 		if (err) {
+			console.log(err);
 			return next(
 				new this.errorController.errors.AuthenticationError({
 					message: err.message
@@ -692,7 +748,6 @@ class AuthController {
 					message: err.message
 				})
 			);
-			//return response.redirect('/views/login');
 		}
 
 		request.logIn(user, error => {
@@ -704,12 +759,7 @@ class AuthController {
 				if (request.session.requestedURL) {
 					response.redirect(request.session.requestedURL);
 				} else {
-					response.end(
-						"logged in: " +
-							request.session.requestedURL +
-							", max age: " +
-							request.session.cookie.maxAge
-					);
+					response.redirect(this.config.DEFAULT_REDIRECT_URI);
 				}
 			} else {
 				return next(new this.errorController.errors.AuthenticationError());

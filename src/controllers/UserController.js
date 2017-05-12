@@ -149,8 +149,7 @@ class UserController {
 				"emailVerified",
 				"emailUnverified",
 				"emailVerificationCode",
-				"locale",
-				"placeOfResidence"
+				"locale"
 			])
 		);
 
@@ -258,8 +257,7 @@ class UserController {
 							"nameDisplay",
 							"nameFirst",
 							"nameLast",
-							"locale",
-							"placeOfResidence"
+							"locale"
 						]),
 						this.isNil
 					)

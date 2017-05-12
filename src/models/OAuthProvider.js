@@ -7,7 +7,7 @@ const OAuthProvider = ({ sequelize }) => {
 		{
 			type: {
 				type: Sequelize.ENUM,
-				values: ["googe", "facebook"]
+				values: ["google", "facebook"]
 			},
 			accessToken: {
 				type: Sequelize.STRING

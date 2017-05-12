@@ -139,7 +139,7 @@ class ErrorController {
 				defaultMessage: i18n.__("The requested resource couldn't be found"),
 
 				defaultExplanation: i18n.__(
-					"Maybe you mistyped something orthe requested resource was " +
+					"Maybe you mistyped something or the requested resource was " +
 						"deleted"
 				)
 			},

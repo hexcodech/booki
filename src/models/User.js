@@ -12,6 +12,8 @@ const User = ({
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 	const async = require("async");
+	const sizeOf = require("image-size");
+	const request = require("request-promise-native");
 
 	const EmailTemplate = require("email-templates").EmailTemplate;
 	const mailController = new (require("../controllers/MailController"))(
@@ -88,13 +90,6 @@ const User = ({
 				validate: {
 					isIn: [config.LOCALES]
 				}
-			},
-
-			/* Meta */
-
-			placeOfResidence: {
-				type: Sequelize.STRING,
-				default: "The milky way"
 			}
 		},
 		{
@@ -197,19 +192,23 @@ const User = ({
 
 				getUserByPassportProfile: function(profile) {
 					return this.findOne({
-						where: { emailVerified: { $in: profile.emails } }
+						where: {
+							emailVerified: { $in: profile.emails.map(obj => obj.value) }
+						}
 					})
 						.then(user => {
 							if (user) {
 								return user;
 							} else {
-								throw new errorController.errors.UnexpectedQueryResultError();
+								return null;
 							}
 						})
 						.catch(err => {
-							throw new errorController.errors.DatabaseError({
-								message: err.message
-							});
+							return Promise.reject(
+								new errorController.errors.DatabaseError({
+									message: err.message
+								})
+							);
 						});
 				},
 
@@ -263,25 +262,22 @@ const User = ({
 				},
 
 				findOrCreateUserByPassportProfile: function(profile) {
-					return this.getUserByPassportProfile(profile).then(() => {
+					return this.getUserByPassportProfile(profile).then(user => {
+						let promise;
+
 						if (user) {
 							//update values for the current user
-							user.updateFromPassportProfile(profile, customKeysAndVals);
+							promise = user.updateFromPassportProfile(profile);
 						} else {
 							//we have to create a new user
-							user = this.createFromPassportProfile(profile, customKeysAndVals);
+							promise = this.createFromPassportProfile(profile);
 						}
 
-						user
-							.save()
-							.then(user => {
-								return user;
-							})
-							.catch(err => {
-								throw new errorController.errors.DatabaseError({
-									message: err.message
-								});
+						return promise.catch(err => {
+							throw new errorController.errors.DatabaseError({
+								message: err.message
 							});
+						});
 					});
 				},
 
@@ -294,20 +290,27 @@ const User = ({
 						emailVerified: profile.emails[0].value
 					});
 
-					//TODO mirror image
-					let profilePicture = new models.Image.build({
-						url: profile.photos[0].value
+					let url = profile.photos[0].value;
+					if (url.indexOf("?sz=50") !== -1) {
+						url = url.replace("?sz=50", "?sz=500");
+					}
+
+					return user.save().then(user => {
+						return request
+							.get({ uri: url, encoding: null })
+							.then(buffer => {
+								return models.Image.store(buffer, user);
+							})
+							.then(image => {
+								return user.setProfilePicture(image);
+							})
+							.then(() => {
+								return user.reload();
+							});
 					});
-
-					user.set("profilePicture", profilePicture);
-
-					let promises = [];
-					promises.push(profilePicture.save());
-					promises.push(user.save());
-
-					return Promise.all(promises);
-				},
-
+				}
+			},
+			instanceMethods: {
 				updateFromPassportProfile: function(profile) {
 					this.set({
 						nameDisplay: profile.displayName,
@@ -315,28 +318,25 @@ const User = ({
 						nameLast: profile.familyName
 					});
 
-					let promises = [];
-
-					//TODO mirror image
-					if (
-						this.get("profilePicture").get("url") !== profile.photos[0].value
-					) {
-						let profilePicture = new models.Image.build({
-							url: profile.photos[0].value
-						});
-
-						this.setProfilePicture(profilePicture);
-
-						promises.push(this.get("profilePicture").destroy());
-						promises.push(profilePicture.save());
+					let url = profile.photos[0].value;
+					if (url.indexOf("?sz=50") !== -1) {
+						url = url.replace("?sz=50", "?sz=500");
 					}
 
-					promises.push(this.save());
-
-					return Promise.all(promises);
-				}
-			},
-			instanceMethods: {
+					return this.save().then(user => {
+						return request
+							.get({ uri: url, encoding: null })
+							.then(buffer => {
+								return models.Image.store(buffer, user);
+							})
+							.then(image => {
+								return user.setProfilePicture(image);
+							})
+							.then(() => {
+								return user.reload();
+							});
+					});
+				},
 				sendMail: function(
 					subject = "",
 					html = "",
@@ -630,7 +630,6 @@ const User = ({
 						"nameDisplay",
 						"nameFirst",
 						"nameLast",
-						"placeOfResidence",
 						"createdAt",
 						"updatedAt"
 					]);

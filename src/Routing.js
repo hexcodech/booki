@@ -700,8 +700,8 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	//last error catch
 
 	app.use((error, request, response, next) => {
+		//TODO improve error handling
 		if (error) {
-			//TODO: translate the error
 			logger.log("error", error);
 			response.json(error);
 			response.end();

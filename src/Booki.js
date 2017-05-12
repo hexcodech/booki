@@ -49,7 +49,7 @@ class Booki {
 								this.server = server;
 
 								return Promise.all([
-									this.setupStats(server).then(statsHolder => {
+									this.setupStats(server, this.config).then(statsHolder => {
 										this.statsHolder = statsHolder;
 									})
 								]);
@@ -60,6 +60,7 @@ class Booki {
 					this.connectToDatabase(logger, this.config).then(sequelize => {
 						this.sequelize = sequelize;
 					}),
+					//TODO use real time index
 					this.connectToSphinx(logger, this.config).then(sphinx => {
 						this.sphinx = sphinx;
 					})
@@ -68,6 +69,7 @@ class Booki {
 			.then(() => {
 				return this.loadModels(
 					this.logger,
+					this.folders,
 					this.config,
 					this.errorController,
 					this.sequelize,
@@ -276,9 +278,9 @@ class Booki {
 		return Promise.resolve({ app, server });
 	}
 
-	setupStats(server) {
+	setupStats(server, config) {
 		const requestStats = require("request-stats");
-		const statsHolder = new (require("./StatsHolder"))();
+		const statsHolder = new (require("./StatsHolder"))(config);
 
 		requestStats(server, statsHolder.requestCompleted);
 
@@ -287,6 +289,7 @@ class Booki {
 
 	loadModels(
 		logger,
+		folders,
 		config,
 		errorController,
 		sequelize,
@@ -326,6 +329,7 @@ class Booki {
 
 		modelFiles.forEach(model => {
 			models[model] = require("./models/" + model)({
+				folders,
 				config,
 				errorController,
 				sequelize,
