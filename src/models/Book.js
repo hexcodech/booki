@@ -1,12 +1,10 @@
-const Book = ({ config, errorController, sequelize, sphinx, models }) => {
+const Book = ({ config, errorController, sequelize, models }) => {
 	const get = require("lodash/get");
 	const pick = require("lodash/pick");
 
 	const Sequelize = require("sequelize");
 	const request = require("request");
 	const async = require("async");
-
-	const sphinxUtils = require("../utilities/SphinxUtilities");
 
 	const amazon = require("amazon-product-api");
 
@@ -70,6 +68,14 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 			}
 		},
 		{
+			indexes: [
+				{
+					type: "FULLTEXT",
+					name: "book_fulltext_idx",
+					fields: ["title", "subtitle", "description", "publisher"]
+				}
+			],
+
 			defaultScope: {
 				include: [
 					{
@@ -114,44 +120,13 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 				},
 
 				lookup: function(text = "", page = 0) {
-					return new Promise((resolve, reject) => {
-						//sphinx search
-						sphinx
-							.query(
-								"SELECT id FROM books WHERE MATCH(?) OPTION field_weights=" +
-									"(isbn13=100, title=5, subitle=3, description=1)",
-								[
-									"@(isbn13,title,subtitle,description) *" +
-										sphinxUtils.escape(text) +
-										"*"
-								]
-							)
-							.then(results => {
-								let dbBooks = [];
+					text = "*" + text.replace(/[^A-z0-9\s]/g, "\\$&") + "*";
 
-								async.each(
-									results[0],
-									(book, callback) => {
-										this.findOne({ where: { id: book.id } })
-											.then(instance => {
-												if (instance) {
-													dbBooks.push(instance);
-												}
-												callback();
-											})
-											.catch(err => {
-												callback(err);
-											});
-									},
-									err => {
-										if (err) {
-											reject(err);
-										}
-
-										return resolve(dbBooks);
-									}
-								);
-							});
+					return this.findAll({
+						where: [
+							"MATCH(title, subtitle, book.description, publisher) AGAINST (? IN BOOLEAN MODE)",
+							[text]
+						]
 					});
 				},
 
@@ -224,17 +199,10 @@ const Book = ({ config, errorController, sequelize, sphinx, models }) => {
 								if (isNaN(author)) {
 									models.Person
 										.searchByExactName(author)
-										.then(results => {
-											if (results[0].length === 1) {
-												models.Person
-													.findOne({ where: { id: results[0][0].id } })
-													.then(authorInstance => {
-														authorInstances.push(authorInstance);
-														callback();
-													})
-													.catch(err => {
-														callback(err);
-													});
+										.then(people => {
+											if (people.length === 1) {
+												authorInstances.push(people[0]);
+												callback();
 											} else {
 												let parts = author.split(" ");
 

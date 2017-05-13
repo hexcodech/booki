@@ -1,8 +1,6 @@
-const Person = ({ sequelize, sphinx, models }) => {
+const Person = ({ sequelize, models }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
-
-	const sphinxUtils = require("../utilities/SphinxUtilities");
 
 	let Person = sequelize.define(
 		"person",
@@ -26,6 +24,14 @@ const Person = ({ sequelize, sphinx, models }) => {
 			}
 		},
 		{
+			indexes: [
+				{
+					type: "FULLTEXT",
+					name: "people_fulltext_idx",
+					fields: ["nameTitle", "nameFirst", "nameMiddle", "nameLast"]
+				}
+			],
+
 			getterMethods: {
 				name: function() {
 					return ((this.nameTitle ? this.nameTitle + " " : "") +
@@ -45,23 +51,23 @@ const Person = ({ sequelize, sphinx, models }) => {
 				},
 
 				searchByExactName: function(name) {
-					return sphinx
-						.query("SELECT * FROM people WHERE MATCH(?)", [
-							"@name '" + sphinxUtils.escape(name) + "'"
-						])
-						.then(results => {
-							return results;
-						});
+					return this.findAll({
+						where: [
+							'CONCAT_WS(" ", nameTitle, nameFirst, nameMiddle, nameLast) = ?',
+							[name]
+						]
+					});
 				},
 
 				lookupByName: function(name) {
-					return sphinx
-						.query("SELECT * FROM people WHERE MATCH(?)", [
-							"@name *" + sphinxUtils.escape(name) + "*"
-						])
-						.then(results => {
-							return results;
-						});
+					name = "*" + name.replace(/[^A-z0-9\s]/g, "\\$&") + "*";
+
+					return this.findAll({
+						where: [
+							"MATCH(nameTitle, nameFirst, nameMiddle, nameLast) AGAINST (? IN BOOLEAN MODE)",
+							[name]
+						]
+					});
 				}
 			},
 			instanceMethods: {

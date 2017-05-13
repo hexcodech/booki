@@ -35,7 +35,7 @@ class UserController {
 
 	getCurrentUser(request, response, next) {
 		this.User
-			.find({
+			.findOne({
 				where: { id: request.user.get("id") },
 				include: [
 					{

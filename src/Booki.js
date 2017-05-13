@@ -59,10 +59,6 @@ class Booki {
 
 					this.connectToDatabase(logger, this.config).then(sequelize => {
 						this.sequelize = sequelize;
-					}),
-					//TODO use real time index
-					this.connectToSphinx(logger, this.config).then(sphinx => {
-						this.sphinx = sphinx;
 					})
 				]);
 			})
@@ -73,7 +69,6 @@ class Booki {
 					this.config,
 					this.errorController,
 					this.sequelize,
-					this.sphinx,
 					this.cryptoUtilities
 				);
 			})
@@ -187,23 +182,6 @@ class Booki {
 		return Promise.resolve(sequelize);
 	}
 
-	connectToSphinx(logger, config) {
-		return new Promise((resolve, reject) => {
-			logger.log("info", "Connecting to sphinx...");
-
-			const mysql = require("mysql2/promise");
-
-			resolve(
-				mysql.createPool({
-					host: this.config.DB_HOST,
-					port: this.config.SPHINX_PORT,
-					connectionLimit: 5
-					//charset : 'UTF8MB4_GENERAL_CI'
-				})
-			);
-		});
-	}
-
 	setupHttpServer(logger, config, i18n, passport) {
 		logger.log("info", "Starting express server...");
 
@@ -293,7 +271,6 @@ class Booki {
 		config,
 		errorController,
 		sequelize,
-		sphinx,
 		cryptoUtilities
 	) {
 		logger.log("info", "Loading models...");
@@ -333,7 +310,6 @@ class Booki {
 				config,
 				errorController,
 				sequelize,
-				sphinx,
 				models,
 				cryptoUtilities
 			});

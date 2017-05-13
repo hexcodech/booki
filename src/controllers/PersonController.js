@@ -200,11 +200,14 @@ class PersonController {
 	lookupPerson(request, response, next) {
 		this.Person
 			.lookupByName(request.query.search)
-			.then(results => {
+			.then(people => {
 				response.end(
 					JSON.stringify(
-						results[0].map(result => {
-							return result.name;
+						people.map(person => {
+							return ((person.nameTitle ? person.nameTitle + " " : "") +
+								(person.nameFirst ? person.nameFirst + " " : "") +
+								(person.nameMiddle ? person.nameMiddle + " " : "") +
+								(person.nameLast ? person.nameLast : "")).trim();
 						})
 					)
 				);
