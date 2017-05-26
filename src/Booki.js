@@ -12,8 +12,9 @@ class Booki {
 			uploads: path.resolve(__dirname, "../static/uploads/")
 		};
 
-		if (process.env.DOCKER) {
-			this.config = require("/run/secrets/booki-config.json");
+		if (process.env.CONFIG_PATH) {
+			console.log("Using config located at " + process.env.CONFIG_PATH);
+			this.config = require(process.env.CONFIG_PATH);
 		} else {
 			this.config = require("../config.json");
 		}
