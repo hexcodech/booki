@@ -7,7 +7,6 @@ this file has to be renamed to config.json and this comment needs to be removed
 {
 	"DB_HOST"                       : "localhost",
 	"DB_PORT"                       : 3306,
-	"SPHINX_PORT"                   : 9306,
 	"DB_NAME"                       : "",
 	"DB_USERNAME"                   : "",
 	"DB_PASSWORD"                   : "",

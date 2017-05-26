@@ -4,7 +4,6 @@
 
 class Booki {
 	constructor() {
-		const bindAll = require("lodash/bindAll");
 		const path = require("path");
 
 		this.booki = this;
@@ -13,9 +12,11 @@ class Booki {
 			uploads: path.resolve(__dirname, "../static/uploads/")
 		};
 
-		this.config = require("../config.json");
-
-		bindAll(this, []);
+		if (process.env.DOCKER) {
+			this.config = require("/run/secrets/booki-config.json");
+		} else {
+			this.config = require("../config.json");
+		}
 
 		//Loading 'shared' modules
 		this.oauth2orize = require("oauth2orize");

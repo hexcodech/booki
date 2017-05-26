@@ -310,16 +310,16 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 		booki
 	);
 
-	const getPersonByIdValidation = require("./validation/Person/GetPersonByIdValidation")(
+	const getPersonByIdValidation = require("./validation/person/GetPersonByIdValidation")(
 		booki
 	);
-	const postPersonValidation = require("./validation/Person/PostPersonValidation")(
+	const postPersonValidation = require("./validation/person/PostPersonValidation")(
 		booki
 	);
-	const putPersonValidation = require("./validation/Person/PutPersonValidation")(
+	const putPersonValidation = require("./validation/person/PutPersonValidation")(
 		booki
 	);
-	const deletePersonValidation = require("./validation/Person/DeletePersonValidation")(
+	const deletePersonValidation = require("./validation/person/DeletePersonValidation")(
 		booki
 	);
 	const lookupPersonValidation = require("./validation/person/LookupPersonValidation")(
@@ -422,7 +422,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 
 	//Images
 
-	const imageController = new (require("./controllers/imageController"))(booki);
+	const imageController = new (require("./controllers/ImageController"))(booki);
 
 	const postImageValidation = require("./validation/image/PostImageValidation")(
 		booki
@@ -586,7 +586,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	const getOfferByBookIdValidation = require("./validation/offer/GetOfferByBookIdValidation")(
 		booki
 	);
-	const postOfferValidation = require("./validation/offer/postOfferValidation")(
+	const postOfferValidation = require("./validation/offer/PostOfferValidation")(
 		booki
 	);
 	const putOfferValidation = require("./validation/offer/PutOfferValidation")(
