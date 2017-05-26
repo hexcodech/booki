@@ -194,7 +194,7 @@ class Booki {
 
 		let app = new express();
 
-		let server = app.listen(config.HTTP_PORT, () => {
+		let server = app.listen(config.HTTP_PORT, "0.0.0.0", () => {
 			logger.log(
 				"info",
 				"Server running on",
