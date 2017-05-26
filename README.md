@@ -1,8 +1,8 @@
 [![Github All Releases](https://img.shields.io/github/downloads/hexcodech/booki/total.svg)]()
-[![Docker Stars](https://img.shields.io/docker/stars/tyratox/booki.svg)]()
-[![Docker Pulls](https://img.shields.io/docker/pulls/tyratox/booki.svg)]()
-[![Docker Automated build](https://img.shields.io/docker/automated/tyratox/booki.svg)]()
-[![Docker Build Status](https://img.shields.io/docker/build/tyratox/booki.svg)]()
+[![Docker Stars](https://img.shields.io/docker/stars/hexcodech/booki.svg)]()
+[![Docker Pulls](https://img.shields.io/docker/pulls/hexcodech/booki.svg)]()
+[![Docker Automated build](https://img.shields.io/docker/automated/hexcodech/booki.svg)]()
+[![Docker Build Status](https://img.shields.io/docker/build/hexcodech/booki.svg)]()
 
 # Booki
 

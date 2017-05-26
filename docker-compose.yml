@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   api:
-    image: tyratox/booki:latest
+    image: hexcodech/booki:latest
     build:
       context: .
       dockerfile: Dockerfile
