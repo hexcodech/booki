@@ -2,3 +2,4 @@
 .git
 node_modules
 config.codekit3
+config.json
