@@ -82,6 +82,9 @@ class Booki {
 				this.sequelize.sync();
 			})
 			.then(() => {
+            	this.piwikTracker = require('piwik-tracker')(this.config.PIWIK_TRACKING_SITE_ID, this.config.PIWIK_TRACKING_URL);
+			})
+			.then(() => {
 				//Do the routing
 				this.logger.log("info", "Setting up routes");
 

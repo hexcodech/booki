@@ -70,6 +70,7 @@
     "passport-google-oauth": "^1.0.0",
     "passport-http-bearer": "^1.0.1",
     "passport-local": "^1.0.0",
+    "piwik-tracker": "^1.0.0",
     "request": "^2.81.0",
     "request-promise-native": "^1.0.4",
     "request-stats": "^3.0.0",

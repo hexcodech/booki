@@ -73,5 +73,10 @@ this file has to be renamed to config.json and this comment needs to be removed
 
 	"DEFAULT_REDIRECT_URI"          : "https://booki.me/login",
 
-	"MAX_UPLOAD_FILE_SIZE"          : 2097152
+	"MAX_UPLOAD_FILE_SIZE"          : 2097152,
+
+	"PIWIK_TRACKING_SITE_ID"		: 1,
+	"PIWIK_TRACKING_SITE_BASE_URL"	: "https://api.booki.me",
+	"PIWIK_TRACKING_USER_AGENT"		: "Booki Node.js Backend",
+	"PIWIK_TRACKING_URL"			: ""
 }

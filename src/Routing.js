@@ -2,7 +2,7 @@
  * Manages the REST routing
  */
 
-const Routing = ({ booki, app, config, logger, i18n }) => {
+const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	const express_validation = require("express-validation");
 	const fs = require("fs");
 
@@ -71,7 +71,9 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 
 	//Authentication
 
-	const authController = new (require("./controllers/AuthController"))(booki);
+	const authController = new (require("./controllers/AuthController"))(
+		booki
+	);
 
 	//TODO Modularize
 
@@ -97,23 +99,23 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 
 	app.get(
 		"/views/login",
-		authController.loginView,
+		authController.loginView, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 	app.get(
 		"/views/verify-email",
-		authController.mailVerificationView,
+		authController.mailVerificationView, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 	app.get(
 		"/views/password-reset",
-		authController.passwordResetView,
+		authController.passwordResetView, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 
 	app.post(
 		"/v1/auth/local/login",
-		validate(localLoginValidation),
+		validate(localLoginValidation), //Tracked in analytics
 		authController.authLocal,
 		authController.catchInternalErrorView
 	);
@@ -127,20 +129,20 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	app.post(
 		"/v1/auth/password-reset",
 		validate(passwordResetValidation),
-		authController.passwordReset,
+		authController.passwordReset, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 
 	app.post(
 		"/v1/auth/local/register",
 		validate(localRegistrationValidation),
-		authController.registration,
+		authController.registration, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 	app.post(
 		"/v1/auth/local/verify-email",
 		validate(verifyMailValidation),
-		authController.verifyEmail,
+		authController.verifyEmail, //Tracked in analytics
 		authController.catchInternalErrorView
 	);
 	app.get(
@@ -150,7 +152,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	);
 	app.get(
 		config.FACEBOOK_CALLBACK_PATH,
-		authController.authFacebookCallback,
+		authController.authFacebookCallback, //Tracked in analytics
 		authController.catchInternalError
 	);
 
@@ -161,7 +163,7 @@ const Routing = ({ booki, app, config, logger, i18n }) => {
 	);
 	app.get(
 		config.GOOGLE_CALLBACK_PATH,
-		authController.authGoogleCallback,
+		authController.authGoogleCallback, //Tracked in analytics
 		authController.catchInternalError
 	);
 
