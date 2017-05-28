@@ -13,7 +13,16 @@ env:
   - secure: "SgBoKj5ZyVt2UAYMGXSpGEg+4+JzO6aRRtcm3in9iOKVK2ykrvAnf+BgqtAwWxhabqNAX5aPCHJQ2+rN8VN8iwWh6M7rjmtGp9rEQJFh4LH9dmtmzbgZEx7q9JFBRUsog5mac0Uj3LVW+hnIgaFE6xsOV3nUrJLUvJMiNihqX1PGcZwHeGopOmQ4WPq/2FGEYhI5Rg6SP7kMnja7zG9PT7wA7r5oUL3+oZbRWBrOahTObUwvOfRxOtUAZ/A7cvXg8ugWd77WqyF24k2OMnlX39NMEvfhfh2tQA+RrS+YPDa+rMBipAS7K6Ocufi5Ude3SHDlvjSCgt/+fm4adzgtjQ0z1wXrqYKi0H6Lxt8iekANybl4wRPOs+monOdOVGDOOvsiAGNIRhK+VnPVId7Cvr0e//LJkFtr8oIAEFvEXbCDMoRU3TZ4NioTcZxbYGQT3w5B1fwdfkssLkoRpOuHu5DNdV7qCqSbD+3pxcjFhq5WROri6fZoTfRG4r050JoDTHMSVCuq1IhLDWBAeP+KvkFhwTzeKcAR1k5naIDTj95lsw9f+iiMa64oyOYYUEeTwGwVLDGzXoF1zmSn4x13h/RC3GKxrq1WRPeIbZpTMju6PtIUA/BaHBaq+PpzQaattshS2Em6uZGeh+kM5TMMJud+gP4uBhc+wpZD+zY/VyE="
 install: yarn install
 before_script: yarn test
-script: docker build -t tyratox/booki .
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "release" ]; then
+    docker build -t tyratox/booki:release .
+    fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker build -t tyratox/booki:staging .
+    fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "dev" ]; then
+    docker build -t tyratox/booki:testing .
+    fi
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "release" ]; then
     docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
