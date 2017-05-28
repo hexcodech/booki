@@ -14,13 +14,13 @@ install: yarn install
 before_script: yarn test
 script:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "release" ]; then
-    docker build -t tyratox/booki:release .
+    docker build -t tyratox/booki:release .;
     fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
-    docker build -t tyratox/booki:staging .
+    docker build -t tyratox/booki:staging .;
     fi
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "dev" ]; then
-    docker build -t tyratox/booki:testing .
+    docker build -t tyratox/booki:testing .;
     fi
 after_success:
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "release" ]; then
