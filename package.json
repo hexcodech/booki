@@ -4,7 +4,7 @@
   "description": "Service to buy and sell used school books",
   "main": "src/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"No test specified yet\"",
     "start": "node src/main.js"
   },
   "repository": {

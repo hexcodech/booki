@@ -71,9 +71,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	//Authentication
 
-	const authController = new (require("./controllers/AuthController"))(
-		booki
-	);
+	const authController = new (require("./controllers/AuthController"))(booki);
 
 	//TODO Modularize
 

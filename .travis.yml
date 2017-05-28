@@ -1,0 +1,29 @@
+sudo: required
+services:
+  - docker
+language: node_js
+node_js:
+  - "node"
+notifications:
+  email: false
+  webhooks:
+    - http://server.tyratox.ch/webhooks/travis/booki.php
+env:
+  - DOCKER_USERNAME=tyratox
+  - secure: "MCs6JxJhEYOM+xj0CMi2DxaMbfw14WAl758Kmw5cS/5yml4NfROnD58KpZVbhWHkIYp4gxbSEGAxkind5DNh9vMYwnaY8s5bBayL2eZ0KcbxbxGPiLy5GG+3SDj+pEE17Iqcwngb5OXnHljeYZbIlCY8QPtQHeNST/jWV003azlPEi0v9kw5GX++s3Au9B0tHT1XQ0JZXUxXFngLQLB856YHRXZHE1WoFceL2bTrGsQgImZhdLHnKui9tLYxn+6SBuVIFelfPR9YoIr21IHDc4xvXwGvTmS8xJCf6cTO2FJLUcIaoNdlB8UGFAgFRgfYHKqA2LzdXUb+owy6QyCdNnVPC6QjcoCVuVigw6YfORWzpjTGO/mKHhCA4bL/bO0lczqLivL3lTpIyREHmEaTYzjA0+bNaLu5txBybbEVbNKw4DWWjdTUlfbkRtX2QUEmkKdOXwxnAIO5jjtFyHxvwWJmxnsfKBlJpRHK3Y2QJ+dnVCthI1XdYywgxQ1GdJp3u6GAHw2muDtZyHoUmX4tqqiTN19xiBRdHb3+ERYXBegVLhnQIw4ZjGb+f63F8BE4NQOGEzv97qH7B/7lONE5IknwG8gyytbgkyI6dPPnMzmuJ4x2Gt+hB1jaKQLWpw4RDmOj7mS6LQ9I/FUZ99fSjbZC8sI7KbzZlZM6pVJrPRs=" #password
+install: yarn install
+before_script: yarn test
+script: docker build -t tyratox/booki .
+after_success:
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "release" ]; then
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push tyratox/booki:latest;
+    fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push tyratox/booki:staging;
+    fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$TRAVIS_BRANCH" == "dev" ]; then
+    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD";
+    docker push tyratox/booki:testing;
+    fi
