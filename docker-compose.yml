@@ -7,10 +7,10 @@ services:
       dockerfile: Dockerfile
     deploy:
       replicas: 1
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 100M
+      #resources:
+        #limits:
+          #cpus: "0.25"
+          #memory: 100M
       update_config:
         parallelism: 2
         delay: 10s
