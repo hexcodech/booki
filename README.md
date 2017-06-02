@@ -10,4 +10,5 @@
 2. Run `docker-compose pull` to download the latest image
 3. Run `docker swarm init` to make it a master node or `docker swarm join` to join a swarm
 4. Download the `config-sample.json`, edit it and save it in the working directory as `config.json`
-5. Run `docker stack deploy -c docker-compose.yml booki` to run the service
+5. (optional) For letsencrypt, add the folder `.well-known` to the working directory
+6. Run `docker stack deploy -c docker-compose.yml booki` to run the service

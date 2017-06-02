@@ -3,7 +3,15 @@
  */
 
 class AuthController {
-	constructor({ booki, config, i18n, models, errorController, passport, piwikTracker }) {
+	constructor({
+		booki,
+		config,
+		i18n,
+		models,
+		errorController,
+		passport,
+		piwikTracker
+	}) {
 		const bindAll = require("lodash/bindAll");
 		this.ejs = require("ejs");
 		this.oauth2orize = require("oauth2orize");
@@ -76,13 +84,13 @@ class AuthController {
 			this.User
 				.register(firstName, email, locale)
 				.then(() => {
-                    this.piwikTracker({
-                        url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                        action_name: 'Authentication/Registration',
-                        urlref: request.get('Referrer'),
-                        ua: this.config.PIWIK_TRACKING_USER_AGENT,
-                        uid: email
-                    });
+					this.piwikTracker.track({
+						url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+						action_name: "Authentication/Registration",
+						urlref: request.get("Referrer"),
+						ua: this.config.PIWIK_TRACKING_USER_AGENT,
+						uid: email
+					});
 					return response.redirect(
 						"/views/verify-email?register=true&email=" + email
 					);
@@ -184,13 +192,13 @@ class AuthController {
 
 		this.authLocal = (request, response, next) => {
 			this.passport.authenticate("local", (err, user, info) => {
-                this.piwikTracker({
-                    url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                    action_name: 'Authentication/AuthLocal',
-                    urlref: request.get('Referrer'),
-                    ua: this.config.PIWIK_TRACKING_USER_AGENT,
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/AuthLocal",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT,
 					uid: user.emailVerified
-                });
+				});
 				this.auth(request, response, next, err, user, info);
 			})(request, response, next);
 		};
@@ -669,13 +677,14 @@ class AuthController {
 							user
 								.updatePassword(password, emailVerificationCode)
 								.then(() => {
-                                    this.piwikTracker({
-                                        url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                                        action_name: 'Authentication/VerifyEmail',
-                                        urlref: request.get('Referrer'),
-                                        ua: this.config.PIWIK_TRACKING_USER_AGENT,
-                                        uid: email
-                                    });
+									this.piwikTracker.track({
+										url: this.config.PIWIK_TRACKING_SITE_BASE_URL +
+											request.path,
+										action_name: "Authentication/VerifyEmail",
+										urlref: request.get("Referrer"),
+										ua: this.config.PIWIK_TRACKING_USER_AGENT,
+										uid: email
+									});
 									response.redirect("/views/login");
 								})
 								.catch(error => {
@@ -719,10 +728,10 @@ class AuthController {
 					);
 				}
 
-				this.piwikTracker({
+				this.piwikTracker.track({
 					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-					action_name: 'Authentication/Login View',
-					urlref: request.get('Referrer'),
+					action_name: "Authentication/Login View",
+					urlref: request.get("Referrer"),
 					ua: this.config.PIWIK_TRACKING_USER_AGENT
 				});
 
@@ -756,12 +765,12 @@ class AuthController {
 					);
 				}
 
-                this.piwikTracker({
-                    url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                    action_name: 'Authentication/MailVerification View',
-                    urlref: request.get('Referrer'),
-                    ua: this.config.PIWIK_TRACKING_USER_AGENT
-                });
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/MailVerification View",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT
+				});
 
 				response.setHeader("Content-Type", "text/html");
 				response.end(str);
@@ -806,26 +815,26 @@ class AuthController {
 
 	authFacebookCallback(request, response, next) {
 		this.passport.authenticate("facebook", (err, user, info) => {
-            this.piwikTracker({
-                url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                action_name: 'Authentication/FacebookLogin',
-                urlref: request.get('Referrer'),
-                ua: this.config.PIWIK_TRACKING_USER_AGENT,
+			this.piwikTracker.track({
+				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+				action_name: "Authentication/FacebookLogin",
+				urlref: request.get("Referrer"),
+				ua: this.config.PIWIK_TRACKING_USER_AGENT,
 				uid: user.emailVerified
-            });
+			});
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
 	}
 
 	authGoogleCallback(request, response, next) {
 		this.passport.authenticate("google", (err, user, info) => {
-            this.piwikTracker({
-                url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                action_name: 'Authentication/GoogleLogin',
-                urlref: request.get('Referrer'),
-                ua: this.config.PIWIK_TRACKING_USER_AGENT,
-                uid: user.emailVerified
-            });
+			this.piwikTracker.track({
+				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+				action_name: "Authentication/GoogleLogin",
+				urlref: request.get("Referrer"),
+				ua: this.config.PIWIK_TRACKING_USER_AGENT,
+				uid: user.emailVerified
+			});
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
 	}
@@ -887,12 +896,12 @@ class AuthController {
 					);
 				}
 
-                this.piwikTracker({
-                    url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                    action_name: 'Authentication/PasswordReset View',
-                    urlref: request.get('Referrer'),
-                    ua: this.config.PIWIK_TRACKING_USER_AGENT
-                });
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/PasswordReset View",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT
+				});
 
 				response.setHeader("Content-Type", "text/html");
 				response.end(str);
@@ -911,13 +920,13 @@ class AuthController {
 					user
 						.updatePassword(request.body.password, request.body.resetCode)
 						.then(() => {
-                            this.piwikTracker({
-                                url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-                                action_name: 'Authentication/PasswordReset',
-                                urlref: request.get('Referrer'),
-                                ua: this.config.PIWIK_TRACKING_USER_AGENT,
-                                uid: user.emailVerified
-                            });
+							this.piwikTracker.track({
+								url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+								action_name: "Authentication/PasswordReset",
+								urlref: request.get("Referrer"),
+								ua: this.config.PIWIK_TRACKING_USER_AGENT,
+								uid: user.emailVerified
+							});
 							response.redirect("/views/login");
 						})
 						.catch(error => {

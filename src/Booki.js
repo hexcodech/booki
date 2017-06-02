@@ -12,9 +12,9 @@ class Booki {
 			uploads: path.resolve(__dirname, "../static/uploads/")
 		};
 
-		if (process.env.CONFIG_PATH) {
-			console.log("Using config located at " + process.env.CONFIG_PATH);
-			this.config = require(process.env.CONFIG_PATH);
+		if (process.env.DOCKER) {
+			console.log("Using config located at /run/secrets/booki-config.json");
+			this.config = require("/run/secrets/booki-config.json");
 		} else {
 			this.config = require("../config.json");
 		}
@@ -82,7 +82,10 @@ class Booki {
 				this.sequelize.sync();
 			})
 			.then(() => {
-            	this.piwikTracker = require('piwik-tracker')(this.config.PIWIK_TRACKING_SITE_ID, this.config.PIWIK_TRACKING_URL);
+				this.piwikTracker = require("piwik-tracker")(
+					this.config.PIWIK_TRACKING_SITE_ID,
+					this.config.PIWIK_TRACKING_URL
+				);
 			})
 			.then(() => {
 				//Do the routing
@@ -210,8 +213,12 @@ class Booki {
 
 		//static resources
 		app.use("/static/", express.static(__dirname + "/../static"));
-		//prove identity
-		app.use("/.well-known/", express.static(__dirname + "/../.well-known"));
+		//prove identity to letsencrypt
+		if (process.env.DOCKER) {
+			app.use("/.well-known/", express.static("/run/secrets/.well-known"));
+		} else {
+			app.use("/.well-known/", express.static(__dirname + "/../.well-known"));
+		}
 
 		//parse json
 		app.use(bodyParser.json());
