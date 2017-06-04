@@ -256,7 +256,11 @@ class Booki {
 			);
 
 			//UTF-8 JSON all the way EXCEPT /static/
-			if (!request.url.startsWith("/static/")) {
+			if (
+				!request.url === "/" &&
+				!request.url.startsWith("/views/") &&
+				!request.url.startsWith("/static/")
+			) {
 				response.header("Content-Type", "application/json; charset=utf-8");
 			} else {
 				response.setHeader("charset", "utf-8");
