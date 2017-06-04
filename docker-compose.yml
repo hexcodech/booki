@@ -40,4 +40,4 @@ secrets:
   booki-config:
     file: ./config.json
   letsencrypt-verification:
-    file: ./well-known
+    file: ./.well-known
