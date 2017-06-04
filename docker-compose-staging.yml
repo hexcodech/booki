@@ -1,4 +1,4 @@
 version: "3.2"
 services:
   booki-api:
-    image: tyratox/booki:staging
+    image: hexcodech/booki:staging
