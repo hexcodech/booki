@@ -1,4 +1,4 @@
 version: "3.2"
 services:
-  api:
+  booki-api:
     image: tyratox/booki:staging
