@@ -35,6 +35,8 @@ services:
         mode: 0440
 
     stop_grace_period: 15s
+    volumes:
+      - ./uploads:/uploads
 
 secrets:
   booki-config:

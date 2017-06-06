@@ -72,7 +72,7 @@ const Book = ({ config, errorController, sequelize, models }) => {
 				{
 					type: "FULLTEXT",
 					name: "book_fulltext_idx",
-					fields: ["title", "subtitle", "description", "publisher"]
+					fields: ["title", "subtitle", "description", "publisher", "isbn13"]
 				}
 			],
 

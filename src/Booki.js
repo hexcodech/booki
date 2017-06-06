@@ -13,8 +13,11 @@ class Booki {
 		};
 
 		if (process.env.DOCKER) {
+			console.log("Running inside docker!");
 			console.log("Using config located at /run/secrets/booki-config.json");
 			this.config = require("/run/secrets/booki-config.json");
+			console.log("Using upload folder: /uploads/");
+			this.folders.uploads = "/uploads/";
 		} else {
 			this.config = require("../config.json");
 		}
