@@ -124,7 +124,7 @@ const Book = ({ config, errorController, sequelize, models }) => {
 
 					return this.findAll({
 						where: [
-							"MATCH(title, subtitle, book.description, publisher) AGAINST (? IN BOOLEAN MODE)",
+							"MATCH(book.title, book.subtitle, book.description, book.publisher, book.isbn13) AGAINST (? IN BOOLEAN MODE)",
 							[text]
 						]
 					});
