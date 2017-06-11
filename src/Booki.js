@@ -48,7 +48,8 @@ class Booki {
 								logger,
 								this.config,
 								i18n,
-								this.passport
+								this.passport,
+								this.folders
 							).then(({ app, server }) => {
 								this.app = app;
 								this.server = server;
@@ -193,7 +194,7 @@ class Booki {
 		return Promise.resolve(sequelize);
 	}
 
-	setupHttpServer(logger, config, i18n, passport) {
+	setupHttpServer(logger, config, i18n, passport, folders) {
 		logger.log("info", "Starting express server...");
 
 		const express = require("express");
@@ -215,7 +216,11 @@ class Booki {
 		logger.log("info", "Configuring express...");
 
 		//static resources
+
+		//seperate statement for uploads because of docker
+		app.use("/static/uploads/", express.static(folders.uploads));
 		app.use("/static/", express.static(__dirname + "/../static"));
+
 		//prove identity to letsencrypt
 		if (process.env.DOCKER) {
 			app.use("/.well-known/", express.static("/run/secrets/.well-known"));
