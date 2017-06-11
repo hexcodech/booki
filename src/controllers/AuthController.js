@@ -107,6 +107,7 @@ class AuthController {
 			new LocalStrategy(
 				{ usernameField: "clientId", passwordField: "clientSecret" },
 				(clientId, clientSecret, callback) => {
+					console.log("1");
 					this.OAuthClient
 						.findOne({ where: { id: clientId } })
 						.then(client => {
@@ -114,12 +115,16 @@ class AuthController {
 								return callback(null, false);
 							}
 
+							console.log("2");
+
 							client
 								.verifySecret(clientSecret)
 								.then(() => {
+									console.log("3");
 									return callback(null, client);
 								})
 								.catch(err => {
+									console.log("4", err);
 									return callback(
 										new this.errorController.errors.DatabaseError({
 											message: err.message
@@ -128,6 +133,7 @@ class AuthController {
 								});
 						})
 						.catch(err => {
+							console.log("5", err);
 							return callback(
 								new this.errorController.errors.DatabaseError({
 									message: err.message
