@@ -111,7 +111,7 @@ const Image = ({
 								return image.reload(); //include 'Thumbnails'
 							})
 							.catch(err => {
-								return next(
+								return Promise.reject(
 									new this.errorController.errors.InternalServerError({
 										message: err.message
 									})
