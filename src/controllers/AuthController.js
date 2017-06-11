@@ -552,13 +552,13 @@ class AuthController {
 							})
 						);
 
-						// Save the access token and check for errors
 						Promise.all(promises)
 							.then(() => {
 								callback(null, tokenData);
 							})
 							.catch(err => {
-								return callback(
+								console.log(err);
+								callback(
 									new this.errorController.errors.DatabaseError({
 										message: err.message
 									})
@@ -678,8 +678,8 @@ class AuthController {
 								.updatePassword(password, emailVerificationCode)
 								.then(() => {
 									this.piwikTracker.track({
-										url: this.config.PIWIK_TRACKING_SITE_BASE_URL +
-											request.path,
+										url:
+											this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
 										action_name: "Authentication/VerifyEmail",
 										urlref: request.get("Referrer"),
 										ua: this.config.PIWIK_TRACKING_USER_AGENT,
