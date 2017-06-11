@@ -9,6 +9,7 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
+      - DAC_OVERRIDE
     network_mode: "bridge"
     dns:
       - 8.8.8.8
