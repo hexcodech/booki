@@ -503,15 +503,17 @@ class AuthController {
 
 		this.oauth2Server.exchange(
 			this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
+				console.log("1");
 				this.OAuthCode
 					.findByCode(code)
 					.then(authCode => {
+						console.log("2");
 						if (authCode.get("expires") < Date.now()) {
 							return callback(
 								new this.errorController.errors.AuthCodeExpiredError()
 							);
 						}
-
+						console.log("3");
 						//Delete the auth code now that it has been used
 						let clientId = authCode.get("oauth_client_id"),
 							userId = authCode.get("user_id");
@@ -530,6 +532,8 @@ class AuthController {
 								}
 							})
 						];
+
+						console.log("4");
 
 						let expirationDate =
 							Date.now() + this.config.ACCESS_TOKEN_LIFETIME * 1000;
@@ -552,13 +556,17 @@ class AuthController {
 							})
 						);
 
+						console.log("5");
+
 						Promise.all(promises)
 							.then(() => {
+								console.log("6");
 								callback(null, tokenData);
 							})
 							.catch(err => {
+								console.log("7");
 								console.log(err);
-								callback(
+								return callback(
 									new this.errorController.errors.DatabaseError({
 										message: err.message
 									})
@@ -566,6 +574,7 @@ class AuthController {
 							});
 					})
 					.catch(err => {
+						console.log("8", err);
 						return callback(
 							new this.errorController.errors.DatabaseError({
 								message: err.message
