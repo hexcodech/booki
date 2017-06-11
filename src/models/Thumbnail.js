@@ -1,4 +1,4 @@
-const Thumbnail = ({ config, sequelize, models }) => {
+const Thumbnail = ({ folders, config, sequelize, models }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
@@ -39,7 +39,10 @@ const Thumbnail = ({ config, sequelize, models }) => {
 			},
 			instanceMethods: {
 				getUrl: function() {
-					return "/static/" + this.get("File").get("path").split("/static/")[1];
+					return (
+						"/static/uploads/" +
+						this.get("File").get("path").split(folders.uploads)[1]
+					);
 				},
 				toJSON: function(options = {}) {
 					let thumbnail = this.get();
