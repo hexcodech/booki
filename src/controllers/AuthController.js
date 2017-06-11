@@ -107,7 +107,6 @@ class AuthController {
 			new LocalStrategy(
 				{ usernameField: "clientId", passwordField: "clientSecret" },
 				(clientId, clientSecret, callback) => {
-					console.log("1");
 					this.OAuthClient
 						.findOne({ where: { id: clientId } })
 						.then(client => {
@@ -115,25 +114,16 @@ class AuthController {
 								return callback(null, false);
 							}
 
-							console.log("2");
-
 							client
 								.verifySecret(clientSecret)
 								.then(() => {
-									console.log("3");
 									return callback(null, client);
 								})
 								.catch(err => {
-									console.log("4", err);
-									return callback(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
+									return callback(new this.errorController.errors.LoginError());
 								});
 						})
 						.catch(err => {
-							console.log("5", err);
 							return callback(
 								new this.errorController.errors.DatabaseError({
 									message: err.message
@@ -509,17 +499,14 @@ class AuthController {
 
 		this.oauth2Server.exchange(
 			this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
-				console.log("1");
 				this.OAuthCode
 					.findByCode(code)
 					.then(authCode => {
-						console.log("2");
 						if (authCode.get("expires") < Date.now()) {
 							return callback(
 								new this.errorController.errors.AuthCodeExpiredError()
 							);
 						}
-						console.log("3");
 						//Delete the auth code now that it has been used
 						let clientId = authCode.get("oauth_client_id"),
 							userId = authCode.get("user_id");
@@ -538,8 +525,6 @@ class AuthController {
 								}
 							})
 						];
-
-						console.log("4");
 
 						let expirationDate =
 							Date.now() + this.config.ACCESS_TOKEN_LIFETIME * 1000;
@@ -562,16 +547,11 @@ class AuthController {
 							})
 						);
 
-						console.log("5");
-
 						Promise.all(promises)
 							.then(() => {
-								console.log("6");
 								callback(null, tokenData);
 							})
 							.catch(err => {
-								console.log("7");
-								console.log(err);
 								return callback(
 									new this.errorController.errors.DatabaseError({
 										message: err.message
@@ -580,7 +560,6 @@ class AuthController {
 							});
 					})
 					.catch(err => {
-						console.log("8", err);
 						return callback(
 							new this.errorController.errors.DatabaseError({
 								message: err.message
