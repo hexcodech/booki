@@ -112,7 +112,7 @@ const Image = ({
 							})
 							.catch(err => {
 								return Promise.reject(
-									new this.errorController.errors.InternalServerError({
+									new errorController.errors.InternalServerError({
 										message: err.message
 									})
 								);
