@@ -61,6 +61,7 @@ const Offer = ({ sequelize, models }) => {
 					]);
 
 					json.bookId = offer.book_id;
+					json.userId = offer.user_id;
 
 					if (offer.User) {
 						json.user = offer.User.toJSON(options);
