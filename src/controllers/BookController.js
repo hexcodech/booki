@@ -191,7 +191,7 @@ class BookController {
 				if (book) {
 					//if the book isn't verified yet, everyone can edit it
 					if (
-						!book.get("verified") ||
+						book.get("verified") &&
 						!request.hasPermission("admin.book.editOthers")
 					) {
 						return next(new this.errorController.errors.ForbiddenError());
