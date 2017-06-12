@@ -131,7 +131,10 @@ const Image = ({
 					);
 				},
 				getUrl: function() {
-					return "/static/" + this.get("File").get("path").split("/static/")[1];
+					return (
+						"/static/uploads/" +
+						this.get("File").get("path").split(folders.uploads)[1]
+					);
 				},
 				getThumbnailsRaw: function(options) {
 					let thumbnails = this.get("Thumbnails");
