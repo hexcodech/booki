@@ -1,13 +1,11 @@
-module.exports = ({config}) => {
-
-	const Joi = require('joi');
+module.exports = ({ config }) => {
+	const Joi = require("joi");
 
 	return {
 		body: {
 			params: {
-				offerId: Joi.number().integer().positive().required(),
+				offerId: Joi.number().integer().positive().required()
 			}
 		}
-	}
-
+	};
 };

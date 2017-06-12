@@ -1,84 +1,83 @@
-const OAuthCode = ({config, sequelize, models, cryptoUtilities}) => {
+const OAuthCode = ({ config, sequelize, models, cryptoUtilities }) => {
+	const Sequelize = require("sequelize");
 
-	const Sequelize       = require('sequelize');
-
-	let OAuthCode         = sequelize.define('oauth_code', {
-		hash: {
-			type       : Sequelize.STRING,
+	let OAuthCode = sequelize.define(
+		"oauth_code",
+		{
+			hash: {
+				type: Sequelize.STRING
+			},
+			expires: {
+				type: Sequelize.DATE
+			}
 		},
-		expires: {
-			type       : Sequelize.DATE,
-		}
-	}, {
-		defaultScope: {
-			include: [
-				{
-					model   : models.User,
-					as      : 'User'
+		{
+			defaultScope: {
+				include: [
+					{
+						model: models.User,
+						as: "User"
+					},
+					{
+						model: models.OAuthClient,
+						as: "OAuthClient"
+					}
+				]
+			},
+
+			classMethods: {
+				associate: function({ User, OAuthClient }) {
+					this.belongsTo(User, {
+						as: "User",
+						foreignKey: "user_id"
+					});
+					this.belongsTo(OAuthClient, {
+						as: "OAuthClient",
+						foreignKey: "oauth_client_id"
+					});
 				},
-				{
-					model  : models.OAuthClient,
-					as      : 'OAuthClient'
-				}
-			]
-		},
 
-		classMethods: {
-    	associate: function({User, OAuthClient}){
-				this.belongsTo(User, {
-					as         : 'User',
-					foreignKey : 'user_id',
-					onDelete   : 'cascade',
-					hooks      : true
-				});
-				this.belongsTo(OAuthClient, {
-					as         : 'OAuthClient',
-					foreignKey : 'oauth_client_id',
-					onDelete   : 'cascade',
-					hooks      : true
-				});
+				generateCode: function() {
+					return cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
+				},
+
+				hashCode: function(code = "") {
+					return cryptoUtilities.generateHash(code, false).hash;
+				},
+
+				findByCode: function(code = "") {
+					return this.findOne({
+						where: { hash: this.hashCode(code) }
+					}).then(oauthCode => {
+						return oauthCode;
+					});
+				}
 			},
 
-			generateCode: function(){
-				return cryptoUtilities.generateRandomString(config.TOKEN_LENGTH);
-			},
+			instanceMethods: {
+				toJSON: function(options = {}) {
+					let code = this.get();
 
-			hashCode: function(code = ''){
-				return cryptoUtilities.generateHash(code, false).hash;
-			},
+					let json = {
+						id: code.id,
+						expires: code.expires
+					};
 
-			findByCode: function(code = ''){
-				return this.findOne({where: {hash: this.hashCode(code)}})
-				.then((oauthCode) => {
-					return oauthCode;
-				});
-			}
-  	},
+					if (code.User) {
+						json.userId = code.User.toJSON();
+					}
 
-  	instanceMethods: {
-    	toJSON: function(options){
-				let code = this.get();
+					if (code.Client) {
+						json.clientId = code.Client.get("id");
+					}
 
-				let json = {
-					id     : code.id,
-					expires: code.expires
-				};
-
-				if(code.User){
-					json.userId = code.User.toJSON();
+					return json;
 				}
-
-				if(code.Client){
-					json.clientId = code.Client.get('id');
-				}
-
-				return json;
 			}
 		}
-	});
+	);
 
 	return OAuthCode;
-
-}
+};
 
 module.exports = OAuthCode;

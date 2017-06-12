@@ -5,55 +5,78 @@ this file has to be renamed to config.json and this comment needs to be removed
 
 
 {
-	"DB_HOST"												: "localhost",
+	"DB_HOST"                       : "localhost",
 	"DB_PORT"                       : 3306,
-	"SPHINX_PORT"                   : 9306,
-	"DB_NAME"												: "booki",
-	"DB_USERNAME"										: "",
-	"DB_PASSWORD"										: "",
+	"DB_NAME"                       : "",
+	"DB_USERNAME"                   : "",
+	"DB_PASSWORD"                   : "",
 
-	"HTTP_PORT"											: 8101,
-	"SESSION_SECRET"								: "",
+	"HTTP_PORT"                     : 8100,
+	"SESSION_SECRET"                : "",
 
-	"HASH_ALGORITHM"								: "sha512",
-	"SALT_LENGTH"										: 30,
+	"HASH_ALGORITHM"                : "sha512",
+	"SALT_LENGTH"                   : 30,
 
-	"CLIENT_ID_LENGTH"							: 30,
-	"CLIENT_SECRET_LENGTH"					: 30,
+	"CLIENT_SECRET_LENGTH"          : 30,
 
-	"TOKEN_LENGTH"									: 30,
-	"CONFIRM_TOKEN_LENGTH"					: 6,
+	"TOKEN_LENGTH"                  : 30,
+	"CONFIRM_TOKEN_LENGTH"          : 6,
 
-	"AUTH_CODE_LIFETIME"						: 600,
-	"ACCESS_TOKEN_LIFETIME"					: 172800,
-	"RESET_CODE_LIFETIME"						: 1200,
+	"AUTH_CODE_LIFETIME"            : 600,
+	"ACCESS_TOKEN_LIFETIME"         : 172800,
+	"RESET_CODE_LIFETIME"           : 1200,
 
-	"HOST"													: "http://localhost:8101",
-	"LOCALES"												: [	"en-US" ],
+	"HOST"                          : "",
+	"LOCALES"                       : ["en-US",
+		"af-ZA","sq-AL","ar-DZ","ar-BH","ar-EG","ar-IQ","ar-JO","ar-KW","ar-LB",
+		"ar-LY","ar-MA","ar-OM","ar-QA","ar-SA","ar-SY","ar-TN","ar-AE","ar-YE",
+		"hy-AM","Cy-az-AZ","Lt-az-AZ","eu-ES","be-BY","bg-BG","ca-ES","zh-CN",
+		"zh-HK","zh-MO","zh-SG","zh-TW","zh-CHS","zh-CHT","hr-HR","cs-CZ","da-DK",
+		"div-MV","nl-BE","nl-NL","en-AU","en-BZ","en-CA","en-CB","en-IE","en-JM",
+		"en-NZ","en-PH","en-ZA","en-TT","en-GB","en-ZW","et-EE","fo-FO",
+		"fa-IR","fi-FI","fr-BE","fr-CA","fr-FR","fr-LU","fr-MC","fr-CH","gl-ES",
+		"ka-GE","de-AT","de-DE","de-LI","de-LU","de-CH","el-GR","gu-IN","he-IL",
+		"hi-IN","hu-HU","is-IS","id-ID","it-IT","it-CH","ja-JP","kn-IN","kk-KZ",
+		"kok-IN","ko-KR","ky-KZ","lv-LV","lt-LT","mk-MK","ms-BN","ms-MY","mr-IN",
+		"mn-MN","nb-NO","nn-NO","pl-PL","pt-BR","pt-PT","pa-IN","ro-RO","ru-RU",
+		"sa-IN","Cy-sr-SP","Lt-sr-SP","sk-SK","sl-SI","es-AR","es-BO","es-CL",
+		"es-CO","es-CR","es-DO","es-EC","es-SV","es-GT","es-HN","es-MX","es-NI",
+		"es-PA","es-PY","es-PE","es-PR","es-ES","es-UY","es-VE","sw-KE","sv-FI",
+		"sv-SE","syr-SY","ta-IN","tt-RU","te-IN","th-TH","tr-TR","uk-UA","ur-PK",
+		"Cy-uz-UZ","Lt-uz-UZ","vi-VN"
+	],
 
-	"MAIL_HOST"											: "",
-	"MAIL_PORT"											: 0,
-	"MAIL_USER"											: "",
-	"MAIL_PASSWORD"									: "",
+	"MAIL_HOST"                     : "smtp.gmail.com",
+	"MAIL_PORT"                     : 465,
+	"MAIL_USER"                     : "",
+	"MAIL_PASSWORD"                 : "",
 
-	"MAIL_FROM_NAME"								: "Booki",
+	"MAIL_FROM_NAME"                : "Booki",
 
-	"FACEBOOK_APP_ID"								: "",
-	"FACEBOOK_APP_SECRET"						: "",
-	"FACEBOOK_CALLBACK_PATH"				: "/auth/facebook/callback",
+	"AWS_ID"                        : "",
+	"AWS_SECRET"                    : "",
+	"AWS_TAG"                       : "",
 
-	"TWITTER_CONSUMER_KEY"					: "",
-	"TWITTER_CONSUMER_SECRET"				: "",
-	"TWITTER_CALLBACK_PATH"					: "/auth/twitter/callback",
+	"FACEBOOK_APP_ID"               : "",
+	"FACEBOOK_APP_SECRET"           : "",
+	"FACEBOOK_CALLBACK_PATH"        : "/auth/facebook/callback",
 
-	"GOOGLE_CLIENT_ID"							: "",
-	"GOOGLE_CLIENT_SECRET"					: "",
-	"GOOGLE_CALLBACK_PATH"					: "/auth/google/callback",
+	"TWITTER_CONSUMER_KEY"          : "",
+	"TWITTER_CONSUMER_SECRET"       : "",
+	"TWITTER_CALLBACK_PATH"         : "/auth/twitter/callback",
 
-	"GOOGLEBOOKS_API_KEY"						: "",
+	"GOOGLE_CLIENT_ID"              : "",
+	"GOOGLE_CLIENT_SECRET"          : "",
+	"GOOGLE_CALLBACK_PATH"          : "/auth/google/callback",
 
-	"DEFAULT_PROFILE_PICTURE_URL"		: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mm&s=512",
-	"DEFAULT_BOOK_COVER"						: "http://localhost/static/res/img/cover/book-cover.png",
+	"GOOGLEBOOKS_API_KEY"           : "",
 
-	"MAX_UPLOAD_FILE_SIZE"          : 2097152
+	"DEFAULT_REDIRECT_URI"          : "https://booki.me/login",
+
+	"MAX_UPLOAD_FILE_SIZE"          : 2097152,
+
+	"PIWIK_TRACKING_SITE_ID"		: 1,
+	"PIWIK_TRACKING_SITE_BASE_URL"	: "https://api.booki.me",
+	"PIWIK_TRACKING_USER_AGENT"		: "Booki Node.js Backend",
+	"PIWIK_TRACKING_URL"			: ""
 }
