@@ -48,6 +48,7 @@
     "body-parser": "^1.15.2",
     "bootstrap": "^4.0.0-alpha.5",
     "busboy": "^0.2.14",
+    "compression": "^1.6.2",
     "ejs": "^2.5.2",
     "email-templates": "^2.4.1",
     "errors": "^0.3.0",

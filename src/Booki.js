@@ -201,6 +201,7 @@ class Booki {
 		const expressSession = require("express-session");
 		const bodyParser = require("body-parser");
 		const helmet = require("helmet");
+		const compression = require("compression");
 
 		let app = new express();
 
@@ -214,6 +215,9 @@ class Booki {
 
 		//Configure the server
 		logger.log("info", "Configuring express...");
+
+		//gzip
+		app.use(compression());
 
 		//static resources
 
