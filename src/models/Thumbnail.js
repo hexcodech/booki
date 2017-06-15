@@ -7,7 +7,7 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 		{},
 		{
 			defaultScope: {
-				/*include: [
+				include: [
 					{
 						model: models.ThumbnailType,
 						as: "ThumbnailType"
@@ -16,7 +16,7 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 						model: models.File,
 						as: "File"
 					}
-				]*/
+				]
 			},
 
 			classMethods: {

@@ -31,7 +31,7 @@ const Image = ({
 		},
 		{
 			defaultScope: {
-				/*include: [
+				include: [
 					{
 						model: models.Thumbnail,
 						as: "Thumbnails"
@@ -40,7 +40,7 @@ const Image = ({
 						model: models.File,
 						as: "File"
 					}
-				]*/
+				]
 			},
 
 			classMethods: {

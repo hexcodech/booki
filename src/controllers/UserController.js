@@ -68,8 +68,6 @@ class UserController {
 	}
 
 	getUser(request, response, next) {
-		console.log(this.models.User);
-
 		this.models.User
 			.findAll({
 				include: [
@@ -88,7 +86,6 @@ class UserController {
 				]
 			})
 			.then(users => {
-				console.log(users);
 				if (request.hasPermission("admin.user.read")) {
 					response.json(
 						users.map(user => {
@@ -106,7 +103,6 @@ class UserController {
 				response.end();
 			})
 			.catch(err => {
-				console.log(err);
 				return next(
 					new this.errorController.errors.DatabaseError({
 						message: err.message
