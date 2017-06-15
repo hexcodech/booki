@@ -24,7 +24,7 @@ class OfferController {
 			include = [];
 		let filter = request.query.filter ? request.query.filter : {};
 
-		if ("newest" in filter && filter.newest) {
+		if ("latest" in filter && filter.latest) {
 			//TODO move limit to config
 			Object.assign(query, { order: [["created_at", "DESC"]], limit: 6 });
 

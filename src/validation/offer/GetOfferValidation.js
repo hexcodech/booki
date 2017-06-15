@@ -4,7 +4,7 @@ module.exports = ({ config }) => {
 	return {
 		query: {
 			filter: {
-				newest: Joi.boolean()
+				latest: Joi.boolean()
 			}
 		}
 	};
