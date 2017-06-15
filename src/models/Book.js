@@ -126,6 +126,20 @@ const Book = ({ config, errorController, sequelize, models }) => {
 						where: [
 							"MATCH(book.title, book.subtitle, book.description, book.publisher, book.isbn13) AGAINST (? IN BOOLEAN MODE)",
 							[text]
+						],
+						include: [
+							{
+								model: models.Person,
+								as: "Authors"
+							},
+							{
+								model: models.Image,
+								as: "Cover"
+							},
+							{
+								model: models.Offer,
+								as: "Offers"
+							}
 						]
 					});
 				},
