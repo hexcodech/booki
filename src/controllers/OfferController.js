@@ -20,18 +20,28 @@ class OfferController {
 	}
 
 	getOffer(request, response, next) {
-		let query = {};
+		let query = {},
+			include = [];
 		let filter = request.query.filter ? request.query.filter : {};
 
 		if ("newest" in filter && filter.newest) {
 			//TODO move limit to config
 			Object.assign(query, { order: [["created_at", "DESC"]], limit: 6 });
+
+			include.push({
+				model: this.models.Book,
+				as: "Book",
+				include: [{ model: this.models.Image, as: "CoverImage" }]
+			});
 		} else if (!request.hasPermission("admin.offer.list")) {
 			return response.end("[]");
 		}
 
 		this.models.Offer
-			.findAll({ where: query })
+			.findAll({
+				where: query,
+				include: include
+			})
 			.then(offers => {
 				if (offers) {
 					if (request.hasPermission("admin.offer.read")) {
