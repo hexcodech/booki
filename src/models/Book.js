@@ -138,7 +138,20 @@ const Book = ({ config, errorController, sequelize, models }) => {
 							},
 							{
 								model: models.Offer,
-								as: "Offers"
+								as: "Offers",
+								include: [
+									{
+										model: models.User,
+										as: "User",
+										include: [
+											{
+												model: models.Image,
+												as: "ProfilePicture",
+												include: [{ model: models.Thumbnail, as: "Thumbnails" }]
+											}
+										]
+									}
+								]
 							}
 						]
 					});
