@@ -21,8 +21,9 @@ class OfferController {
 
 	getOffer(request, response, next) {
 		let query = {};
+		let filter = request.query.filter ? request.query.filter : {};
 
-		if ("newest" in request.query.filter) {
+		if ("newest" in filter && filter.newest) {
 			//TODO move limit to config
 			Object.assign(query, { order: [["created_at", "DESC"]], limit: 6 });
 		} else if (!request.hasPermission("admin.offer.list")) {

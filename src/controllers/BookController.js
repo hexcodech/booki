@@ -227,17 +227,7 @@ class BookController {
 
 					this.models.Image
 						.findOne({
-							where: { id: request.body.book.coverId },
-							include: [
-								{
-									model: this.models.Person,
-									as: "Authors"
-								},
-								{
-									model: this.models.Image,
-									as: "Cover"
-								}
-							]
+							where: { id: request.body.book.coverId }
 						})
 						.then(image => {
 							let promises = [];

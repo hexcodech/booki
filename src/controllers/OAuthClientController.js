@@ -327,6 +327,7 @@ class OAuthClientController {
 				}
 			})
 			.catch(err => {
+				console.log(err);
 				return next(
 					new this.errorController.errors.DatabaseError({
 						message: err.message
