@@ -31,7 +31,7 @@ class OfferController {
 			include.push({
 				model: this.models.Book,
 				as: "Book",
-				include: [{ model: this.models.Image, as: "CoverImage" }]
+				include: [{ model: this.models.Image, as: "Cover" }]
 			});
 		} else if (!request.hasPermission("admin.offer.list")) {
 			query.user_id = request.user.id;
