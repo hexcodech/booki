@@ -446,7 +446,15 @@ class AuthController {
 
 		this.oauth2Server.deserializeClient((id, callback) => {
 			this.models.OAuthClient
-				.findOne({ where: { id: id } })
+				.findOne({
+					where: { id: id },
+					include: [
+						{
+							model: this.models.OAuthRedirectUri,
+							as: "OAuthRedirectUris"
+						}
+					]
+				})
 				.then(client => {
 					return callback(null, client);
 				})
@@ -582,7 +590,7 @@ class AuthController {
 						where: { id: clientId },
 						include: [
 							{
-								model: models.OAuthRedirectUri,
+								model: this.models.OAuthRedirectUri,
 								as: "OAuthRedirectUris"
 							}
 						]

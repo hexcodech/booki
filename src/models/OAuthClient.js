@@ -124,6 +124,14 @@ const OAuthClient = ({ config, sequelize, models, cryptoUtilities }) => {
 				},
 
 				verifyRedirectUri: function(redirectUri) {
+					if (!this.get("OAuthRedirectUris")) {
+						console.log(
+							"OAuthRedirectUris wasn't included in this instance of OAuthClient!"
+						);
+
+						return false;
+					}
+
 					let uris = this.get("OAuthRedirectUris").map(uri => {
 						return uri.get("uri");
 					});
