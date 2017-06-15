@@ -68,17 +68,8 @@ class UserController {
 	}
 
 	getUser(request, response, next) {
-		let query = {};
-
-		if (request.hasPermission("admin.user.query")) {
-			query = request.body.query;
-		} else {
-			query.name = request.body.query.name;
-		}
-
 		this.models.User
 			.findAll({
-				where: query,
 				include: [
 					{
 						model: this.models.Permission,

@@ -552,6 +552,12 @@ const User = ({
 				},
 
 				getPermissionArray: function() {
+					if (!this.get("Permissions")) {
+						console.log(
+							"Permissions weren't included in this instance of User!"
+						);
+						return [];
+					}
 					return this.get("Permissions").map(permission => {
 						return permission.get("permission");
 					});
