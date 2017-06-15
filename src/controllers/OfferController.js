@@ -34,7 +34,12 @@ class OfferController {
 				include: [{ model: this.models.Image, as: "CoverImage" }]
 			});
 		} else if (!request.hasPermission("admin.offer.list")) {
-			return response.end("[]");
+			query.user_id = request.user.id;
+
+			include.push({
+				model: this.models.Book,
+				as: "Book"
+			});
 		}
 
 		this.models.Offer
