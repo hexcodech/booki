@@ -225,7 +225,15 @@ class OAuthClientController {
 
 	putOAuthClient(request, response, next) {
 		this.models.OAuthClient
-			.findOne({ where: { id: request.params.clientId } })
+			.findOne({
+				where: { id: request.params.clientId },
+				include: [
+					{
+						model: this.models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
+					}
+				]
+			})
 			.then(client => {
 				if (client) {
 					let promises = [];
@@ -327,7 +335,6 @@ class OAuthClientController {
 				}
 			})
 			.catch(err => {
-				console.log(err);
 				return next(
 					new this.errorController.errors.DatabaseError({
 						message: err.message
