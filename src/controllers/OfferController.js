@@ -21,12 +21,15 @@ class OfferController {
 
 	getOffer(request, response, next) {
 		let query = {},
-			include = [];
+			include = [],
+			order = [],
+			limit = undefined;
 		let filter = request.query.filter ? request.query.filter : {};
 
 		if ("latest" in filter && filter.latest) {
 			//TODO move limit to config
-			Object.assign(query, { order: [["created_at", "DESC"]], limit: 6 });
+			order.push([["created_at", "DESC"]]);
+			limit = 6;
 
 			include.push({
 				model: this.models.Book,
@@ -45,7 +48,9 @@ class OfferController {
 		this.models.Offer
 			.findAll({
 				where: query,
-				include: include
+				include: include,
+				order: order,
+				limit: limit
 			})
 			.then(offers => {
 				if (offers) {
