@@ -580,6 +580,9 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	const offerController = new (require("./controllers/OfferController"))(booki);
 
+	const getOfferValidation = require("./validation/offer/GetOfferValidation")(
+		booki
+	);
 	const getOfferByIdValidation = require("./validation/offer/GetOfferByIdValidation")(
 		booki
 	);
@@ -599,6 +602,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	app.get(
 		"/v1/offer",
 		authController.isBearerAuthenticated(),
+		validate(getOfferValidation),
 		offerController.getOffer
 	);
 

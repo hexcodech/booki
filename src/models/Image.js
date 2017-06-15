@@ -31,7 +31,7 @@ const Image = ({
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.Thumbnail,
 						as: "Thumbnails"
@@ -40,7 +40,7 @@ const Image = ({
 						model: models.File,
 						as: "File"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -108,7 +108,18 @@ const Image = ({
 								return image.generateThumbnails();
 							})
 							.then(() => {
-								return image.reload(); //include 'Thumbnails'
+								return image.reload({
+									include: [
+										{
+											model: models.Thumbnail,
+											as: "Thumbnails"
+										},
+										{
+											model: models.File,
+											as: "File"
+										}
+									]
+								});
 							})
 							.catch(err => {
 								return Promise.reject(
@@ -228,11 +239,17 @@ const Image = ({
 
 					json.userId = image.user_id;
 
-					if (options.hiddenData) {
+					if (image.User) {
+						json.user = image.User.toJSON(options);
+					}
+
+					if (options.admin) {
+						json.fileId = image.file_id;
+
 						if (image.File) {
+							json.file = image.File.toJSON(options);
 							json.url = this.getUrl();
 						}
-						json.fileId = image.file_id;
 					}
 
 					if (image.Thumbnails) {

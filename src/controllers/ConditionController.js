@@ -7,7 +7,7 @@ class ConditionController {
 
 		this.errorController = errorController;
 
-		this.Condition = models.Condition;
+		this.models = models;
 
 		bindAll(this, [
 			"getCondition",
@@ -19,14 +19,14 @@ class ConditionController {
 	}
 
 	getCondition(request, response, next) {
-		this.Condition
+		this.models.Condition
 			.findAll()
 			.then(conditions => {
 				if (conditions) {
-					if (request.hasPermission("admin.condition.hiddenData.read")) {
+					if (request.hasPermission("admin.condition.read")) {
 						response.json(
 							conditions.map(condition => {
-								return condition.toJSON({ hiddenData: true });
+								return condition.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -53,12 +53,12 @@ class ConditionController {
 	}
 
 	getConditionById(request, response, next) {
-		this.Condition
+		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {
-					if (request.hasPermission("admin.condition.hiddenData.read")) {
-						response.json(condition.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.condition.read")) {
+						response.json(condition.toJSON({ admin: true }));
 					} else {
 						response.json(condition.toJSON());
 					}
@@ -79,11 +79,11 @@ class ConditionController {
 	}
 
 	postCondition(request, response, next) {
-		let condition = this.Condition.build(
+		let condition = this.models.Condition.build(
 			this.pick(request.body.condition, ["key", "priceFactor"])
 		);
 
-		if (request.hasPermission("admin.condition.hiddenData.write")) {
+		if (request.hasPermission("admin.condition.write")) {
 			condition.set(
 				this.omitBy(this.pick(request.body.condition, ["id"]), this.isNil)
 			);
@@ -92,8 +92,8 @@ class ConditionController {
 		condition
 			.save()
 			.then(() => {
-				if (request.hasPermission("admin.condition.hiddenData.read")) {
-					response.json(condition.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.condition.read")) {
+					response.json(condition.toJSON({ admin: true }));
 				} else {
 					response.json(condition.toJSON());
 				}
@@ -108,7 +108,7 @@ class ConditionController {
 	}
 
 	putCondition(request, response, next) {
-		this.Condition
+		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {
@@ -116,7 +116,7 @@ class ConditionController {
 						this.pick(request.body.condition, ["key", "priceFactor"])
 					);
 
-					if (request.hasPermission("admin.condition.hiddenData.write")) {
+					if (request.hasPermission("admin.condition.write")) {
 						condition.set(
 							this.omitBy(this.pick(request.body.condition, ["id"]), this.isNil)
 						);
@@ -125,8 +125,8 @@ class ConditionController {
 					condition
 						.save()
 						.then(() => {
-							if (request.hasPermission("admin.condition.hiddenData.read")) {
-								response.json(condition.toJSON({ hiddenData: true }));
+							if (request.hasPermission("admin.condition.read")) {
+								response.json(condition.toJSON({ admin: true }));
 							} else {
 								response.json(condition.toJSON());
 							}
@@ -152,7 +152,7 @@ class ConditionController {
 	}
 
 	deleteCondition(request, response, next) {
-		this.Condition
+		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
 				if (condition) {

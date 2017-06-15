@@ -15,10 +15,7 @@ class BookController {
 		this.config = config;
 		this.errorController = errorController;
 
-		this.Book = models.Book;
-		this.Image = models.Image;
-		this.User = models.User;
-		this.Person = models.Person;
+		this.models = models;
 
 		this.generateRandomString = generateRandomString;
 
@@ -34,14 +31,21 @@ class BookController {
 	}
 
 	getBook(request, response, next) {
-		this.Book
-			.findAll()
+		this.models.Book
+			.findAll({
+				include: [
+					{
+						model: models.Person,
+						as: "Authors"
+					}
+				]
+			})
 			.then(books => {
 				if (books) {
-					if (request.hasPermission("admin.book.hiddenData.read")) {
+					if (request.hasPermission("admin.book.read")) {
 						response.json(
 							books.map(book => {
-								return book.toJSON({ hiddenData: true });
+								return book.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -69,12 +73,28 @@ class BookController {
 	}
 
 	getBookById(request, response, next) {
-		this.Book
-			.findOne({ where: { id: request.params.bookId } })
+		this.models.Book
+			.findOne({
+				where: { id: request.params.bookId },
+				include: [
+					{
+						model: models.Person,
+						as: "Authors"
+					},
+					{
+						model: models.Image,
+						as: "Cover"
+					},
+					{
+						model: models.Offer,
+						as: "Offers"
+					}
+				]
+			})
 			.then(book => {
 				if (book) {
-					if (request.hasPermission("admin.book.hiddenData.read")) {
-						response.json(book.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.book.read")) {
+						response.json(book.toJSON({ admin: true }));
 					} else {
 						response.json(book.toJSON());
 					}
@@ -94,7 +114,7 @@ class BookController {
 	}
 
 	postBook(request, response, next) {
-		this.Book
+		this.models.Book
 			.create(
 				this.pick(request.body.book, [
 					"isbn13",
@@ -109,7 +129,7 @@ class BookController {
 			)
 			.then(book => {
 				//check whether the cover actually exists
-				this.Image
+				this.models.Image
 					.findOne({ where: { id: request.body.book.coverId } })
 					.then(image => {
 						let promises = [];
@@ -120,10 +140,7 @@ class BookController {
 
 						//add additional fields
 						if (
-							request.hasPermissions([
-								"admin.book.create",
-								"admin.book.hiddenData.write"
-							])
+							request.hasPermissions(["admin.book.create", "admin.book.write"])
 						) {
 							book.set(this.pick(request.body.book, ["id", "verified"]));
 
@@ -143,12 +160,23 @@ class BookController {
 						Promise.all(promises)
 							.then(() => {
 								book
-									.reload()
+									.reload({
+										include: [
+											{
+												model: models.Person,
+												as: "Authors"
+											},
+											{
+												model: models.Image,
+												as: "Cover"
+											}
+										]
+									})
 									.then(() => {
-										if (request.hasPermission("admin.book.hiddenData.read")) {
-											response.json(book.toJSON({ hiddenData: true }));
+										if (request.hasPermission("admin.book.read")) {
+											response.json(book.toJSON({ admin: true }));
 										} else {
-											response.json(book.toJSON());
+											response.json(book.toJSON({ owner: true }));
 										}
 									})
 									.catch(err => {
@@ -185,7 +213,7 @@ class BookController {
 	}
 
 	putBook(request, response, next) {
-		this.Book
+		this.models.Book
 			.findOne({ where: { id: request.params.bookId } })
 			.then(book => {
 				if (book) {
@@ -197,8 +225,20 @@ class BookController {
 						return next(new this.errorController.errors.ForbiddenError());
 					}
 
-					this.Image
-						.findOne({ where: { id: request.body.book.coverId } })
+					this.models.Image
+						.findOne({
+							where: { id: request.body.book.coverId },
+							include: [
+								{
+									model: models.Person,
+									as: "Authors"
+								},
+								{
+									model: models.Image,
+									as: "Cover"
+								}
+							]
+						})
 						.then(image => {
 							let promises = [];
 
@@ -221,10 +261,10 @@ class BookController {
 								)
 							);
 
-							//if a user updated
+							//set the userId to the last user who edited it
 							book.set("user_id", request.user.id);
 
-							if (request.hasPermission("admin.book.hiddenData.write")) {
+							if (request.hasPermission("admin.book.write")) {
 								book.set(
 									this.omitBy(
 										this.pick(request.body.book, ["verified"]),
@@ -241,8 +281,8 @@ class BookController {
 
 							Promise.all(promises)
 								.then(() => {
-									if (request.hasPermission("admin.book.hiddenData.read")) {
-										response.json(book.toJSON({ hiddenData: true }));
+									if (request.hasPermission("admin.book.read")) {
+										response.json(book.toJSON({ admin: true }));
 									} else {
 										response.json(book.toJSON());
 									}
@@ -250,7 +290,6 @@ class BookController {
 									return response.end();
 								})
 								.catch(err => {
-									console.log(err);
 									return next(
 										new this.errorController.errors.DatabaseError({
 											message: err.message
@@ -279,16 +318,16 @@ class BookController {
 	}
 
 	deleteBook(request, response, next) {
-		this.Book
+		this.models.Book
 			.findOne({
 				where: { id: request.params.bookId },
 				include: [
 					{
-						model: this.User,
+						model: this.models.User,
 						as: "User"
 					},
 					{
-						model: this.Image,
+						model: this.models.Image,
 						as: "CoverImage"
 					}
 				]
@@ -326,13 +365,13 @@ class BookController {
 	}
 
 	lookupBook(request, response, next) {
-		this.Book
+		this.models.Book
 			.lookup(request.query.search)
 			.then(books => {
-				if (request.hasPermission("admin.book.hiddenData.read")) {
+				if (request.hasPermission("admin.book.read")) {
 					response.json(
 						books.map(book => {
-							return book.toJSON({ hiddenData: true });
+							return book.toJSON({ admin: true });
 						})
 					);
 				} else {
@@ -351,7 +390,7 @@ class BookController {
 	}
 
 	lookupExternalBook(request, response, next) {
-		this.Book
+		this.models.Book
 			.lookupExternal(request.query.search)
 			.then(books => {
 				response.json(books);

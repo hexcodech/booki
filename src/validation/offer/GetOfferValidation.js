@@ -2,6 +2,10 @@ module.exports = ({ config }) => {
 	const Joi = require("joi");
 
 	return {
-		body: {}
+		query: {
+			filter: {
+				newest: Joi.boolean()
+			}
+		}
 	};
 };

@@ -7,7 +7,7 @@ class ThumbnailTypeController {
 
 		this.errorController = errorController;
 
-		this.ThumbnailType = models.ThumbnailType;
+		this.models = models;
 
 		bindAll(this, [
 			"getThumbnailType",
@@ -19,14 +19,14 @@ class ThumbnailTypeController {
 	}
 
 	getThumbnailType(request, response, next) {
-		this.ThumbnailType
+		this.models.ThumbnailType
 			.findAll()
 			.then(thumbnailTypes => {
 				if (thumbnailTypes) {
-					if (request.hasPermission("admin.thumbnailType.hiddenData.read")) {
+					if (request.hasPermission("admin.thumbnailType.read")) {
 						response.json(
 							thumbnailTypes.map(thumbnailType => {
-								return thumbnailType.toJSON({ hiddenData: true });
+								return thumbnailType.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -53,12 +53,12 @@ class ThumbnailTypeController {
 	}
 
 	getThumbnailTypeById(request, response, next) {
-		this.ThumbnailType
+		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {
-					if (request.hasPermission("admin.thumbnailType.hiddenData.read")) {
-						response.json(thumbnailType.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.thumbnailType.read")) {
+						response.json(thumbnailType.toJSON({ admin: true }));
 					} else {
 						response.json(thumbnailType.toJSON());
 					}
@@ -79,11 +79,11 @@ class ThumbnailTypeController {
 	}
 
 	postThumbnailType(request, response, next) {
-		let thumbnailType = this.ThumbnailType.build(
+		let thumbnailType = this.models.ThumbnailType.build(
 			this.pick(request.body.thumbnailType, ["name", "width", "height"])
 		);
 
-		if (request.hasPermission("admin.thumbnailType.hiddenData.write")) {
+		if (request.hasPermission("admin.thumbnailType.write")) {
 			thumbnailType.set(
 				this.omitBy(this.pick(request.body.thumbnailType, ["id"]), this.isNil)
 			);
@@ -92,8 +92,8 @@ class ThumbnailTypeController {
 		thumbnailType
 			.save()
 			.then(() => {
-				if (request.hasPermission("admin.thumbnailType.hiddenData.read")) {
-					response.json(thumbnailType.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.thumbnailType.read")) {
+					response.json(thumbnailType.toJSON({ admin: true }));
 				} else {
 					response.json(thumbnailType.toJSON());
 				}
@@ -108,7 +108,7 @@ class ThumbnailTypeController {
 	}
 
 	putThumbnailType(request, response, next) {
-		this.ThumbnailType
+		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {
@@ -116,7 +116,7 @@ class ThumbnailTypeController {
 						this.pick(request.body.thumbnailType, ["name", "width", "height"])
 					);
 
-					if (request.hasPermission("admin.thumbnailType.hiddenData.write")) {
+					if (request.hasPermission("admin.thumbnailType.write")) {
 						thumbnailType.set(
 							this.omitBy(
 								this.pick(request.body.thumbnailType, ["id"]),
@@ -128,10 +128,8 @@ class ThumbnailTypeController {
 					thumbnailType
 						.save()
 						.then(() => {
-							if (
-								request.hasPermission("admin.thumbnailType.hiddenData.read")
-							) {
-								response.json(thumbnailType.toJSON({ hiddenData: true }));
+							if (request.hasPermission("admin.thumbnailType.read")) {
+								response.json(thumbnailType.toJSON({ admin: true }));
 							} else {
 								response.json(thumbnailType.toJSON());
 							}
@@ -157,7 +155,7 @@ class ThumbnailTypeController {
 	}
 
 	deleteThumbnailType(request, response, next) {
-		this.ThumbnailType
+		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
 				if (thumbnailType) {

@@ -22,21 +22,31 @@ class ImageController {
 		this.folders = folders;
 		this.errorController = errorController;
 
-		this.File = models.File;
-		this.Image = models.Image;
+		this.models = models;
 
 		bindAll(this, ["getImage", "postImage", "putImage", "deleteImage"]);
 	}
 
 	getImage(request, response, next) {
-		this.Image
-			.findAll()
+		this.models.Image
+			.findAll({
+				include: [
+					{
+						model: models.Thumbnail,
+						as: "Thumbnails"
+					},
+					{
+						model: models.File,
+						as: "File"
+					}
+				]
+			})
 			.then(images => {
 				if (images) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
+					if (request.hasPermission("admin.offer.read")) {
 						response.json(
 							images.map(image => {
-								return image.toJSON({ hiddenData: true });
+								return image.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -66,8 +76,6 @@ class ImageController {
 		try {
 			let busboy = new this.Busboy({ headers: request.headers });
 			busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-				console.log(mimetype);
-
 				if (!mimetype.startsWith("image/")) {
 					return next(new this.errorController.errors.InvalidImageError());
 				}
@@ -88,11 +96,11 @@ class ImageController {
 						mimetype.startsWith("image/") &&
 						data.length <= this.config.MAX_UPLOAD_FILE_SIZE
 					) {
-						this.Image
+						this.models.Image
 							.store(data, request.user)
 							.then(image => {
-								if (request.hasPermission("admin.image.hiddenData.read")) {
-									response.json(image.toJSON({ hiddenData: true }));
+								if (request.hasPermission("admin.image.read")) {
+									response.json(image.toJSON({ admin: true }));
 								} else {
 									response.json(image.toJSON());
 								}
@@ -118,7 +126,7 @@ class ImageController {
 	}
 
 	putImage(request, response, next) {
-		this.Image
+		this.models.Image
 			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
 				if (
@@ -143,13 +151,12 @@ class ImageController {
 										mimetype.startsWith("image/") &&
 										file.byteLength <= this.config.MAX_UPLOAD_FILE_SIZE
 									) {
-										this.Image
+										//TODO delete old file
+										this.models.Image
 											.store(data, request.user)
 											.then(image => {
-												if (
-													request.hasPermission("admin.image.hiddenData.read")
-												) {
-													response.json(image.toJSON({ hiddenData: true }));
+												if (request.hasPermission("admin.image.read")) {
+													response.json(image.toJSON({ admin: true }));
 												} else {
 													response.json(image.toJSON());
 												}
@@ -185,7 +192,7 @@ class ImageController {
 	}
 
 	deleteImage(request, response, next) {
-		this.Image
+		this.models.Image
 			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
 				if (

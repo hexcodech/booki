@@ -13,7 +13,7 @@ const File = ({ sequelize, models }) => {
 		},
 		{
 			classMethods: {
-				associate: function({ Image }) {}
+				associate: function({}) {}
 			},
 			instanceMethods: {
 				toJSON: function(options = {}) {

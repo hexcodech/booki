@@ -94,7 +94,7 @@ const User = ({
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.Permission,
 						as: "Permissions"
@@ -107,7 +107,7 @@ const User = ({
 						model: models.OAuthProvider,
 						as: "OAuthProviders"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -596,7 +596,8 @@ const User = ({
 									})
 									.then(result => {
 										let promises = [];
-										let permissionInstance = result[0], created = result[1];
+										let permissionInstance = result[0],
+											created = result[1];
 
 										permissionInstances.push(permissionInstance);
 										callback();
@@ -635,6 +636,7 @@ const User = ({
 					]);
 
 					json.thumbnails = [];
+					json.profilePictureId = user.profile_picture_id;
 
 					if (user.ProfilePicture) {
 						json.thumbnails = user.ProfilePicture.getThumbnailsRaw();
@@ -652,9 +654,9 @@ const User = ({
 						});
 					}
 
-					json.permissions = this.getPermissionArray();
+					if (options.owner || options.admin) {
+						json.permissions = this.getPermissionArray();
 
-					if (options.hiddenData && options.hiddenData === true) {
 						json = Object.assign(
 							json,
 							pick(user, [

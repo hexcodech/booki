@@ -15,13 +15,7 @@ class UserController {
 		this.i18n = i18n;
 		this.errorController = errorController;
 
-		this.User = models.User;
-
-		this.Permission = models.Permission;
-		this.Image = models.Image;
-		this.OAuthProvider = models.OAuthProvider;
-		this.Offer = models.Offer;
-		this.OfferRequest = models.OfferRequest;
+		this.models = models;
 
 		bindAll(this, [
 			"getCurrentUser",
@@ -34,34 +28,34 @@ class UserController {
 	}
 
 	getCurrentUser(request, response, next) {
-		this.User
+		this.models.User
 			.findOne({
 				where: { id: request.user.get("id") },
 				include: [
 					{
-						model: this.Permission,
+						model: this.models.Permission,
 						as: "Permissions"
 					},
 					{
-						model: this.Image,
+						model: this.models.Image,
 						as: "ProfilePicture"
 					},
 					{
-						model: this.OAuthProvider,
+						model: this.models.OAuthProvider,
 						as: "OAuthProviders"
 					},
 					{
-						model: this.Offer,
+						model: this.models.Offer,
 						as: "Offers"
 					},
 					{
-						model: this.OfferRequest,
+						model: this.models.OfferRequest,
 						as: "OfferRequests"
 					}
 				]
 			})
 			.then(user => {
-				response.json(user.toJSON());
+				response.json(user.toJSON({ owner: true }));
 				response.end();
 			})
 			.catch(err => {
@@ -82,15 +76,29 @@ class UserController {
 			query.name = request.body.query.name;
 		}
 
-		this.User
+		this.models.User
 			.findAll({
-				where: query
+				where: query,
+				include: [
+					{
+						model: this.models.Permission,
+						as: "Permissions"
+					},
+					{
+						model: this.models.Image,
+						as: "ProfilePicture"
+					},
+					{
+						model: this.models.OAuthProvider,
+						as: "OAuthProviders"
+					}
+				]
 			})
 			.then(users => {
-				if (request.hasPermission("admin.user.hiddenData.read")) {
+				if (request.hasPermission("admin.user.read")) {
 					response.json(
 						users.map(user => {
-							return user.toJSON({ hiddenData: true });
+							return user.toJSON({ admin: true });
 						})
 					);
 				} else {
@@ -117,11 +125,35 @@ class UserController {
 			return this.getCurrentUser(request, response, next);
 		}
 
-		this.User
-			.findOne({ where: { id: request.params.userId } })
+		this.models.User
+			.findOne({
+				where: { id: request.params.userId },
+				include: [
+					{
+						model: this.models.Permission,
+						as: "Permissions"
+					},
+					{
+						model: this.models.Image,
+						as: "ProfilePicture"
+					},
+					{
+						model: this.models.OAuthProvider,
+						as: "OAuthProviders"
+					},
+					{
+						model: this.models.Offer,
+						as: "Offers"
+					},
+					{
+						model: this.models.OfferRequest,
+						as: "OfferRequests"
+					}
+				]
+			})
 			.then(user => {
-				if (request.hasPermission("admin.user.hiddenData.read")) {
-					response.json(user.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.user.read")) {
+					response.json(user.toJSON({ admin: true }));
 				} else {
 					response.json(user.toJSON());
 				}
@@ -140,7 +172,7 @@ class UserController {
 	postUser(request, response, next) {
 		//this function is for admins only so we can accept any fields
 
-		let user = this.User.build(
+		let user = this.models.User.build(
 			this.pick(request.body.user, [
 				"id",
 				"nameDisplay",
@@ -175,12 +207,35 @@ class UserController {
 						//newly added permissions
 
 						user
-							.reload()
+							.reload({
+								include: [
+									{
+										model: this.models.Permission,
+										as: "Permissions"
+									},
+									{
+										model: this.models.Image,
+										as: "ProfilePicture"
+									},
+									{
+										model: this.models.OAuthProvider,
+										as: "OAuthProviders"
+									},
+									{
+										model: this.models.Offer,
+										as: "Offers"
+									},
+									{
+										model: this.models.OfferRequest,
+										as: "OfferRequests"
+									}
+								]
+							})
 							.then(() => {
-								if (request.hasPermission("admin.user.hiddenData.read")) {
-									response.json(user.toJSON({ hiddenData: true }));
+								if (request.hasPermission("admin.user.read")) {
+									response.json(user.toJSON({ admin: true }));
 								} else {
-									response.json(user.toJSON());
+									response.json(user.toJSON({ owner: true }));
 								}
 							})
 							.catch(err => {
@@ -216,28 +271,28 @@ class UserController {
 			return next(new this.errorController.errors.ForbiddenError());
 		}
 
-		this.User
+		this.models.User
 			.findOne({
 				where: { id: request.params.userId },
 				include: [
 					{
-						model: this.Permission,
+						model: this.models.Permission,
 						as: "Permissions"
 					},
 					{
-						model: this.Image,
+						model: this.models.Image,
 						as: "ProfilePicture"
 					},
 					{
-						model: this.OAuthProvider,
+						model: this.models.OAuthProvider,
 						as: "OAuthProviders"
 					},
 					{
-						model: this.Offer,
+						model: this.models.Offer,
 						as: "Offers"
 					},
 					{
-						model: this.OfferRequest,
+						model: this.models.OfferRequest,
 						as: "OfferRequests"
 					}
 				]
@@ -279,7 +334,7 @@ class UserController {
 				}
 
 				//update other fields as well if the user is allowed to
-				if (request.hasPermission("admin.user.hiddenData.write")) {
+				if (request.hasPermission("admin.user.write")) {
 					//if the user has this permission we need to update more fields
 
 					user.set(
@@ -314,12 +369,35 @@ class UserController {
 							//the newly added permissions
 
 							user
-								.reload()
+								.reload({
+									include: [
+										{
+											model: this.models.Permission,
+											as: "Permissions"
+										},
+										{
+											model: this.models.Image,
+											as: "ProfilePicture"
+										},
+										{
+											model: this.models.OAuthProvider,
+											as: "OAuthProviders"
+										},
+										{
+											model: this.models.Offer,
+											as: "Offers"
+										},
+										{
+											model: this.models.OfferRequest,
+											as: "OfferRequests"
+										}
+									]
+								})
 								.then(() => {
-									if (request.hasPermission("admin.user.hiddenData.read")) {
-										response.json(user.toJSON({ hiddenData: true }));
+									if (request.hasPermission("admin.user.read")) {
+										response.json(user.toJSON({ admin: true }));
 									} else {
-										response.json(user.toJSON());
+										response.json(user.toJSON({ owner: true }));
 									}
 								})
 								.catch(err => {
@@ -347,8 +425,8 @@ class UserController {
 							//no need to reload() as all changes were made directly on the user
 							//instance
 
-							if (request.hasPermission("admin.user.hiddenData.read")) {
-								response.json(user.toJSON({ hiddenData: true }));
+							if (request.hasPermission("admin.user.read")) {
+								response.json(user.toJSON({ admin: true }));
 							} else {
 								response.json(user.toJSON());
 							}
@@ -372,7 +450,7 @@ class UserController {
 	}
 
 	deleteUser(request, response, next) {
-		this.User
+		this.models.User
 			.destroy({ where: { id: request.params.userId } })
 			.then(() => {
 				response.json({ success: true });

@@ -19,7 +19,7 @@ const Offer = ({ sequelize, models }) => {
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.User,
 						as: "User"
@@ -28,7 +28,7 @@ const Offer = ({ sequelize, models }) => {
 						model: models.Condition,
 						as: "Condition"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -61,17 +61,22 @@ const Offer = ({ sequelize, models }) => {
 					]);
 
 					json.bookId = offer.book_id;
+
+					if (offer.Book) {
+						json.book = offer.Book.toJSON(options);
+					}
+
 					json.userId = offer.user_id;
 
 					if (offer.User) {
 						json.user = offer.User.toJSON(options);
 					}
 
+					json.conditionId = offer.condition_id;
+
 					if (offer.Condition) {
 						json.condition = offer.Condition.toJSON(options);
 					}
-
-					json.conditionId = offer.condition_id;
 
 					return json;
 				}

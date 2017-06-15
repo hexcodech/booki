@@ -77,7 +77,7 @@ const Book = ({ config, errorController, sequelize, models }) => {
 			],
 
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.Person,
 						as: "Authors"
@@ -90,7 +90,7 @@ const Book = ({ config, errorController, sequelize, models }) => {
 						model: models.Offer,
 						as: "Offers"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -309,11 +309,15 @@ const Book = ({ config, errorController, sequelize, models }) => {
 						"updatedAt"
 					]);
 
-					if (options.hiddenData) {
+					if (options.admin) {
 						json.coverId = book.cover_image_id;
 					}
 
 					json.userId = book.user_id;
+
+					if (book.User) {
+						json.user = book.User.toJSON(options);
+					}
 
 					if (book.Authors) {
 						json.authors = book.Authors.map(author => {

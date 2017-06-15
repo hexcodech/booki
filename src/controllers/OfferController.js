@@ -7,11 +7,7 @@ class OfferController {
 
 		this.errorController = errorController;
 
-		this.Offer = models.Offer;
-
-		this.Book = models.Book;
-		this.User = models.User;
-		this.Condition = models.Condition;
+		this.models = models;
 
 		bindAll(this, [
 			"getOffer",
@@ -24,14 +20,23 @@ class OfferController {
 	}
 
 	getOffer(request, response, next) {
-		this.Offer
-			.findAll()
+		let query = {};
+
+		if ("newest" in request.query.filter) {
+			//TODO move limit to config
+			Object.assign(query, { order: [["created_at", "DESC"]], limit: 6 });
+		} else if (!request.hasPermission("admin.offer.list")) {
+			return response.end("[]");
+		}
+
+		this.models.Offer
+			.findAll({ where: query })
 			.then(offers => {
 				if (offers) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
+					if (request.hasPermission("admin.offer.read")) {
 						response.json(
 							offers.map(offer => {
-								return offer.toJSON({ hiddenData: true });
+								return offer.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -58,12 +63,24 @@ class OfferController {
 	}
 
 	getOfferById(request, response, next) {
-		this.Offer
-			.findOne({ where: { id: request.params.offerId } })
+		this.models.Offer
+			.findOne({
+				where: { id: request.params.offerId },
+				include: [
+					{
+						model: this.models.User,
+						as: "User"
+					},
+					{
+						model: this.models.Condition,
+						as: "Condition"
+					}
+				]
+			})
 			.then(offer => {
 				if (offer) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
-						response.json(offer.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.offer.read")) {
+						response.json(offer.toJSON({ admin: true }));
 					} else {
 						response.json(offer.toJSON());
 					}
@@ -84,14 +101,26 @@ class OfferController {
 	}
 
 	getOfferByBookId(request, response, next) {
-		this.Offer
-			.findAll({ where: { book_id: request.params.bookId } })
+		this.models.Offer
+			.findAll({
+				where: { book_id: request.params.bookId },
+				include: [
+					{
+						model: this.models.User,
+						as: "User"
+					},
+					{
+						model: this.models.Condition,
+						as: "Condition"
+					}
+				]
+			})
 			.then(offers => {
 				if (offers) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
+					if (request.hasPermission("admin.offer.read")) {
 						response.json(
 							offers.map(offer => {
-								return offer.toJSON({ hiddenData: true });
+								return offer.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -118,11 +147,11 @@ class OfferController {
 	}
 
 	postOffer(request, response, next) {
-		let offer = this.Offer.build(
+		let offer = this.models.Offer.build(
 			this.pick(request.body.offer, ["description", "price"])
 		);
 
-		let userId = request.hasPermission("admin.offer.hiddenData.write") &&
+		let userId = request.hasPermission("admin.offer.write") &&
 			request.body.offer.userId
 			? request.body.offer.userId
 			: request.user.get("id");
@@ -130,7 +159,7 @@ class OfferController {
 		let promises = [];
 
 		promises.push(
-			this.User.findOne({ where: { id: userId } }).then(user => {
+			this.models.User.findOne({ where: { id: userId } }).then(user => {
 				if (user) {
 					return Promise.resolve();
 				} else {
@@ -142,7 +171,7 @@ class OfferController {
 		);
 
 		promises.push(
-			this.Book
+			this.models.Book
 				.findOne({ where: { id: request.body.offer.bookId } })
 				.then(book => {
 					if (book) {
@@ -156,7 +185,7 @@ class OfferController {
 		);
 
 		promises.push(
-			this.Condition
+			this.models.Condition
 				.findOne({ where: { id: request.body.offer.conditionId } })
 				.then(condition => {
 					if (condition) {
@@ -177,7 +206,7 @@ class OfferController {
 					condition_id: request.body.offer.conditionId
 				});
 
-				if (request.hasPermission("admin.offer.hiddenData.write")) {
+				if (request.hasPermission("admin.offer.write")) {
 					offer.set(
 						this.omitBy(this.pick(request.body.offer, ["id"]), this.isNil)
 					);
@@ -192,8 +221,8 @@ class OfferController {
 				});
 			})
 			.then(offer => {
-				if (request.hasPermission("admin.offer.hiddenData.read")) {
-					response.json(offer.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(offer.toJSON({ admin: true }));
 				} else {
 					response.json(offer.toJSON());
 				}
@@ -204,7 +233,7 @@ class OfferController {
 	}
 
 	putOffer(request, response, next) {
-		this.Offer
+		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
 				if (offer) {
@@ -216,16 +245,15 @@ class OfferController {
 							this.pick(request.body.offer, ["description", "price", "sold"])
 						);
 
-						let userId = request.hasPermission(
-							"admin.offer.hiddenData.write"
-						) && request.body.offer.userId
+						let userId = request.hasPermission("admin.offer.write") &&
+							request.body.offer.userId
 							? request.body.offer.userId
 							: request.user.get("id");
 
 						let promises = [];
 
 						promises.push(
-							this.User.findOne({ where: { id: userId } }).then(user => {
+							this.models.User.findOne({ where: { id: userId } }).then(user => {
 								if (user) {
 									return Promise.resolve();
 								} else {
@@ -238,7 +266,7 @@ class OfferController {
 
 						if (request.body.offer.bookId) {
 							promises.push(
-								this.Book
+								this.models.Book
 									.findOne({ where: { id: request.body.offer.bookId } })
 									.then(book => {
 										if (book) {
@@ -254,7 +282,7 @@ class OfferController {
 
 						if (request.body.offer.conditionId) {
 							promises.push(
-								this.Condition
+								this.models.Condition
 									.findOne({ where: { id: request.body.offer.conditionId } })
 									.then(condition => {
 										if (condition) {
@@ -276,7 +304,7 @@ class OfferController {
 									condition_id: request.body.offer.conditionId
 								});
 
-								if (request.hasPermission("admin.offer.hiddenData.write")) {
+								if (request.hasPermission("admin.offer.write")) {
 									offer.set(
 										this.omitBy(
 											this.pick(request.body.offer, ["id"]),
@@ -294,8 +322,8 @@ class OfferController {
 								});
 							})
 							.then(offer => {
-								if (request.hasPermission("admin.offer.hiddenData.read")) {
-									response.json(offer.toJSON({ hiddenData: true }));
+								if (request.hasPermission("admin.offer.read")) {
+									response.json(offer.toJSON({ admin: true }));
 								} else {
 									response.json(offer.toJSON());
 								}
@@ -320,7 +348,7 @@ class OfferController {
 	}
 
 	deleteOffer(request, response, next) {
-		this.Offer
+		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
 				if (offer) {

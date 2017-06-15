@@ -7,7 +7,7 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 		{},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.ThumbnailType,
 						as: "ThumbnailType"
@@ -16,7 +16,7 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 						model: models.File,
 						as: "File"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -49,10 +49,18 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 
 					let json = pick(thumbnail, ["id", "createdAt", "updatedAt"]);
 
+					json.imageId = thumbnail.image_id;
+
 					if (thumbnail.File) {
 						json.url = this.getUrl();
+
+						if (options.admin) {
+							json.fileId = thumbnail.file_id;
+							json.file = thumbnail.File.toJSON(options);
+						}
 					}
 
+					json.thumbnailTypeId = thumbnail.thumbnail_type_id;
 					if (thumbnail.ThumbnailType) {
 						Object.assign(
 							json,

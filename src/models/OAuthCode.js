@@ -13,7 +13,7 @@ const OAuthCode = ({ config, sequelize, models, cryptoUtilities }) => {
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.User,
 						as: "User"
@@ -22,7 +22,7 @@ const OAuthCode = ({ config, sequelize, models, cryptoUtilities }) => {
 						model: models.OAuthClient,
 						as: "OAuthClient"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -63,12 +63,18 @@ const OAuthCode = ({ config, sequelize, models, cryptoUtilities }) => {
 						expires: code.expires
 					};
 
-					if (code.User) {
-						json.userId = code.User.toJSON();
-					}
+					if (options.owner || options.admin) {
+						json.userId = code.user_id;
 
-					if (code.Client) {
-						json.clientId = code.Client.get("id");
+						if (code.User) {
+							json.user = code.User.toJSON(options);
+						}
+
+						json.clientId = code.client_id;
+
+						if (code.Client) {
+							json.clientId = code.Client.toJSON(options);
+						}
 					}
 
 					return json;

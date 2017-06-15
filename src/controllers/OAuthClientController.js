@@ -18,9 +18,7 @@ class OAuthClientController {
 		this.getLocale = getLocale;
 		this.generateRandomString = generateRandomString;
 
-		this.OAuthClient = models.OAuthClient;
-		this.OAuthRedirectUri = models.OAuthRedirectUri;
-		this.User = models.User;
+		this.models = models;
 
 		bindAll(this, [
 			"getOAuthClient",
@@ -32,46 +30,45 @@ class OAuthClientController {
 	}
 
 	getOAuthClient(request, response, next) {
-		let query = {}, include = [], userId = null;
+		let query = {},
+			userId = null;
 
-		if (request.hasPermission("admin.user.query")) {
+		if (request.hasPermission("admin.client.query")) {
 			query = request.body.query;
 		} else {
 			query = this.pick(request.body.client, ["id", "name", "trusted"]);
+		}
 
+		if (!request.hasPermission("admin.client.list")) {
 			userId = request.user.id;
 		}
 
-		if (
-			request.body.client &&
-			request.body.client.userId &&
-			request.hasPermission("admin.client.filters")
-		) {
-			userId = request.body.client.userId;
-		}
-
 		if (userId) {
-			include.push({
-				model: this.User,
-				as: "User",
-				where: { id: userId }
-			});
+			query.user_id = userId;
 		}
 
-		this.OAuthClient
-			.findAll({ where: query, include: include })
+		this.models.OAuthClient
+			.findAll({
+				where: query,
+				include: [
+					{
+						model: models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
+					}
+				]
+			})
 			.then(clients => {
 				if (clients) {
-					if (request.hasPermission("admin.client.hiddenData.read")) {
+					if (request.hasPermission("admin.client.read")) {
 						response.json(
 							clients.map(client => {
-								return client.toJSON({ hiddenData: true });
+								return client.toJSON({ admin: true });
 							})
 						);
 					} else {
 						response.json(
 							clients.map(client => {
-								return client.toJSON();
+								return client.toJSON({ owner: true });
 							})
 						);
 					}
@@ -91,23 +88,35 @@ class OAuthClientController {
 	}
 
 	getOAuthClientById(request, response, next) {
-		this.OAuthClient
+		let query = { id: request.params.clientId };
+
+		if (!request.hasPermission("admin.client.list")) {
+			query.user_id = request.user.id;
+		}
+
+		this.models.OAuthClient
 			.findOne({
-				where: { id: request.params.clientId },
+				where: query,
 				include: [
 					{
-						model: this.User,
-						as: "User",
-						where: { id: request.user.id }
+						model: models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
 					}
 				]
 			})
 			.then(client => {
 				if (client) {
-					if (request.hasPermission("admin.client.hiddenData.read")) {
-						response.json(client.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.client.read")) {
+						response.json(
+							client.toJSON({
+								admin: true,
+								owner: client.user_id === request.user.id
+							})
+						);
 					} else {
-						response.json(client.toJSON());
+						response.json(
+							client.toJSON({ owner: client.user_id === request.user.id })
+						);
 					}
 
 					return response.end();
@@ -125,22 +134,17 @@ class OAuthClientController {
 	}
 
 	postOAuthClient(request, response, next) {
-		const secret = this.OAuthClient.generateSecret();
+		const secret = this.models.OAuthClient.generateSecret();
 		let promises = [];
 
-		let client = this.OAuthClient.build({
+		let client = this.models.OAuthClient.build({
 			name: request.body.client.name,
 			user_id: request.user.id
 		});
 
 		client.setSecret(secret);
 
-		if (
-			request.hasPermissions([
-				"admin.client.create",
-				"admin.client.hiddenData.write"
-			])
-		) {
+		if (request.hasPermissions(["admin.client.create", "admin.client.write"])) {
 			if (request.body.client.userId) {
 				client.set("user_id", request.body.client.userId);
 			}
@@ -161,7 +165,7 @@ class OAuthClientController {
 				if (request.body.client.redirectUris) {
 					request.body.client.redirectUris.forEach(uri => {
 						promises.push(
-							this.OAuthRedirectUri.create({
+							this.models.OAuthRedirectUri.create({
 								uri: uri,
 								oauth_client_id: client.get("id")
 							})
@@ -172,14 +176,21 @@ class OAuthClientController {
 				Promise.all(promises)
 					.then(() => {
 						client
-							.reload()
+							.reload({
+								include: [
+									{
+										model: models.OAuthRedirectUri,
+										as: "OAuthRedirectUris"
+									}
+								]
+							})
 							.then(() => {
 								let json = {};
 
-								if (request.hasPermission("admin.client.hiddenData.read")) {
-									json = client.toJSON({ hiddenData: true });
+								if (request.hasPermission("admin.client.read")) {
+									json = client.toJSON({ admin: true });
 								} else {
-									json = client.toJSON();
+									json = client.toJSON({ owner: true });
 								}
 
 								json.secret = secret; //attach secret to response
@@ -213,7 +224,7 @@ class OAuthClientController {
 	}
 
 	putOAuthClient(request, response, next) {
-		this.OAuthClient
+		this.models.OAuthClient
 			.findOne({ where: { id: request.params.clientId } })
 			.then(client => {
 				if (client) {
@@ -222,7 +233,7 @@ class OAuthClientController {
 					if (
 						request.hasPermissions([
 							"admin.client.editOthers",
-							"admin.client.hiddenData.write"
+							"admin.client.write"
 						])
 					) {
 						client.set(
@@ -264,7 +275,7 @@ class OAuthClientController {
 
 						for (let i = 0; i < newUris.length; i++) {
 							if (tempCurrentUris.indexOf(newUris[i]) === -1) {
-								let uri = this.OAuthRedirectUri.build({
+								let uri = this.models.OAuthRedirectUri.build({
 									uri: newUris[i],
 									oauth_client_id: client.get("id")
 								});
@@ -279,12 +290,19 @@ class OAuthClientController {
 					Promise.all(promises)
 						.then(() => {
 							client
-								.reload()
+								.reload({
+									include: [
+										{
+											model: models.OAuthRedirectUri,
+											as: "OAuthRedirectUris"
+										}
+									]
+								})
 								.then(() => {
-									if (request.hasPermission("admin.client.hiddenData.read")) {
-										response.json(client.toJSON({ hiddenData: true }));
+									if (request.hasPermission("admin.client.read")) {
+										response.json(client.toJSON({ admin: true }));
 									} else {
-										response.json(client.toJSON());
+										response.json(client.toJSON({ owner: true }));
 									}
 
 									return response.end();
@@ -319,7 +337,7 @@ class OAuthClientController {
 	}
 
 	deleteOAuthClient(request, response, next) {
-		this.OAuthClient
+		this.models.OAuthClient
 			.findOne({ where: { id: request.params.clientId } })
 			.then(client => {
 				if (client) {

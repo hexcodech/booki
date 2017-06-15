@@ -7,7 +7,7 @@ class PersonController {
 
 		this.errorController = errorController;
 
-		this.Person = models.Person;
+		this.models = models;
 
 		bindAll(this, [
 			"getPerson",
@@ -20,14 +20,14 @@ class PersonController {
 	}
 
 	getPerson(request, response, next) {
-		this.Person
+		this.models.Person
 			.findAll()
 			.then(people => {
 				if (people) {
-					if (request.hasPermission("admin.person.hiddenData.read")) {
+					if (request.hasPermission("admin.person.read")) {
 						response.json(
 							people.map(person => {
-								return person.toJSON({ hiddenData: true });
+								return person.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -54,12 +54,12 @@ class PersonController {
 	}
 
 	getPersonById(request, response, next) {
-		this.Person
+		this.models.Person
 			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
-					if (request.hasPermission("admin.person.hiddenData.read")) {
-						response.json(person.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.person.read")) {
+						response.json(person.toJSON({ admin: true }));
 					} else {
 						response.json(person.toJSON());
 					}
@@ -78,7 +78,7 @@ class PersonController {
 	}
 
 	postPerson(request, response, next) {
-		let person = this.Person.build(
+		let person = this.models.Person.build(
 			this.pick(request.body.person, [
 				"nameTitle",
 				"nameFirst",
@@ -87,7 +87,7 @@ class PersonController {
 			])
 		);
 
-		if (request.hasPermission("admin.person.hiddenData.write")) {
+		if (request.hasPermission("admin.person.write")) {
 			person.set(
 				this.omitBy(
 					this.pick(request.body.person, ["id", "verified"]),
@@ -99,8 +99,8 @@ class PersonController {
 		person
 			.save()
 			.then(() => {
-				if (request.hasPermission("admin.person.hiddenData.read")) {
-					response.json(person.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.person.read")) {
+					response.json(person.toJSON({ admin: true }));
 				} else {
 					response.json(person.toJSON());
 				}
@@ -115,7 +115,7 @@ class PersonController {
 	}
 
 	putPerson(request, response, next) {
-		this.Person
+		this.models.Person
 			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
@@ -128,7 +128,7 @@ class PersonController {
 						])
 					);
 
-					if (request.hasPermission("admin.person.hiddenData.write")) {
+					if (request.hasPermission("admin.person.write")) {
 						person.set(
 							this.omitBy(
 								this.pick(request.body.person, ["id", "verified"]),
@@ -140,8 +140,8 @@ class PersonController {
 					person
 						.save()
 						.then(() => {
-							if (request.hasPermission("admin.person.hiddenData.read")) {
-								response.json(person.toJSON({ hiddenData: true }));
+							if (request.hasPermission("admin.person.read")) {
+								response.json(person.toJSON({ admin: true }));
 							} else {
 								response.json(person.toJSON());
 							}
@@ -167,7 +167,7 @@ class PersonController {
 	}
 
 	deletePerson(request, response, next) {
-		this.Person
+		this.models.Person
 			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
 				if (person) {
@@ -198,7 +198,7 @@ class PersonController {
 	}
 
 	lookupPerson(request, response, next) {
-		this.Person
+		this.models.Person
 			.lookupByName(request.query.search)
 			.then(people => {
 				response.end(

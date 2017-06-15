@@ -31,7 +31,15 @@ const OAuthProvider = ({ sequelize }) => {
 
 					let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);
 
-					if (hiddenData) {
+					if (options.owner || options.admin) {
+						json.userId = provider.user_id;
+
+						if (provider.User) {
+							json.user = provider.User.toJSON(options);
+						}
+					}
+
+					if (options.admin) {
 						json.accessToken = provider.accessToken;
 						json.refreshToken = provider.refreshToken;
 					}

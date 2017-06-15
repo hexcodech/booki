@@ -28,7 +28,7 @@ const OfferRequest = ({
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.Offer,
 						as: "Offer"
@@ -37,7 +37,7 @@ const OfferRequest = ({
 						model: models.User,
 						as: "User"
 					}
-				]
+				]*/
 			},
 			classMethods: {
 				generateResponseKey: function() {
@@ -77,11 +77,12 @@ const OfferRequest = ({
 										requester: requester.get(),
 										book: book.get(),
 										offer: offer.get(),
-										responseUrl: config.HOST +
-											"/v1/offer-request/" +
-											this.get("id") +
-											"/respond?responseKey=" +
-											this.get("responseKey")
+										responseUrl:
+											config.HOST +
+												"/v1/offer-request/" +
+												this.get("id") +
+												"/respond?responseKey=" +
+												this.get("responseKey")
 									},
 									offerer.get("locale")
 								)
@@ -112,12 +113,15 @@ const OfferRequest = ({
 						"createdAt"
 					]);
 
-					if (offerRequest.user_id) {
-						json.userId = offerRequest.user_id;
+					json.userId = offerRequest.user_id;
+
+					if (offerRequest.User) {
+						json.user = offerRequest.User.toJSON(options);
 					}
 
-					if (offerRequest.offer_id) {
-						json.offerId = offerRequest.offer_id;
+					json.offerId = offerRequest.offer_id;
+					if (offerRequest.Offer) {
+						json.offer = offerRequest.Offer.toJSON(options);
 					}
 
 					return json;

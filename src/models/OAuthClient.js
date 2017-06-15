@@ -33,7 +33,7 @@ const OAuthClient = ({ config, sequelize, models, cryptoUtilities }) => {
 		},
 		{
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.User,
 						as: "User"
@@ -42,7 +42,7 @@ const OAuthClient = ({ config, sequelize, models, cryptoUtilities }) => {
 						model: models.OAuthRedirectUri,
 						as: "OAuthRedirectUris"
 					}
-				]
+				]*/
 			},
 
 			classMethods: {
@@ -150,17 +150,21 @@ const OAuthClient = ({ config, sequelize, models, cryptoUtilities }) => {
 
 					//user id
 
-					if (options.hiddenData && client.User) {
-						json.userId = client.User.get("id");
-					}
+					if (options.owner || options.admin) {
+						json.userId = client.user_id;
 
-					//redirect uris
-					json.redirectUris = [];
+						if (client.User) {
+							json.user = client.User.toJSON(options);
+						}
 
-					if (Array.isArray(client.OAuthRedirectUris)) {
-						client.OAuthRedirectUris.forEach(redirectUri => {
-							json.redirectUris.push(redirectUri.get("uri"));
-						});
+						//redirect uris
+						json.redirectUris = [];
+
+						if (Array.isArray(client.OAuthRedirectUris)) {
+							client.OAuthRedirectUris.forEach(redirectUri => {
+								json.redirectUris.push(redirectUri.get("uri"));
+							});
+						}
 					}
 
 					return json;

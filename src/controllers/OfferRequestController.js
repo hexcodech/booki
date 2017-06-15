@@ -7,10 +7,7 @@ class OfferRequestController {
 
 		this.errorController = errorController;
 
-		this.OfferRequest = models.OfferRequest;
-
-		this.Offer = models.Offer;
-		this.User = models.User;
+		this.models = models;
 
 		bindAll(this, [
 			"getOfferRequest",
@@ -24,14 +21,14 @@ class OfferRequestController {
 	}
 
 	getOfferRequest(request, response, next) {
-		this.OfferRequest
+		this.models.OfferRequest
 			.findAll()
 			.then(offerRequests => {
 				if (offerRequests) {
-					if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
+					if (request.hasPermission("admin.offerRequest.read")) {
 						response.json(
 							offerRequests.map(offerRequest => {
-								return offerRequest.toJSON({ hiddenData: true });
+								return offerRequest.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -58,12 +55,12 @@ class OfferRequestController {
 	}
 
 	getOfferRequestById(request, response, next) {
-		this.OfferRequest
+		this.models.OfferRequest
 			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
-					if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
-						response.json(offerRequest.toJSON({ hiddenData: true }));
+					if (request.hasPermission("admin.offerRequest.read")) {
+						response.json(offerRequest.toJSON({ admin: true }));
 					} else {
 						response.json(offerRequest.toJSON());
 					}
@@ -84,14 +81,22 @@ class OfferRequestController {
 	}
 
 	getUserOfferRequests(request, response, next) {
-		this.OfferRequest
-			.findAll({ where: { user_id: request.user.get("id") } })
+		this.models.OfferRequest
+			.findAll({
+				where: { user_id: request.user.get("id") },
+				include: [
+					{
+						model: this.models.Offer,
+						as: "Offer"
+					}
+				]
+			})
 			.then(offerRequests => {
 				if (offerRequests) {
-					if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
+					if (request.hasPermission("admin.offerRequest.read")) {
 						response.json(
 							offerRequests.map(offerRequest => {
-								return offerRequest.toJSON({ hiddenData: true });
+								return offerRequest.toJSON({ admin: true });
 							})
 						);
 					} else {
@@ -118,11 +123,11 @@ class OfferRequestController {
 	}
 
 	postOfferRequest(request, response, next) {
-		let offerRequest = this.OfferRequest.build(
+		let offerRequest = this.models.OfferRequest.build(
 			this.pick(request.body.offerRequest, ["message"])
 		);
 
-		let userId = request.hasPermission("admin.offerRequest.hiddenData.write") &&
+		let userId = request.hasPermission("admin.offerRequest.write") &&
 			request.body.offerRequest.userId
 			? request.body.offerRequest.userId
 			: request.user.get("id");
@@ -130,7 +135,7 @@ class OfferRequestController {
 		let promises = [];
 
 		promises.push(
-			this.Offer
+			this.models.Offer
 				.findOne({ where: { id: request.body.offerRequest.offerId } })
 				.then(offer => {
 					if (offer) {
@@ -144,7 +149,7 @@ class OfferRequestController {
 		);
 
 		promises.push(
-			this.User.findOne({ where: { id: userId } }).then(user => {
+			this.models.User.findOne({ where: { id: userId } }).then(user => {
 				if (user) {
 					return Promise.resolve(user);
 				} else {
@@ -157,14 +162,15 @@ class OfferRequestController {
 
 		Promise.all(promises)
 			.then(values => {
-				const offer = values[0], user = values[1];
+				const offer = values[0],
+					user = values[1];
 
 				offerRequest.set({
 					offer_id: request.body.offerRequest.offerId,
 					user_id: userId
 				});
 
-				if (request.hasPermission("admin.offerRequest.hiddenData.write")) {
+				if (request.hasPermission("admin.offerRequest.write")) {
 					offerRequest.set(
 						this.omitBy(
 							this.pick(request.body.offerRequest, ["id", "responded"]),
@@ -175,7 +181,7 @@ class OfferRequestController {
 
 				offerRequest.set(
 					"responseKey",
-					this.OfferRequest.generateResponseKey()
+					this.models.OfferRequest.generateResponseKey()
 				);
 
 				return offerRequest
@@ -202,8 +208,8 @@ class OfferRequestController {
 					});
 			})
 			.then(offerRequest => {
-				if (request.hasPermission("admin.offerRequest.hiddenData.read")) {
-					response.json(offerRequest.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.offerRequest.read")) {
+					response.json(offerRequest.toJSON({ admin: true }));
 				} else {
 					response.json(offerRequest.toJSON());
 				}
@@ -214,7 +220,7 @@ class OfferRequestController {
 	}
 
 	putOfferRequest(request, response, next) {
-		this.OfferRequest
+		this.models.OfferRequest
 			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
@@ -224,16 +230,15 @@ class OfferRequestController {
 					) {
 						offerRequest.set(this.pick(request.body.offerRequest, ["message"]));
 
-						let userId = request.hasPermission(
-							"admin.offerRequest.hiddenData.write"
-						) && request.body.offerRequest.userId
+						let userId = request.hasPermission("admin.offerRequest.write") &&
+							request.body.offerRequest.userId
 							? request.body.offerRequest.userId
 							: request.user.get("id");
 
 						let promises = [];
 
 						promises.push(
-							this.User.findOne({ where: { id: userId } }).then(user => {
+							this.models.User.findOne({ where: { id: userId } }).then(user => {
 								if (user) {
 									return Promise.resolve();
 								} else {
@@ -246,7 +251,7 @@ class OfferRequestController {
 
 						if (request.body.offerRequest.offerId) {
 							promises.push(
-								this.Offer
+								this.models.Offer
 									.findOne({ where: { id: request.body.offerRequest.offerId } })
 									.then(offer => {
 										if (offer) {
@@ -267,9 +272,7 @@ class OfferRequestController {
 									user_id: userId
 								});
 
-								if (
-									request.hasPermission("admin.offerRequest.hiddenData.write")
-								) {
+								if (request.hasPermission("admin.offerRequest.write")) {
 									offerRequest.set(
 										this.omitBy(
 											this.pick(request.body.offerRequest, ["id", "responded"]),
@@ -287,10 +290,8 @@ class OfferRequestController {
 								});
 							})
 							.then(offerRequest => {
-								if (
-									request.hasPermission("admin.offerRequest.hiddenData.read")
-								) {
-									response.json(offerRequest.toJSON({ hiddenData: true }));
+								if (request.hasPermission("admin.offerRequest.read")) {
+									response.json(offerRequest.toJSON({ admin: true }));
 								} else {
 									response.json(offerRequest.toJSON());
 								}
@@ -315,7 +316,7 @@ class OfferRequestController {
 	}
 
 	deleteOfferRequest(request, response, next) {
-		this.OfferRequest
+		this.models.OfferRequest
 			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {
@@ -353,7 +354,7 @@ class OfferRequestController {
 	}
 
 	respondToOfferRequest(request, response, next) {
-		this.OfferRequest
+		this.models.OfferRequest
 			.findOne({ where: { id: request.params.offerRequestId } })
 			.then(offerRequest => {
 				if (offerRequest) {

@@ -12,9 +12,7 @@ const OAuthAccessToken = ({ config, sequelize, models, cryptoUtilities }) => {
 			}
 		},
 		{
-			defaultScope: {
-				include: []
-			},
+			defaultScope: {},
 			classMethods: {
 				associate: function({ User, OAuthClient }) {
 					this.belongsTo(User, {
@@ -49,12 +47,17 @@ const OAuthAccessToken = ({ config, sequelize, models, cryptoUtilities }) => {
 						expires: token.expires
 					};
 
-					if (token.User) {
-						json.user = token.User.toJSON(options);
-					}
+					if (options.owner || options.admin) {
+						token.userId = token.user_id;
+						token.clientId = token.client_id;
 
-					if (token.Client) {
-						json.clientId = token.Client.get("id");
+						if (token.User) {
+							json.user = token.User.toJSON(options);
+						}
+
+						if (token.Client) {
+							json.clientId = token.Client.get("id");
+						}
 					}
 
 					return json;
