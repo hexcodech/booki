@@ -52,7 +52,7 @@ class OAuthClientController {
 				where: query,
 				include: [
 					{
-						model: models.OAuthRedirectUri,
+						model: this.models.OAuthRedirectUri,
 						as: "OAuthRedirectUris"
 					}
 				]
@@ -99,7 +99,7 @@ class OAuthClientController {
 				where: query,
 				include: [
 					{
-						model: models.OAuthRedirectUri,
+						model: this.models.OAuthRedirectUri,
 						as: "OAuthRedirectUris"
 					}
 				]
@@ -179,7 +179,7 @@ class OAuthClientController {
 							.reload({
 								include: [
 									{
-										model: models.OAuthRedirectUri,
+										model: this.models.OAuthRedirectUri,
 										as: "OAuthRedirectUris"
 									}
 								]

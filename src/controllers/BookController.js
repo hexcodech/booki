@@ -35,7 +35,7 @@ class BookController {
 			.findAll({
 				include: [
 					{
-						model: models.Person,
+						model: this.models.Person,
 						as: "Authors"
 					}
 				]
@@ -78,15 +78,15 @@ class BookController {
 				where: { id: request.params.bookId },
 				include: [
 					{
-						model: models.Person,
+						model: this.models.Person,
 						as: "Authors"
 					},
 					{
-						model: models.Image,
+						model: this.models.Image,
 						as: "Cover"
 					},
 					{
-						model: models.Offer,
+						model: this.models.Offer,
 						as: "Offers"
 					}
 				]
@@ -163,11 +163,11 @@ class BookController {
 									.reload({
 										include: [
 											{
-												model: models.Person,
+												model: this.models.Person,
 												as: "Authors"
 											},
 											{
-												model: models.Image,
+												model: this.models.Image,
 												as: "Cover"
 											}
 										]
@@ -230,11 +230,11 @@ class BookController {
 							where: { id: request.body.book.coverId },
 							include: [
 								{
-									model: models.Person,
+									model: this.models.Person,
 									as: "Authors"
 								},
 								{
-									model: models.Image,
+									model: this.models.Image,
 									as: "Cover"
 								}
 							]

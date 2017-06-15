@@ -32,11 +32,11 @@ class ImageController {
 			.findAll({
 				include: [
 					{
-						model: models.Thumbnail,
+						model: this.models.Thumbnail,
 						as: "Thumbnails"
 					},
 					{
-						model: models.File,
+						model: this.models.File,
 						as: "File"
 					}
 				]

@@ -29,11 +29,7 @@ class AuthController {
 
 		this.passport = passport;
 
-		this.User = models.User;
-		this.OAuthClient = models.OAuthClient;
-		this.OAuthAccessToken = models.OAuthAccessToken;
-		this.OAuthCode = models.OAuthCode;
-		this.OAuthProvider = models.OAuthProvider;
+		this.models = models;
 
 		this.piwikTracker = piwikTracker;
 
@@ -57,7 +53,7 @@ class AuthController {
 		});
 
 		this.passport.deserializeUser((userId, done) => {
-			this.User
+			this.models.User
 				.findOne({ where: { id: userId } })
 				.then(user => {
 					done(null, user);
@@ -81,7 +77,7 @@ class AuthController {
 				locale = request.getLocale();
 			}
 
-			this.User
+			this.models.User
 				.register(firstName, email, locale)
 				.then(() => {
 					this.piwikTracker.track({
@@ -107,8 +103,16 @@ class AuthController {
 			new LocalStrategy(
 				{ usernameField: "clientId", passwordField: "clientSecret" },
 				(clientId, clientSecret, callback) => {
-					this.OAuthClient
-						.findOne({ where: { id: clientId } })
+					this.models.OAuthClient
+						.findOne({
+							where: { id: clientId },
+							include: [
+								{
+									model: models.OAuthRedirectUri,
+									as: "OAuthRedirectUris"
+								}
+							]
+						})
 						.then(client => {
 							if (!client) {
 								return callback(null, false);
@@ -143,7 +147,7 @@ class AuthController {
 		this.passport.use(
 			"local",
 			new LocalStrategy((email, password, done) => {
-				this.User
+				this.models.User
 					.findOne({
 						where: { emailVerified: email }
 					})
@@ -207,12 +211,12 @@ class AuthController {
 				},
 				(request, accessToken, callback) => {
 					//keeping the database clean
-					this.OAuthAccessToken
+					this.models.OAuthAccessToken
 						.destroy({
 							where: { expires: { $lt: new Date() } }
 						})
 						.then(() => {
-							this.OAuthAccessToken
+							this.models.OAuthAccessToken
 								.findByToken(accessToken)
 								.then(token => {
 									// No token found
@@ -222,7 +226,7 @@ class AuthController {
 										);
 									}
 
-									this.User
+									this.models.User
 										.findOne({ where: { id: token.get("user_id") } })
 										.then(user => {
 											if (!user) {
@@ -334,7 +338,7 @@ class AuthController {
 					passReqToCallback: true
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					this.User
+					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
@@ -352,7 +356,7 @@ class AuthController {
 
 											return provider.save();
 										} else {
-											return this.OAuthProvider
+											return this.models.OAuthProvider
 												.create({
 													type: "facebook",
 													accessToken,
@@ -388,7 +392,7 @@ class AuthController {
 					passReqToCallback: true
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					this.User
+					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
@@ -406,7 +410,7 @@ class AuthController {
 
 											return provider.save();
 										} else {
-											return this.OAuthProvider
+											return this.models.OAuthProvider
 												.create({
 													type: "google",
 													accessToken,
@@ -441,7 +445,7 @@ class AuthController {
 		});
 
 		this.oauth2Server.deserializeClient((id, callback) => {
-			this.OAuthClient
+			this.models.OAuthClient
 				.findOne({ where: { id: id } })
 				.then(client => {
 					return callback(null, client);
@@ -467,13 +471,13 @@ class AuthController {
 						);
 					}
 
-					let codeValue = this.OAuthCode.generateCode();
+					let codeValue = this.models.OAuthCode.generateCode();
 
 					let expirationDate =
 						Date.now() + this.config.AUTH_CODE_LIFETIME * 1000;
 
-					let code = this.OAuthCode.build({
-						hash: this.OAuthCode.hashCode(codeValue),
+					let code = this.models.OAuthCode.build({
+						hash: this.models.OAuthCode.hashCode(codeValue),
 						expires: expirationDate,
 						user_id: user.get("id"),
 						oauth_client_id: client.get("id")
@@ -499,7 +503,7 @@ class AuthController {
 
 		this.oauth2Server.exchange(
 			this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
-				this.OAuthCode
+				this.models.OAuthCode
 					.findByCode(code)
 					.then(authCode => {
 						if (authCode.get("expires") < Date.now()) {
@@ -512,7 +516,7 @@ class AuthController {
 							userId = authCode.get("user_id");
 
 						let promises = [
-							this.OAuthCode.destroy({
+							this.models.OAuthCode.destroy({
 								where: {
 									$or: [
 										{
@@ -531,7 +535,7 @@ class AuthController {
 
 						// Create an access token
 						let tokenData = {
-							token: this.OAuthAccessToken.generateToken(),
+							token: this.models.OAuthAccessToken.generateToken(),
 							clientId: clientId,
 							userId: userId,
 							expires: expirationDate
@@ -539,8 +543,8 @@ class AuthController {
 
 						//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
 						promises.push(
-							this.OAuthAccessToken.create({
-								hash: this.OAuthAccessToken.hashToken(tokenData.token),
+							this.models.OAuthAccessToken.create({
+								hash: this.models.OAuthAccessToken.hashToken(tokenData.token),
 								expires: expirationDate,
 								user_id: userId,
 								oauth_client_id: clientId
@@ -573,8 +577,16 @@ class AuthController {
 
 		this.authorization = [
 			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
-				this.OAuthClient
-					.findOne({ where: { id: clientId } })
+				this.models.OAuthClient
+					.findOne({
+						where: { id: clientId },
+						include: [
+							{
+								model: models.OAuthRedirectUri,
+								as: "OAuthRedirectUris"
+							}
+						]
+					})
 					.then(client => {
 						if (client && client.verifyRedirectUri(redirectUri)) {
 							return callback(null, client, redirectUri);
@@ -660,7 +672,7 @@ class AuthController {
 			emailVerificationCode = request.body.emailVerificationCode,
 			password = request.body.password;
 
-		this.User
+		this.models.User
 			.findOne({ where: { emailUnverified: email } })
 			.then(user => {
 				user
@@ -834,7 +846,7 @@ class AuthController {
 	}
 
 	initPasswordReset(request, response, next) {
-		this.User
+		this.models.User
 			.findOne({
 				where: { emailVerified: request.body.email }
 			})
@@ -904,7 +916,7 @@ class AuthController {
 	}
 
 	passwordReset(request, response, next) {
-		this.User
+		this.models.User
 			.findOne({
 				where: { emailVerified: request.body.email }
 			})
