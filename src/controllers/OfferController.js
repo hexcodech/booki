@@ -28,7 +28,7 @@ class OfferController {
 
 		if ("latest" in filter && filter.latest) {
 			//TODO move limit to config
-			order.push([["created_at", "DESC"]]);
+			order.push([["createdAt", "DESC"]]);
 			limit = 6;
 
 			include.push({
