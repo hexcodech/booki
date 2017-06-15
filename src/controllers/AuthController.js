@@ -227,7 +227,15 @@ class AuthController {
 									}
 
 									this.models.User
-										.findOne({ where: { id: token.get("user_id") } })
+										.findOne({
+											where: { id: token.get("user_id") },
+											include: [
+												{
+													model: this.models.Permission,
+													as: "Permissions"
+												}
+											]
+										})
 										.then(user => {
 											if (!user) {
 												// No user was found, so the token is invalid
