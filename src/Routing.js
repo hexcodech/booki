@@ -100,10 +100,10 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		authController.isBearerAuthenticated(),
 		(error, request, response, next) => {
 			if (error || !request.user) {
-				return response.end("{loggedIn: false}");
+				return response.end('{"loggedIn": false}');
 			}
 
-			response.end("{loggedIn: true}");
+			response.end('{"loggedIn": true}');
 		}
 	);
 
