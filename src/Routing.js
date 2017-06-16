@@ -22,8 +22,8 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		}
 	);
 
-	app.get("/", (response, request) => {
-		request.end(easteregg);
+	app.get("/", (request, response) => {
+		response.end(easteregg);
 	});
 
 	const validate = schema => {
@@ -93,6 +93,18 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	const verifyMailValidation = require("./validation/authentication/VerifyMailValidation")(
 		booki
+	);
+
+	app.get(
+		"/v1/auth/logged-in",
+		authController.isBearerAuthenticated(),
+		(error, request, response, next) => {
+			if (error) {
+				return response.end("{loggedIn: false}");
+			}
+
+			response.end("{loggedIn: true}");
+		}
 	);
 
 	app.get(
