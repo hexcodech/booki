@@ -327,11 +327,37 @@ class AuthController {
 			return (request, response, next) => {
 				request.requiredPermissions = permissions;
 
-				this.passport.authenticate("bearer", { session: false })(
-					request,
-					response,
-					next
-				);
+				this.passport.authenticate(
+					"bearer",
+					{ session: false },
+					(err, user, info) => {
+						if (err) {
+							return next(
+								new this.errorController.errors.AuthenticationError({
+									message: err.message
+								})
+							);
+						}
+
+						if (!user) {
+							return next(
+								new this.errorController.errors.AuthenticationError()
+							);
+						}
+
+						request.logIn(user, err => {
+							if (err) {
+								return next(
+									new this.errorController.errors.AuthenticationError({
+										message: err.message
+									})
+								);
+							}
+
+							next();
+						});
+					}
+				)(request, response, next);
 			};
 		};
 

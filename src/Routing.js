@@ -99,7 +99,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		"/v1/auth/logged-in",
 		authController.isBearerAuthenticated(),
 		(error, request, response, next) => {
-			if (error) {
+			if (error || !request.user) {
 				return response.end("{loggedIn: false}");
 			}
 
