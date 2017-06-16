@@ -93,6 +93,10 @@ class BookController {
 								model: this.models.User,
 								as: "User",
 								include: [{ model: this.models.Image, as: "ProfilePicture" }]
+							},
+							{
+								model: this.models.Condition,
+								as: "Condition"
 							}
 						]
 					}
