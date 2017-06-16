@@ -611,12 +611,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
-	app.get(
-		"/v1/offer",
-		authController.isBearerAuthenticated(),
-		validate(getOfferValidation),
-		offerController.getOffer
-	);
+	app.get("/v1/offer", validate(getOfferValidation), offerController.getOffer);
 
 	app.get(
 		"/v1/offer/:offerId",
