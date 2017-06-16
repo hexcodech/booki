@@ -87,7 +87,14 @@ class BookController {
 					},
 					{
 						model: this.models.Offer,
-						as: "Offers"
+						as: "Offers",
+						include: [
+							{
+								model: this.models.User,
+								as: "User",
+								include: [{ model: this.models.Image, as: "ProfilePicture" }]
+							}
+						]
 					}
 				]
 			})
