@@ -689,14 +689,14 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	app.post(
 		"/v1/offer-request",
-		authController.isBearerAuthenticated(["admin.offerRequest.create"]),
+		authController.isBearerAuthenticated(),
 		validate(postOfferRequestValidation),
 		offerRequestController.postOfferRequest
 	);
 
 	app.put(
 		"/v1/offer-request/:offerRequestId",
-		authController.isBearerAuthenticated(["admin.offerRequest.udate"]),
+		authController.isBearerAuthenticated(["admin.offerRequest.update"]),
 		validate(putOfferRequestValidation),
 		offerRequestController.putOfferRequest
 	);
