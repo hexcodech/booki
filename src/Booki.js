@@ -22,7 +22,7 @@ class Booki {
 			this.folders.uploads = "/uploads";
 
 			console.log("Using log folder: /logs");
-			this.folders.uploads = "/logs";
+			this.folders.logs = "/logs";
 		} else {
 			this.config = require("../config.json");
 		}
