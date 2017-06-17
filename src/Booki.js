@@ -9,8 +9,8 @@ class Booki {
 		this.booki = this;
 
 		this.folders = {
-			uploads: path.resolve(__dirname, "../static/uploads/"),
-			logs: path.resolve(__dirname, "../logs/")
+			uploads: path.resolve(__dirname, "../static/uploads"),
+			logs: path.resolve(__dirname, "../logs")
 		};
 
 		if (process.env.DOCKER) {
@@ -18,11 +18,11 @@ class Booki {
 			console.log("Using config located at /run/secrets/booki-config.json");
 			this.config = require("/run/secrets/booki-config.json");
 
-			console.log("Using upload folder: /uploads/");
-			this.folders.uploads = "/uploads/";
+			console.log("Using upload folder: /uploads");
+			this.folders.uploads = "/uploads";
 
-			console.log("Using log folder: /logs/");
-			this.folders.uploads = "/logs/";
+			console.log("Using log folder: /logs");
+			this.folders.uploads = "/logs";
 		} else {
 			this.config = require("../config.json");
 		}
