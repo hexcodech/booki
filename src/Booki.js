@@ -35,37 +35,39 @@ class Booki {
 		);
 
 		//setup with dependencies
-		this.setupLogger(this.folders)
-			.then(({ winston, logger }) => {
-				this.winston = winston;
-				this.logger = logger;
+		this.checkIfWritable(this.folders)
+			.then(() => {
+				return this.setupLogger(this.folders).then(({ winston, logger }) => {
+					this.winston = winston;
+					this.logger = logger;
 
-				return Promise.all([
-					this.setupI18n(logger, this.config).then(i18n => {
-						this.i18n = i18n;
+					return Promise.all([
+						this.setupI18n(logger, this.config).then(i18n => {
+							this.i18n = i18n;
 
-						return this.setupHttpServer(
-							logger,
-							this.config,
-							i18n,
-							this.passport,
-							this.folders
-						).then(({ app, server }) => {
-							this.app = app;
-							this.server = server;
+							return this.setupHttpServer(
+								logger,
+								this.config,
+								i18n,
+								this.passport,
+								this.folders
+							).then(({ app, server }) => {
+								this.app = app;
+								this.server = server;
 
-							return Promise.all([
-								this.setupStats(server, this.config).then(statsHolder => {
-									this.statsHolder = statsHolder;
-								})
-							]);
-						});
-					}),
+								return Promise.all([
+									this.setupStats(server, this.config).then(statsHolder => {
+										this.statsHolder = statsHolder;
+									})
+								]);
+							});
+						}),
 
-					this.connectToDatabase(logger, this.config).then(sequelize => {
-						this.sequelize = sequelize;
-					})
-				]);
+						this.connectToDatabase(logger, this.config).then(sequelize => {
+							this.sequelize = sequelize;
+						})
+					]);
+				});
 			})
 			.then(() => {
 				return this.loadModels(
@@ -96,8 +98,37 @@ class Booki {
 				require("./Routing")(this);
 			})
 			.catch(e => {
-				throw e;
+				console.log(e);
+				process.exit(1);
 			});
+	}
+
+	checkIfWritable(folders) {
+		const fs = require("fs");
+
+		let keys = Object.keys(folders),
+			promises = [];
+
+		for (let i = 0; i < keys.length; i++) {
+			promises.push(
+				new Promise((resolve, reject) => {
+					if (!fs.existsSync(folders[keys[i]])) {
+						reject(
+							new Error("The folder " + folders[keys[i]] + " doesn't exist!")
+						);
+					}
+					fs.access(folders[keys[i]], fs.W_OK, err => {
+						if (err) {
+							reject(new Error("Can't write to " + folders[keys[i]]));
+						}
+
+						resolve();
+					});
+				})
+			);
+		}
+
+		return Promise.all(promises);
 	}
 
 	setupLogger(folders) {
