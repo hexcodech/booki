@@ -717,7 +717,8 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 			error.name = request.__(error.name);
 			error.message = request.__(error.message);
 
-			response.json(error);
+			response.status(500);
+			response.json({ name: error.name, message: error.message });
 			response.end();
 		}
 
