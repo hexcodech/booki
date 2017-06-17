@@ -1,11 +1,9 @@
 class PersonController {
-	constructor({ booki, models, errorController }) {
+	constructor({ booki, models }) {
 		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
-
-		this.errorController = errorController;
 
 		this.models = models;
 
@@ -23,58 +21,40 @@ class PersonController {
 		this.models.Person
 			.findAll()
 			.then(people => {
-				if (people) {
-					if (request.hasPermission("admin.person.read")) {
-						response.json(
-							people.map(person => {
-								return person.toJSON({ admin: true });
-							})
-						);
-					} else {
-						response.json(
-							people.map(person => {
-								return person.toJSON();
-							})
-						);
-					}
-					return response.end();
+				if (request.hasPermission("admin.person.read")) {
+					response.json(
+						people.map(person => {
+							return person.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						people.map(person => {
+							return person.toJSON();
+						})
+					);
 				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getPersonById(request, response, next) {
 		this.models.Person
 			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
-				if (person) {
-					if (request.hasPermission("admin.person.read")) {
-						response.json(person.toJSON({ admin: true }));
-					} else {
-						response.json(person.toJSON());
-					}
-					return response.end();
+				if (!person) {
+					return Promise.reject(new Error("This person wasn't found!"));
 				}
 
-				return next(new this.errorController.errors.NotFoundError());
+				if (request.hasPermission("admin.person.read")) {
+					response.json(person.toJSON({ admin: true }));
+				} else {
+					response.json(person.toJSON());
+				}
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postPerson(request, response, next) {
@@ -105,13 +85,7 @@ class PersonController {
 					response.json(person.toJSON());
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	putPerson(request, response, next) {
@@ -137,64 +111,34 @@ class PersonController {
 						);
 					}
 
-					person
-						.save()
-						.then(() => {
-							if (request.hasPermission("admin.person.read")) {
-								response.json(person.toJSON({ admin: true }));
-							} else {
-								response.json(person.toJSON());
-							}
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+					return person.save().then(() => {
+						if (request.hasPermission("admin.person.read")) {
+							response.json(person.toJSON({ admin: true }));
+						} else {
+							response.json(person.toJSON());
+						}
+					});
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(new Error("This person wasn't found!"));
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	deletePerson(request, response, next) {
 		this.models.Person
 			.findOne({ where: { id: request.params.personId } })
 			.then(person => {
-				if (person) {
-					person
-						.destroy()
-						.then(() => {
-							response.json({ success: true });
-							response.end();
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!person) {
+					return Promise.reject(new Error("This person wasn't found!"));
 				}
+
+				return person.destroy().then(() => {
+					response.json({ success: true });
+					response.end();
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	lookupPerson(request, response, next) {
@@ -212,13 +156,7 @@ class PersonController {
 					)
 				);
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

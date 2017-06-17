@@ -3,15 +3,7 @@
  */
 
 class AuthController {
-	constructor({
-		booki,
-		config,
-		i18n,
-		models,
-		errorController,
-		passport,
-		piwikTracker
-	}) {
+	constructor({ booki, config, i18n, models, passport, piwikTracker }) {
 		const bindAll = require("lodash/bindAll");
 		this.ejs = require("ejs");
 		this.oauth2orize = require("oauth2orize");
@@ -25,7 +17,6 @@ class AuthController {
 		//Store passed parameters
 		this.config = config;
 		this.i18n = i18n;
-		this.errorController = errorController;
 
 		this.passport = passport;
 
@@ -58,13 +49,7 @@ class AuthController {
 				.then(user => {
 					done(null, user);
 				})
-				.catch(err => {
-					done(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				.catch(done);
 		});
 
 		//Local registration
@@ -91,9 +76,7 @@ class AuthController {
 						"/views/verify-email?register=true&email=" + email
 					);
 				})
-				.catch(error => {
-					next(error);
-				});
+				.catch(next);
 		};
 
 		//OAuth client authentication
@@ -124,16 +107,10 @@ class AuthController {
 									return callback(null, client);
 								})
 								.catch(err => {
-									return callback(new this.errorController.errors.LoginError());
+									return callback(new Error("The secret is invalid!"));
 								});
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
@@ -153,7 +130,7 @@ class AuthController {
 					})
 					.then(user => {
 						if (!user || user.get("passwordHash").length === 0) {
-							return done(new this.errorController.errors.LoginError());
+							return done(new Error("The user couldn't be found!"));
 						}
 
 						user
@@ -161,21 +138,9 @@ class AuthController {
 							.then(success => {
 								return done(null, success ? user : null);
 							})
-							.catch(err => {
-								return done(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
+							.catch(done);
 					})
-					.catch(err => {
-						return done(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(done);
 			})
 		);
 
@@ -216,17 +181,15 @@ class AuthController {
 							where: { expires: { $lt: new Date() } }
 						})
 						.then(() => {
-							this.models.OAuthAccessToken
+							return this.models.OAuthAccessToken
 								.findByToken(accessToken)
 								.then(token => {
 									// No token found
 									if (!token) {
-										return callback(
-											new this.errorController.errors.TokenInvalidError()
-										);
+										return callback(new Error("The sent token is invalid!"));
 									}
 
-									this.models.User
+									return this.models.User
 										.findOne({
 											where: { id: token.get("user_id") },
 											include: [
@@ -239,23 +202,14 @@ class AuthController {
 										.then(user => {
 											if (!user) {
 												// No user was found, so the token is invalid
-												return token
-													.destroy()
-													.then(() => {
-														return callback(
-															new this.errorController.errors
-																.TokenInvalidError(),
-															false
-														);
-													})
-													.catch(err => {
-														return callback(
-															new this.errorController.errors.DatabaseError({
-																message: err.message
-															}),
-															false
-														);
-													});
+												return token.destroy().then(() => {
+													return callback(
+														new Error(
+															"The sent token isn't associated with a user!"
+														),
+														false
+													);
+												});
 											}
 
 											//extend token lifetime
@@ -264,61 +218,28 @@ class AuthController {
 												Date.now() + this.config.ACCESS_TOKEN_LIFETIME * 1000
 											);
 
-											token
-												.save()
-												.then(() => {
-													//check whether the user has the required permissions
-													if (
-														request.requiredPermissions &&
-														user.doesHavePermissions(
-															request.requiredPermissions
-														)
-													) {
-														//request.hasPermission not possible yet, as request.user
-														//isn't set yet
-														return callback(null, user);
-													}
+											return token.save().then(() => {
+												//check whether the user has the required permissions
+												if (
+													request.requiredPermissions &&
+													user.doesHavePermissions(request.requiredPermissions)
+												) {
+													//request.hasPermission not possible yet, as request.user
+													//isn't set yet
+													return callback(null, user);
+												}
 
-													return callback(
-														new this.errorController.errors.ForbiddenError(),
-														false
-													);
-												})
-												.catch(err => {
-													return callback(
-														new this.errorController.errors.DatabaseError({
-															message: err.message
-														}),
-														false
-													);
-												});
-										})
-										.catch(err => {
-											return callback(
-												new this.errorController.errors.DatabaseError({
-													message: err.message
-												}),
-												false
-											);
+												return callback(
+													new Error(
+														"You don't have the permission to do this!"
+													),
+													false
+												);
+											});
 										});
-								})
-								.catch(err => {
-									return callback(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										}),
-										false
-									);
 								});
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								}),
-								false
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
@@ -332,30 +253,14 @@ class AuthController {
 					{ session: false },
 					(err, user, info) => {
 						if (err) {
-							return next(
-								new this.errorController.errors.AuthenticationError({
-									message: err.message
-								})
-							);
+							return next(err);
 						}
 
 						if (!user) {
-							return next(
-								new this.errorController.errors.AuthenticationError()
-							);
+							return next(new Error("The sent access token is invalid!"));
 						}
 
-						request.logIn(user, err => {
-							if (err) {
-								return next(
-									new this.errorController.errors.AuthenticationError({
-										message: err.message
-									})
-								);
-							}
-
-							next();
-						});
+						request.logIn(user, next);
 					}
 				)(request, response, next);
 			};
@@ -406,9 +311,7 @@ class AuthController {
 						.then(user => {
 							return done(null, user);
 						})
-						.catch(error => {
-							return done(error);
-						});
+						.catch(done);
 				}
 			)
 		);
@@ -460,9 +363,7 @@ class AuthController {
 						.then(user => {
 							return done(null, user);
 						})
-						.catch(error => {
-							return done(error);
-						});
+						.catch(done);
 				}
 			)
 		);
@@ -492,13 +393,7 @@ class AuthController {
 				.then(client => {
 					return callback(null, client);
 				})
-				.catch(err => {
-					return callback(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				.catch(callback);
 		});
 
 		this.oauth2Server.grant(
@@ -508,8 +403,9 @@ class AuthController {
 
 					if (!client.verifyRedirectUri(redirectUri)) {
 						return callback(
-							new this.errorController.errors.InvalidRedirectUriError(),
-							null
+							new Error(
+								"The sent redirect uri isn't registered with this oauth client!"
+							)
 						);
 					}
 
@@ -532,13 +428,7 @@ class AuthController {
 						.then(() => {
 							return callback(null, codeValue);
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
@@ -550,7 +440,7 @@ class AuthController {
 					.then(authCode => {
 						if (authCode.get("expires") < Date.now()) {
 							return callback(
-								new this.errorController.errors.AuthCodeExpiredError()
+								new Error("The sent auth code has already expired!")
 							);
 						}
 						//Delete the auth code now that it has been used
@@ -597,21 +487,9 @@ class AuthController {
 							.then(() => {
 								callback(null, tokenData);
 							})
-							.catch(err => {
-								return callback(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
+							.catch(callback);
 					})
-					.catch(err => {
-						return callback(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(callback);
 			})
 		);
 
@@ -634,17 +512,13 @@ class AuthController {
 							return callback(null, client, redirectUri);
 						} else {
 							return callback(
-								new this.errorController.errors.InvalidRedirectUriError()
+								new Error(
+									"The sent redirect uri isn't registered with this oauth client!"
+								)
 							);
 						}
 					})
-					.catch(err => {
-						return callback(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(callback);
 			}),
 			(request, response, next) => {
 				//Check whether request qualifies for immediate approval
@@ -664,13 +538,7 @@ class AuthController {
 						}
 						return next(null);
 					})
-					.catch(err => {
-						return next(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(next);
 			},
 			(request, response, next) => {
 				this.ejs.renderFile(
@@ -691,11 +559,7 @@ class AuthController {
 					{},
 					(err, str) => {
 						if (err) {
-							return next(
-								new errorController.errors.RenderError({
-									message: err.message
-								})
-							);
+							return next(err);
 						}
 
 						response.setHeader("Content-Type", "text/html");
@@ -735,24 +599,14 @@ class AuthController {
 									});
 									response.redirect("/views/login");
 								})
-								.catch(error => {
-									next(error);
-								});
+								.catch(next);
 						} else {
 							response.redirect("/views/login");
 						}
 					})
-					.catch(error => {
-						next(error);
-					});
+					.catch(next);
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	loginView(request, response, next) {
@@ -769,11 +623,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new this.errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -806,11 +656,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -828,35 +674,22 @@ class AuthController {
 
 	auth(request, response, next, err, user, info) {
 		if (err) {
-			console.log(err);
-			return next(
-				new this.errorController.errors.AuthenticationError({
-					message: err.message
-				})
-			);
+			return next(err);
 		}
 
 		if (!user) {
-			return next(
-				new this.errorController.errors.AuthenticationError({
-					message: err.message
-				})
-			);
+			return next(new Error("Couldn't find a user!"));
 		}
 
-		request.logIn(user, error => {
-			if (error) {
-				return next(error);
+		request.logIn(user, err => {
+			if (err) {
+				return next(err);
 			}
 
-			if (user) {
-				if (request.session.requestedURL) {
-					response.redirect(request.session.requestedURL);
-				} else {
-					response.redirect(this.config.DEFAULT_REDIRECT_URI);
-				}
+			if (request.session.requestedURL) {
+				response.redirect(request.session.requestedURL);
 			} else {
-				return next(new this.errorController.errors.AuthenticationError());
+				response.redirect(this.config.DEFAULT_REDIRECT_URI);
 			}
 		});
 	}
@@ -902,9 +735,7 @@ class AuthController {
 								"/views/password-reset?email=" + request.body.email
 							);
 						})
-						.catch(error => {
-							return next(error);
-						});
+						.catch(next);
 				} else {
 					//ALWAYS redirect to not leak whether this email is registered
 					return response.redirect(
@@ -912,13 +743,7 @@ class AuthController {
 					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	passwordResetView(request, response, next) {
@@ -937,11 +762,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new this.errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -977,43 +798,29 @@ class AuthController {
 							});
 							response.redirect("/views/login");
 						})
-						.catch(error => {
-							//Return always the same error to not leak whether this email
-							//is registered
-							return next(
-								new this.errorController.errors.PasswordResetCodeInvalidError(),
-								null
-							);
-						});
+						.catch(next);
 				} else {
 					//Return always the same error to not leak whether this email
 					//is registered
-					return next(
-						new this.errorController.errors.PasswordResetCodeInvalidError(),
-						null
-					);
+					return next(new Error("The password reset code was invalid!"));
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
-	catchInternalError(error, request, response, next) {
-		if (error) {
-			console.log(error);
-			return response.redirect(this.config.LOGIN_PATH);
+	catchInternalError(err, request, response, next) {
+		if (err) {
+			response.redirect(this.config.LOGIN_PATH);
+			throw err;
+
+			return;
 		} else {
 			next();
 		}
 	}
 
-	catchInternalErrorView(error, request, response, next) {
-		if (error) {
+	catchInternalErrorView(err, request, response, next) {
+		if (err) {
 			this.ejs.renderFile(
 				__dirname + "/../views/Error.ejs",
 				{
@@ -1023,16 +830,21 @@ class AuthController {
 							locale: request.getLocale()
 						});
 					},
-					error: error
+					error: err
 				},
 				{},
 				(err, str) => {
-					if (err) {
-						console.log(err);
+					if (err2) {
 						response.end(
-							`Yes, there was just an error while rendering the error...
-						The original error was: ${JSON.stringify(error)}`
+							"Yes, there was just an error while rendering the error..."
 						);
+
+						console.log(`The original error was: ${JSON.stringify(err)}
+						and the new one is: ${JSON.stringify(err2)}`);
+
+						throw err;
+
+						return;
 					}
 
 					response.setHeader("Content-Type", "text/html");

@@ -1,11 +1,9 @@
 class ThumbnailTypeController {
-	constructor({ booki, models, errorController }) {
+	constructor({ booki, models }) {
 		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
-
-		this.errorController = errorController;
 
 		this.models = models;
 
@@ -22,60 +20,40 @@ class ThumbnailTypeController {
 		this.models.ThumbnailType
 			.findAll()
 			.then(thumbnailTypes => {
-				if (thumbnailTypes) {
-					if (request.hasPermission("admin.thumbnailType.read")) {
-						response.json(
-							thumbnailTypes.map(thumbnailType => {
-								return thumbnailType.toJSON({ admin: true });
-							})
-						);
-					} else {
-						response.json(
-							thumbnailTypes.map(thumbnailType => {
-								return thumbnailType.toJSON();
-							})
-						);
-					}
-					return response.end();
+				if (request.hasPermission("admin.thumbnailType.read")) {
+					response.json(
+						thumbnailTypes.map(thumbnailType => {
+							return thumbnailType.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						thumbnailTypes.map(thumbnailType => {
+							return thumbnailType.toJSON();
+						})
+					);
 				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getThumbnailTypeById(request, response, next) {
 		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
-				if (thumbnailType) {
-					if (request.hasPermission("admin.thumbnailType.read")) {
-						response.json(thumbnailType.toJSON({ admin: true }));
-					} else {
-						response.json(thumbnailType.toJSON());
-					}
-					return response.end();
+				if (!thumbnailType) {
+					return Promise.reject(new Error("This thumbnail type wasn't found!"));
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				if (request.hasPermission("admin.thumbnailType.read")) {
+					response.json(thumbnailType.toJSON({ admin: true }));
+				} else {
+					response.json(thumbnailType.toJSON());
+				}
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postThumbnailType(request, response, next) {
@@ -98,91 +76,55 @@ class ThumbnailTypeController {
 					response.json(thumbnailType.toJSON());
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	putThumbnailType(request, response, next) {
 		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
-				if (thumbnailType) {
-					thumbnailType.set(
-						this.pick(request.body.thumbnailType, ["name", "width", "height"])
-					);
-
-					if (request.hasPermission("admin.thumbnailType.write")) {
-						thumbnailType.set(
-							this.omitBy(
-								this.pick(request.body.thumbnailType, ["id"]),
-								this.isNil
-							)
-						);
-					}
-
-					thumbnailType
-						.save()
-						.then(() => {
-							if (request.hasPermission("admin.thumbnailType.read")) {
-								response.json(thumbnailType.toJSON({ admin: true }));
-							} else {
-								response.json(thumbnailType.toJSON());
-							}
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!thumbnailType) {
+					return Promise.reject("This thumbnail type wasn't found!");
 				}
-			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
+
+				thumbnailType.set(
+					this.pick(request.body.thumbnailType, ["name", "width", "height"])
 				);
-			});
+
+				if (request.hasPermission("admin.thumbnailType.write")) {
+					thumbnailType.set(
+						this.omitBy(
+							this.pick(request.body.thumbnailType, ["id"]),
+							this.isNil
+						)
+					);
+				}
+
+				return thumbnailType.save().then(() => {
+					if (request.hasPermission("admin.thumbnailType.read")) {
+						response.json(thumbnailType.toJSON({ admin: true }));
+					} else {
+						response.json(thumbnailType.toJSON());
+					}
+				});
+			})
+			.catch(next);
 	}
 
 	deleteThumbnailType(request, response, next) {
 		this.models.ThumbnailType
 			.findOne({ where: { id: request.params.thumbnailTypeId } })
 			.then(thumbnailType => {
-				if (thumbnailType) {
-					thumbnailType
-						.destroy()
-						.then(() => {
-							response.json({ success: true });
-							response.end();
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!thumbnailType) {
+					return Promise.reject(new Error("This thumbnail type wasn't found!"));
 				}
+
+				return thumbnailType.destroy().then(() => {
+					response.json({ success: true });
+					response.end();
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

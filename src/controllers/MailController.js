@@ -4,13 +4,12 @@
  */
 
 class MailController {
-	constructor(config, errorController) {
+	constructor(config) {
 		const bindAll = require("lodash/bindAll");
 		const nodemailer = require("nodemailer");
 
 		//store the passed parameters
 		this.config = config;
-		this.errorController = errorController;
 
 		bindAll(this, ["sendMail"]);
 
@@ -36,11 +35,8 @@ class MailController {
 	) {
 		return new Promise((resolve, reject) => {
 			let data = {
-				from: '"' +
-					this.config.MAIL_FROM_NAME +
-					'" <' +
-					this.config.MAIL_USER +
-					">"
+				from:
+					'"' + this.config.MAIL_FROM_NAME + '" <' + this.config.MAIL_USER + ">"
 			};
 
 			let requiredFields = [
@@ -64,7 +60,11 @@ class MailController {
 
 			for (let i = 0; i < requiredFields.length; i++) {
 				if (!requiredFields[i].value) {
-					return reject(new this.errorController.errors.InputValidationError());
+					return reject(
+						new Error(
+							requiredFields[i].value + " is required to send the email!"
+						)
+					);
 				}
 			}
 
@@ -82,13 +82,9 @@ class MailController {
 				}
 			}
 
-			this.transporter.sendMail(data, (error, info) => {
-				if (error) {
-					return reject(
-						new this.errorController.errors.ApiError({
-							message: error.message
-						})
-					);
+			this.transporter.sendMail(data, (err, info) => {
+				if (err) {
+					return reject(err);
 				}
 
 				resolve();

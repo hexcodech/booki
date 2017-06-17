@@ -2,19 +2,19 @@
 <html>
 	<head>
 		<title><%= __("Booki") %> - <%= __("Error") %></title>
-		
+
 		<meta charset="utf-8">
-		
+
 		<link href="/static/res/css/booki.min.css" rel="stylesheet" type="text/css">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,400i" rel="stylesheet">
-		
+
 	</head>
-	
+
 	<body>
 		<nav class="navbar navbar-dark bg-primary">
 			<a class="navbar-brand" href="#"><img src="/static/res/img/logo/logo.svg"></a>
 		</nav>
-		
+
 		<div class="modal static">
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
@@ -22,32 +22,24 @@
 						<h3><%= error.name %></h3>
 					</div>
 					<div class="modal-body">
-						
+
 						<%if (error.message) { %>
-							<p><%= __("Message") %> : <%= error.message %></p>
+							<p><%= __("Message") %> : <%= __(error.message) %></p>
 						<% } %>
-						
-						<%if (error.response) { %>
-							<p><%= __("Response") %> : <%= error.response %></p>
-						<% } %>
-						
-						<%if (error.explanation) { %>
-							<p><%= __("Explanation") %> : <%= error.explanation %></p>
-						<% } %>
-						
+
 						<%if (true && error.stack) { %>
 							<p><%= __("Stack Trace") %> : <code><%= error.stack %></code></p>
 						<% } %>
-						
+
 						<%if (error.errors && error.errors.length > 0) { %>
 							<div class="list-group">
 							<% for(var i=0; i<error.errors.length; i++) { %>
 								<div class="list-group-item">
-									<h5 class="list-group-item-heading"><%= __("Field") %> : <%= error.errors[i].field %></h5>
+									<h5 class="list-group-item-heading"><%= __("Field") %> : <%= __(error.errors[i].field) %></h5>
 									<p class="list-group-item-text">
 										<ul class="list-style-none">
 											<% for(var j=0; j<error.errors[i].messages.length; j++) { %>
-												<li><%= error.errors[i].messages[j] %></li>
+												<li><%= __(error.errors[i].messages[j]) %></li>
 											<% } %>
 										</ul>
 									</p>
@@ -55,7 +47,7 @@
 							<% } %>
 							</div>
 						<% } %>
-						
+
 					</div>
 				</div>
 			</div>

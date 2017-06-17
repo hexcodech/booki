@@ -1,11 +1,9 @@
 class ConditionController {
-	constructor({ booki, models, errorController }) {
+	constructor({ booki, models }) {
 		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
-
-		this.errorController = errorController;
 
 		this.models = models;
 
@@ -22,60 +20,41 @@ class ConditionController {
 		this.models.Condition
 			.findAll()
 			.then(conditions => {
-				if (conditions) {
-					if (request.hasPermission("admin.condition.read")) {
-						response.json(
-							conditions.map(condition => {
-								return condition.toJSON({ admin: true });
-							})
-						);
-					} else {
-						response.json(
-							conditions.map(condition => {
-								return condition.toJSON();
-							})
-						);
-					}
-					return response.end();
+				if (request.hasPermission("admin.condition.read")) {
+					response.json(
+						conditions.map(condition => {
+							return condition.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						conditions.map(condition => {
+							return condition.toJSON();
+						})
+					);
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getConditionById(request, response, next) {
 		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
-				if (condition) {
-					if (request.hasPermission("admin.condition.read")) {
-						response.json(condition.toJSON({ admin: true }));
-					} else {
-						response.json(condition.toJSON());
-					}
-					return response.end();
+				if (!condition) {
+					return Promise.reject(new Error("This condition wasn't found!"));
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				if (request.hasPermission("admin.condition.read")) {
+					response.json(condition.toJSON({ admin: true }));
+				} else {
+					response.json(condition.toJSON());
+				}
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postCondition(request, response, next) {
@@ -98,88 +77,51 @@ class ConditionController {
 					response.json(condition.toJSON());
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	putCondition(request, response, next) {
 		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
-				if (condition) {
-					condition.set(
-						this.pick(request.body.condition, ["key", "priceFactor"])
-					);
-
-					if (request.hasPermission("admin.condition.write")) {
-						condition.set(
-							this.omitBy(this.pick(request.body.condition, ["id"]), this.isNil)
-						);
-					}
-
-					condition
-						.save()
-						.then(() => {
-							if (request.hasPermission("admin.condition.read")) {
-								response.json(condition.toJSON({ admin: true }));
-							} else {
-								response.json(condition.toJSON());
-							}
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!condition) {
+					return Promise.reject(new Error("This condition wasn't found!"));
 				}
-			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
+				condition.set(
+					this.pick(request.body.condition, ["key", "priceFactor"])
 				);
-			});
+
+				if (request.hasPermission("admin.condition.write")) {
+					condition.set(
+						this.omitBy(this.pick(request.body.condition, ["id"]), this.isNil)
+					);
+				}
+
+				return condition.save().then(() => {
+					if (request.hasPermission("admin.condition.read")) {
+						response.json(condition.toJSON({ admin: true }));
+					} else {
+						response.json(condition.toJSON());
+					}
+				});
+			})
+			.catch(next);
 	}
 
 	deleteCondition(request, response, next) {
 		this.models.Condition
 			.findOne({ where: { id: request.params.conditionId } })
 			.then(condition => {
-				if (condition) {
-					condition
-						.destroy()
-						.then(() => {
-							response.json({ success: true });
-							response.end();
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!condition) {
+					return Promise.reject(new Error("This condition wasn't found!"));
 				}
+
+				return condition.destroy().then(() => {
+					response.json({ success: true });
+					response.end();
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

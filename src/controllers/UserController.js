@@ -3,7 +3,7 @@
  */
 
 class UserController {
-	constructor({ booki, config, app, i18n, errorController, models }) {
+	constructor({ booki, config, app, i18n, models }) {
 		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
@@ -13,7 +13,6 @@ class UserController {
 		this.config = config;
 		this.app = app;
 		this.i18n = i18n;
-		this.errorController = errorController;
 
 		this.models = models;
 
@@ -58,13 +57,7 @@ class UserController {
 				response.json(user.toJSON({ owner: true }));
 				response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getUser(request, response, next) {
@@ -102,13 +95,7 @@ class UserController {
 
 				response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getUserById(request, response, next) {
@@ -143,6 +130,10 @@ class UserController {
 				]
 			})
 			.then(user => {
+				if (!user) {
+					return Promise.reject(new Error("This user wasn't found!"));
+				}
+
 				if (request.hasPermission("admin.user.read")) {
 					response.json(user.toJSON({ admin: true }));
 				} else {
@@ -151,13 +142,7 @@ class UserController {
 
 				response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postUser(request, response, next) {
@@ -191,13 +176,13 @@ class UserController {
 					request.body.user.permissions = [];
 				}
 
-				user
+				return user
 					.setPermissionsRaw(request.body.user.permissions)
 					.then(() => {
 						//added relations, refreshing the user instance in order to include the
 						//newly added permissions
 
-						user
+						return user
 							.reload({
 								include: [
 									{
@@ -228,30 +213,10 @@ class UserController {
 								} else {
 									response.json(user.toJSON({ owner: true }));
 								}
-							})
-							.catch(err => {
-								return next(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
 							});
-					})
-					.catch(err => {
-						return next(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
 					});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	putUser(request, response, next) {
@@ -259,7 +224,7 @@ class UserController {
 			!request.hasPermission("admin.user.editOthers") &&
 			request.params.userId !== request.user.get("id")
 		) {
-			return next(new this.errorController.errors.ForbiddenError());
+			return next(new Error("You are not allowed to update this user!"));
 		}
 
 		this.models.User
@@ -290,7 +255,7 @@ class UserController {
 			})
 			.then(user => {
 				if (!user) {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(new Error("This user wasn't found!"));
 				}
 
 				let promises = [];
@@ -351,109 +316,55 @@ class UserController {
 						request.body.user.permissions = [];
 					}
 
-					Promise.all([
+					return Promise.all([
 						user.save(),
 						user.setPermissionsRaw(request.body.user.permissions)
-					])
-						.then(() => {
-							//added relations, refreshing the user instance in order to include
-							//the newly added permissions
+					]).then(() => {
+						//added relations, refreshing the user instance in order to include
+						//the newly added permissions
 
-							user
-								.reload({
-									include: [
-										{
-											model: this.models.Permission,
-											as: "Permissions"
-										},
-										{
-											model: this.models.Image,
-											as: "ProfilePicture"
-										},
-										{
-											model: this.models.OAuthProvider,
-											as: "OAuthProviders"
-										},
-										{
-											model: this.models.Offer,
-											as: "Offers"
-										},
-										{
-											model: this.models.OfferRequest,
-											as: "OfferRequests"
-										}
-									]
-								})
-								.then(() => {
-									if (request.hasPermission("admin.user.read")) {
-										response.json(user.toJSON({ admin: true }));
-									} else {
-										response.json(user.toJSON({ owner: true }));
-									}
-								})
-								.catch(err => {
-									return next(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								});
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
+						return user.reload().then(() => {
+							if (request.hasPermission("admin.user.read")) {
+								response.json(user.toJSON({ admin: true }));
+							} else {
+								response.json(user.toJSON({ owner: true }));
+							}
 						});
+					});
 				} else {
 					//if not return
 
 					promises.push(user.save());
 
-					Promise.all(promises)
-						.then(() => {
-							//no need to reload() as all changes were made directly on the user
-							//instance
+					return Promise.all(promises).then(() => {
+						//no need to reload() as all changes were made directly on the user
+						//instance
 
-							if (request.hasPermission("admin.user.read")) {
-								response.json(user.toJSON({ admin: true }));
-							} else {
-								response.json(user.toJSON());
-							}
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						if (request.hasPermission("admin.user.read")) {
+							response.json(user.toJSON({ admin: true }));
+						} else {
+							response.json(user.toJSON());
+						}
+					});
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	deleteUser(request, response, next) {
 		this.models.User
-			.destroy({ where: { id: request.params.userId } })
-			.then(() => {
-				response.json({ success: true });
-				response.end();
+			.findOne({ where: { id: request.params.userId } })
+			.then(user => {
+				if (!user) {
+					return Promise.reject(new Error("This user wasn't found!"));
+				}
+
+				return user.destroy().then(() => {
+					response.json({ success: true });
+					response.end();
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

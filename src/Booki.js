@@ -9,15 +9,20 @@ class Booki {
 		this.booki = this;
 
 		this.folders = {
-			uploads: path.resolve(__dirname, "../static/uploads/")
+			uploads: path.resolve(__dirname, "../static/uploads/"),
+			logs: path.resolve(__dirname, "../logs/")
 		};
 
 		if (process.env.DOCKER) {
 			console.log("Running inside docker!");
 			console.log("Using config located at /run/secrets/booki-config.json");
 			this.config = require("/run/secrets/booki-config.json");
+
 			console.log("Using upload folder: /uploads/");
 			this.folders.uploads = "/uploads/";
+
+			console.log("Using log folder: /logs/");
+			this.folders.uploads = "/logs/";
 		} else {
 			this.config = require("../config.json");
 		}
@@ -30,7 +35,7 @@ class Booki {
 		);
 
 		//setup with dependencies
-		this.setupLogger()
+		this.setupLogger(this.folders)
 			.then(({ winston, logger }) => {
 				this.winston = winston;
 				this.logger = logger;
@@ -39,28 +44,22 @@ class Booki {
 					this.setupI18n(logger, this.config).then(i18n => {
 						this.i18n = i18n;
 
-						return Promise.all([
-							this.loadErrorController(i18n).then(errorController => {
-								this.errorController = errorController;
-							}),
+						return this.setupHttpServer(
+							logger,
+							this.config,
+							i18n,
+							this.passport,
+							this.folders
+						).then(({ app, server }) => {
+							this.app = app;
+							this.server = server;
 
-							this.setupHttpServer(
-								logger,
-								this.config,
-								i18n,
-								this.passport,
-								this.folders
-							).then(({ app, server }) => {
-								this.app = app;
-								this.server = server;
-
-								return Promise.all([
-									this.setupStats(server, this.config).then(statsHolder => {
-										this.statsHolder = statsHolder;
-									})
-								]);
-							})
-						]);
+							return Promise.all([
+								this.setupStats(server, this.config).then(statsHolder => {
+									this.statsHolder = statsHolder;
+								})
+							]);
+						});
 					}),
 
 					this.connectToDatabase(logger, this.config).then(sequelize => {
@@ -73,7 +72,6 @@ class Booki {
 					this.logger,
 					this.folders,
 					this.config,
-					this.errorController,
 					this.sequelize,
 					this.cryptoUtilities
 				);
@@ -98,16 +96,11 @@ class Booki {
 				require("./Routing")(this);
 			})
 			.catch(e => {
-				if (this.logger) {
-					this.logger.log("critical", e);
-				} else {
-					console.log("ERROR", e);
-					process.exit(1);
-				}
+				throw e;
 			});
 	}
 
-	setupLogger() {
+	setupLogger(folders) {
 		let winston = require("winston");
 
 		let logger = new winston.Logger({
@@ -121,8 +114,9 @@ class Booki {
 				new winston.transports.File({
 					name: "file-log",
 					level: "debug",
-					filename: "booki.log",
-					colorize: true,
+					filename: folders.logs + "/booki.log",
+					handleExceptions: true,
+					colorize: false,
 					prettyPrint: true
 				})
 			],
@@ -161,12 +155,6 @@ class Booki {
 		});
 
 		return Promise.resolve(i18n);
-	}
-
-	loadErrorController(i18n) {
-		return Promise.resolve(
-			new (require("./controllers/ErrorController"))(i18n)
-		);
 	}
 
 	connectToDatabase(logger, config) {
@@ -289,14 +277,7 @@ class Booki {
 		return Promise.resolve(statsHolder);
 	}
 
-	loadModels(
-		logger,
-		folders,
-		config,
-		errorController,
-		sequelize,
-		cryptoUtilities
-	) {
+	loadModels(logger, folders, config, sequelize, cryptoUtilities) {
 		logger.log("info", "Loading models...");
 
 		const Sequelize = require("sequelize");
@@ -332,7 +313,6 @@ class Booki {
 			models[model] = require("./models/" + model)({
 				folders,
 				config,
-				errorController,
 				sequelize,
 				models,
 				cryptoUtilities

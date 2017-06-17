@@ -9,7 +9,8 @@ module.exports = ({ config }) => {
 		body: {
 			offerRequest: {
 				id: Joi.number().integer().positive().allow(null),
-				offerId: Joi.number().integer().positive(),
+				userId: Joi.number().integer().positive(),
+				/*offerId: Joi.number().integer().positive(),*/
 				message: Joi.string().max(2000).allow(null),
 				requested: Joi.boolean(),
 				responded: Joi.boolean()

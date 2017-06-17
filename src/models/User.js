@@ -2,13 +2,7 @@
  * Defines the user structure
  */
 
-const User = ({
-	config,
-	errorController,
-	sequelize,
-	models,
-	cryptoUtilities
-}) => {
+const User = ({ config, sequelize, models, cryptoUtilities }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 	const async = require("async");
@@ -16,10 +10,7 @@ const User = ({
 	const request = require("request-promise-native");
 
 	const EmailTemplate = require("email-templates").EmailTemplate;
-	const mailController = new (require("../controllers/MailController"))(
-		config,
-		errorController
-	);
+	const mailController = new (require("../controllers/MailController"))(config);
 
 	let User = sequelize.define(
 		"user",
@@ -195,21 +186,13 @@ const User = ({
 						where: {
 							emailVerified: { $in: profile.emails.map(obj => obj.value) }
 						}
-					})
-						.then(user => {
-							if (user) {
-								return user;
-							} else {
-								return null;
-							}
-						})
-						.catch(err => {
-							return Promise.reject(
-								new errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+					}).then(user => {
+						if (user) {
+							return user;
+						} else {
+							return null;
+						}
+					});
 				},
 
 				register: function(firstName, email, locale) {
@@ -239,45 +222,26 @@ const User = ({
 						}
 					}).then(users => {
 						if (users && users.length > 0) {
-							throw new errorController.errors.UserAlreadyExistsError();
+							return Promise.reject("This email is already registered!");
 						} else {
-							return this.create(userData)
-								.then(user => {
-									user
-										.initEmailVerification(true)
-										.then(() => {
-											return user;
-										})
-										.catch(error => {
-											throw error;
-										});
-								})
-								.catch(err => {
-									throw new errorController.errors.DatabaseError({
-										message: err.message
-									});
+							return this.create(userData).then(user => {
+								user.initEmailVerification(true).then(() => {
+									return user;
 								});
+							});
 						}
 					});
 				},
 
 				findOrCreateUserByPassportProfile: function(profile) {
 					return this.getUserByPassportProfile(profile).then(user => {
-						let promise;
-
 						if (user) {
 							//update values for the current user
-							promise = user.updateFromPassportProfile(profile);
+							return user.updateFromPassportProfile(profile);
 						} else {
 							//we have to create a new user
-							promise = this.createFromPassportProfile(profile);
+							return this.createFromPassportProfile(profile);
 						}
-
-						return promise.catch(err => {
-							throw new errorController.errors.DatabaseError({
-								message: err.message
-							});
-						});
 					});
 				},
 
@@ -403,20 +367,18 @@ const User = ({
 								passwordResetCode: ""
 							});
 
-							return this.save()
-								.then(user => {
-									return;
-								})
-								.catch(err => {
-									throw new errorController.errors.DatabaseError({
-										message: err.message
-									});
-								});
+							return this.save().then(user => {
+								return;
+							});
 						} else {
-							throw new errorController.errors.PasswordResetCodeExpiredError();
+							return Promise.reject(
+								new Error("The password reset code has already expired!")
+							);
 						}
 					} else {
-						throw new errorController.errors.PasswordResetCodeInvalidError();
+						return Promise.reject(
+							new Error("The password reset code is invalid!")
+						);
 					}
 				},
 
@@ -441,25 +403,14 @@ const User = ({
 							this.get("locale")
 						)
 						.then(result => {
-							return this.sendMail(result.subject, result.html, result.text)
-								.then(() => {
-									return this.save()
-										.then(() => {
-											return true;
-										})
-										.catch(err => {
-											throw new errorController.errors.DatabaseError({
-												message: err.message
-											});
-										});
-								})
-								.catch(error => {
-									throw error;
+							return this.sendMail(
+								result.subject,
+								result.html,
+								result.text
+							).then(() => {
+								return this.save().then(() => {
+									return true;
 								});
-						})
-						.catch(err => {
-							throw new errorController.errors.RenderError({
-								message: err.message
 							});
 						});
 				},
@@ -487,37 +438,20 @@ const User = ({
 								result.html,
 								result.text,
 								this.get("emailUnverified")
-							)
-								.then(() => {
-									this.set("emailVerificationCode", emailVerificationCode);
+							).then(() => {
+								this.set("emailVerificationCode", emailVerificationCode);
 
-									if (registration) {
-										this.set("passwordResetCode", emailVerificationCode);
-										this.set(
-											"passwordResetCodeExpirationDate",
-											Date.now() + config.RESET_CODE_LIFETIME * 1000
-										);
-									}
+								if (registration) {
+									this.set("passwordResetCode", emailVerificationCode);
+									this.set(
+										"passwordResetCodeExpirationDate",
+										Date.now() + config.RESET_CODE_LIFETIME * 1000
+									);
+								}
 
-									return this.save()
-										.then(() => {
-											return true;
-										})
-										.catch(err => {
-											throw new errorController.errors.DatabaseError({
-												message: err.message
-											});
-										});
-								})
-								.catch(err => {
-									throw new errorController.errors.InternalServerError({
-										message: err.message
-									});
+								return this.save().then(() => {
+									return true;
 								});
-						})
-						.catch(err => {
-							throw new errorController.errors.RenderError({
-								message: err.message
 							});
 						});
 				},
@@ -535,18 +469,12 @@ const User = ({
 							emailUnverified: null
 						});
 
-						return this.save()
-							.then(() => {
-								return true;
-							})
-							.catch(err => {
-								throw new errorController.errors.DatabaseError({
-									message: err.message
-								});
-							});
+						return this.save().then(() => {
+							return true;
+						});
 					} else {
 						return Promise.reject(
-							new errorController.errors.EmailVerificationCodeInvalidError()
+							new Error("The email verification code is invalid!")
 						);
 					}
 				},

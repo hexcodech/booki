@@ -1,11 +1,4 @@
-const Image = ({
-	folders,
-	config,
-	sequelize,
-	errorController,
-	models,
-	cryptoUtilities
-}) => {
+const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
@@ -120,13 +113,6 @@ const Image = ({
 										}
 									]
 								});
-							})
-							.catch(err => {
-								return Promise.reject(
-									new errorController.errors.InternalServerError({
-										message: err.message
-									})
-								);
 							});
 					});
 				}

@@ -1,10 +1,4 @@
-const OfferRequest = ({
-	config,
-	sequelize,
-	models,
-	errorController,
-	cryptoUtilities
-}) => {
+const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
@@ -86,13 +80,6 @@ const OfferRequest = ({
 									},
 									offerer.get("locale")
 								)
-								.catch(err => {
-									return Promise.reject(
-										new errorController.errors.RenderError({
-											message: err.message
-										})
-									);
-								})
 								.then(result => {
 									return offerer.sendMail(
 										result.subject,

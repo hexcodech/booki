@@ -1,11 +1,9 @@
 class OfferController {
-	constructor({ booki, models, errorController }) {
+	constructor({ booki, models }) {
 		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
-
-		this.errorController = errorController;
 
 		this.models = models;
 
@@ -53,34 +51,22 @@ class OfferController {
 				limit: limit
 			})
 			.then(offers => {
-				if (offers) {
-					if (request.hasPermission("admin.offer.read")) {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON({ admin: true });
-							})
-						);
-					} else {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON();
-							})
-						);
-					}
-					return response.end();
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON();
+						})
+					);
 				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getOfferById(request, response, next) {
@@ -99,26 +85,18 @@ class OfferController {
 				]
 			})
 			.then(offer => {
-				if (offer) {
-					if (request.hasPermission("admin.offer.read")) {
-						response.json(offer.toJSON({ admin: true }));
-					} else {
-						response.json(offer.toJSON());
-					}
-					return response.end();
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(offer.toJSON({ admin: true }));
+				} else {
+					response.json(offer.toJSON());
+				}
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getOfferByBookId(request, response, next) {
@@ -137,34 +115,22 @@ class OfferController {
 				]
 			})
 			.then(offers => {
-				if (offers) {
-					if (request.hasPermission("admin.offer.read")) {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON({ admin: true });
-							})
-						);
-					} else {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON();
-							})
-						);
-					}
-					return response.end();
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON();
+						})
+					);
 				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postOffer(request, response, next) {
@@ -181,13 +147,11 @@ class OfferController {
 
 		promises.push(
 			this.models.User.findOne({ where: { id: userId } }).then(user => {
-				if (user) {
-					return Promise.resolve();
-				} else {
-					return Promise.reject(
-						new this.errorController.errors.NotFoundError()
-					);
+				if (!user) {
+					return Promise.reject(new Error("The given user wasn't found!"));
 				}
+
+				return Promise.resolve();
 			})
 		);
 
@@ -195,13 +159,11 @@ class OfferController {
 			this.models.Book
 				.findOne({ where: { id: request.body.offer.bookId } })
 				.then(book => {
-					if (book) {
-						return Promise.resolve();
-					} else {
-						return Promise.reject(
-							new this.errorController.errors.NotFoundError()
-						);
+					if (!book) {
+						return Promise.reject(new Error("The given book wasn't found!"));
 					}
+
+					return Promise.resolve();
 				})
 		);
 
@@ -209,13 +171,13 @@ class OfferController {
 			this.models.Condition
 				.findOne({ where: { id: request.body.offer.conditionId } })
 				.then(condition => {
-					if (condition) {
-						return Promise.resolve();
-					} else {
+					if (!condition) {
 						return Promise.reject(
-							new this.errorController.errors.NotFoundError()
+							new Error("The given condition wasn't found!")
 						);
 					}
+
+					return Promise.resolve();
 				})
 		);
 
@@ -233,13 +195,7 @@ class OfferController {
 					);
 				}
 
-				return offer.save().catch(err => {
-					return Promise.reject(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				return offer.save();
 			})
 			.then(offer => {
 				if (request.hasPermission("admin.offer.read")) {
@@ -248,162 +204,132 @@ class OfferController {
 					response.json(offer.toJSON());
 				}
 			})
-			.catch(error => {
-				return next(error);
-			});
+			.catch(next);
 	}
 
 	putOffer(request, response, next) {
 		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
-				if (offer) {
-					if (
-						request.hasPermission("admin.offer.editOthers") ||
-						offer.get("user_id") === request.user.get("id")
-					) {
-						offer.set(
-							this.pick(request.body.offer, ["description", "price", "sold"])
-						);
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
+				}
 
-						let userId = request.hasPermission("admin.offer.write") &&
-							request.body.offer.userId
-							? request.body.offer.userId
-							: request.user.get("id");
+				if (
+					request.hasPermission("admin.offer.editOthers") ||
+					offer.get("user_id") === request.user.get("id")
+				) {
+					offer.set(
+						this.pick(request.body.offer, ["description", "price", "sold"])
+					);
 
-						let promises = [];
+					let userId = request.hasPermission("admin.offer.write") &&
+						request.body.offer.userId
+						? request.body.offer.userId
+						: request.user.get("id");
 
+					let promises = [];
+
+					promises.push(
+						this.models.User.findOne({ where: { id: userId } }).then(user => {
+							if (!user) {
+								return Promise.reject(
+									new Error("The given user wasn't found!")
+								);
+							}
+
+							return Promise.resolve();
+						})
+					);
+
+					if (request.body.offer.bookId) {
 						promises.push(
-							this.models.User.findOne({ where: { id: userId } }).then(user => {
-								if (user) {
+							this.models.Book
+								.findOne({ where: { id: request.body.offer.bookId } })
+								.then(book => {
+									if (!book) {
+										return Promise.reject(
+											new Error("The given Book wasn't found!")
+										);
+									}
+
 									return Promise.resolve();
-								} else {
-									return Promise.reject(
-										new this.errorController.errors.NotFoundError()
-									);
-								}
-							})
+								})
 						);
-
-						if (request.body.offer.bookId) {
-							promises.push(
-								this.models.Book
-									.findOne({ where: { id: request.body.offer.bookId } })
-									.then(book => {
-										if (book) {
-											return Promise.resolve();
-										} else {
-											return Promise.reject(
-												new this.errorController.errors.NotFoundError()
-											);
-										}
-									})
-							);
-						}
-
-						if (request.body.offer.conditionId) {
-							promises.push(
-								this.models.Condition
-									.findOne({ where: { id: request.body.offer.conditionId } })
-									.then(condition => {
-										if (condition) {
-											return Promise.resolve();
-										} else {
-											return Promise.reject(
-												new this.errorController.errors.NotFoundError()
-											);
-										}
-									})
-							);
-						}
-
-						Promise.all(promises)
-							.then(() => {
-								offer.set({
-									book_id: request.body.offer.bookId,
-									user_id: userId,
-									condition_id: request.body.offer.conditionId
-								});
-
-								if (request.hasPermission("admin.offer.write")) {
-									offer.set(
-										this.omitBy(
-											this.pick(request.body.offer, ["id"]),
-											this.isNil
-										)
-									);
-								}
-
-								return offer.save().catch(err => {
-									return Promise.reject(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								});
-							})
-							.then(offer => {
-								if (request.hasPermission("admin.offer.read")) {
-									response.json(offer.toJSON({ admin: true }));
-								} else {
-									response.json(offer.toJSON());
-								}
-							})
-							.catch(error => {
-								return next(error);
-							});
-					} else {
-						return next(new this.errorController.errors.ForbiddenError());
 					}
+
+					if (request.body.offer.conditionId) {
+						promises.push(
+							this.models.Condition
+								.findOne({ where: { id: request.body.offer.conditionId } })
+								.then(condition => {
+									if (!condition) {
+										return Promise.reject(
+											new Error("The given condition wasn't found!")
+										);
+									}
+
+									return Promise.resolve();
+								})
+						);
+					}
+
+					return Promise.all(promises)
+						.then(() => {
+							offer.set({
+								book_id: request.body.offer.bookId,
+								user_id: userId,
+								condition_id: request.body.offer.conditionId
+							});
+
+							if (request.hasPermission("admin.offer.write")) {
+								offer.set(
+									this.omitBy(this.pick(request.body.offer, ["id"]), this.isNil)
+								);
+							}
+
+							return offer.save();
+						})
+						.then(offer => {
+							if (request.hasPermission("admin.offer.read")) {
+								response.json(offer.toJSON({ admin: true }));
+							} else {
+								response.json(offer.toJSON());
+							}
+						})
+						.catch(next);
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(
+						new Error("You are not allowed to update this offer!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	deleteOffer(request, response, next) {
 		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
-				if (offer) {
-					if (
-						request.hasPermission("admin.offer.deleteOthers") ||
-						offer.get("user_id") === request.user.get("id")
-					) {
-						offer
-							.destroy()
-							.then(() => {
-								response.json({ success: true });
-								response.end();
-							})
-							.catch(err => {
-								return next(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
-					} else {
-						return next(new this.errorController.errors.ForbiddenError());
-					}
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
+				}
+
+				if (
+					request.hasPermission("admin.offer.deleteOthers") ||
+					offer.get("user_id") === request.user.get("id")
+				) {
+					offer.destroy().then(() => {
+						response.json({ success: true });
+						response.end();
+					});
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(
+						new Error("You are not allowed to delete this offer!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

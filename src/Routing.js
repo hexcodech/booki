@@ -711,9 +711,12 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	//last error catch
 
 	app.use((error, request, response, next) => {
-		//TODO improve error handling
 		if (error) {
 			logger.log("error", error);
+
+			error.name = request.__(error.name);
+			error.message = request.__(error.message);
+
 			response.json(error);
 			response.end();
 		}

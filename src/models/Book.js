@@ -1,4 +1,4 @@
-const Book = ({ config, errorController, sequelize, models }) => {
+const Book = ({ config, sequelize, models }) => {
 	const get = require("lodash/get");
 	const pick = require("lodash/pick");
 
@@ -290,16 +290,16 @@ const Book = ({ config, errorController, sequelize, models }) => {
 									this.Person
 										.findOne({ where: { id: author } })
 										.then(instance => {
-											if (instance) {
-												authorInstances.push(instance);
-												callback();
-											} else {
-												callback(new Error("The author couldn't be found!"));
+											if (!instance) {
+												return Promise.reject(
+													new Error("The author couldn't be found!")
+												);
 											}
+
+											authorInstances.push(instance);
+											callback();
 										})
-										.catch(err => {
-											callback(err);
-										});
+										.catch(callback);
 								}
 							},
 							err => {
