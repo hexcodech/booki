@@ -30,9 +30,8 @@ class BookController {
 			filter = request.query.filter ? request.query.filter : {};
 
 		if ("latestOffers" in filter && filter.latest) {
-			//TODO move limit to config
 			order.push([[this.models.Offer, "createdAt", "DESC"]]);
-			limit = 6;
+			limit = this.config.LATEST_OFFERS_LIMIT;
 
 			include.push({
 				model: this.models.Offer,

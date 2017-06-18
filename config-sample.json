@@ -26,6 +26,8 @@ this file has to be renamed to config.json and this comment needs to be removed
 	"ACCESS_TOKEN_LIFETIME"         : 172800,
 	"RESET_CODE_LIFETIME"           : 1200,
 
+	"LATEST_OFFERS_LIMIT"           : 6,
+
 	"HOST"                          : "",
 	"LOCALES"                       : ["en-US",
 		"af-ZA","sq-AL","ar-DZ","ar-BH","ar-EG","ar-IQ","ar-JO","ar-KW","ar-LB",
