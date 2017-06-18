@@ -23,14 +23,32 @@ class BookController {
 	}
 
 	getBook(request, response, next) {
+		let query = {},
+			include = [],
+			order = [],
+			limit = undefined,
+			filter = request.query.filter ? request.query.filter : {};
+
+		if ("latestOffers" in filter && filter.latest) {
+			//TODO move limit to config
+			order.push([[this.models.Offer, "createdAt", "DESC"]]);
+			limit = 6;
+
+			include.push({
+				model: this.models.Offer,
+				as: "Offers"
+			});
+
+			include.push({ model: this.models.Image, as: "Cover" });
+		} else if (!request.user || !request.hasPermission("admin.book.list")) {
+			next(new Error("You are not allowed to list all books!"));
+		}
+
 		this.models.Book
 			.findAll({
-				include: [
-					{
-						model: this.models.Person,
-						as: "Authors"
-					}
-				]
+				include: include,
+				order: order,
+				limit: limit
 			})
 			.then(books => {
 				if (request.hasPermission("admin.book.read")) {

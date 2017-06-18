@@ -477,6 +477,10 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	const bookController = new (require("./controllers/BookController"))(booki);
 
+	const getBookValidation = require("./validation/book/GetBookValidation")(
+		booki
+	);
+
 	const getBookByIdValidation = require("./validation/book/GetBookByIdValidation")(
 		booki
 	);
@@ -512,11 +516,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		bookController.getBookById
 	);
 
-	app.get(
-		"/v1/book",
-		authController.isBearerAuthenticated(["admin.book.list"]),
-		bookController.getBook
-	);
+	app.get("/v1/book", validate(getBookValidation), bookController.getBook);
 
 	app.post(
 		"/v1/book",
@@ -592,9 +592,6 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	const offerController = new (require("./controllers/OfferController"))(booki);
 
-	const getOfferValidation = require("./validation/offer/GetOfferValidation")(
-		booki
-	);
 	const getOfferByIdValidation = require("./validation/offer/GetOfferByIdValidation")(
 		booki
 	);
@@ -611,7 +608,11 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
-	app.get("/v1/offer", validate(getOfferValidation), offerController.getOffer);
+	app.get(
+		"/v1/offer",
+		authController.isBearerAuthenticated(),
+		offerController.getOffer
+	);
 
 	app.get(
 		"/v1/offer/:offerId",

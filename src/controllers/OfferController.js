@@ -21,20 +21,10 @@ class OfferController {
 		let query = {},
 			include = [],
 			order = [],
-			limit = undefined;
-		let filter = request.query.filter ? request.query.filter : {};
+			limit = undefined,
+			filter = request.query.filter ? request.query.filter : {};
 
-		if ("latest" in filter && filter.latest) {
-			//TODO move limit to config
-			order.push([["createdAt", "DESC"]]);
-			limit = 6;
-
-			include.push({
-				model: this.models.Book,
-				as: "Book",
-				include: [{ model: this.models.Image, as: "Cover" }]
-			});
-		} else if (!request.user || !request.hasPermission("admin.offer.list")) {
+		if (!request.hasPermission("admin.offer.list")) {
 			query.user_id = request.user.id;
 
 			include.push({
