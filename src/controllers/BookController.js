@@ -30,7 +30,9 @@ class BookController {
 			filter = request.query.filter ? request.query.filter : {};
 
 		if ("latestOffers" in filter && filter.latestOffers) {
-			order.push([[this.models.Offer, "createdAt", "DESC"]]);
+			order.push([
+				[{ model: this.models.Offer, as: "Offers" }, "createdAt", "DESC"]
+			]);
 			limit = this.config.LATEST_OFFERS_LIMIT;
 
 			include.push({
