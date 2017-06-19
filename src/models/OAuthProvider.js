@@ -2,53 +2,46 @@ const OAuthProvider = ({ sequelize }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
-	let OAuthProvider = sequelize.define(
-		"oauth_provider",
-		{
-			type: {
-				type: Sequelize.ENUM,
-				values: ["google", "facebook"]
-			},
-			accessToken: {
-				type: Sequelize.STRING
-			},
-			refreshToken: {
-				type: Sequelize.STRING
-			}
+	let OAuthProvider = sequelize.define("oauth_provider", {
+		type: {
+			type: Sequelize.ENUM,
+			values: ["google", "facebook"]
 		},
-		{
-			classMethods: {
-				associate: function({ User }) {
-					this.belongsTo(User, {
-						as: "User",
-						foreignKey: "user_id"
-					});
-				}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let provider = this.get();
+		accessToken: {
+			type: Sequelize.STRING
+		},
+		refreshToken: {
+			type: Sequelize.STRING
+		}
+	});
 
-					let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);
+	OAuthProvider.associate = function({ User }) {
+		this.belongsTo(User, {
+			as: "User",
+			foreignKey: "user_id"
+		});
+	};
 
-					if (options.owner || options.admin) {
-						json.userId = provider.user_id;
+	OAuthProvider.prototype.toJSON = function(options = {}) {
+		let provider = this.get();
 
-						if (provider.User) {
-							json.user = provider.User.toJSON(options);
-						}
-					}
+		let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);
 
-					if (options.admin) {
-						json.accessToken = provider.accessToken;
-						json.refreshToken = provider.refreshToken;
-					}
+		if (options.owner || options.admin) {
+			json.userId = provider.user_id;
 
-					return json;
-				}
+			if (provider.User) {
+				json.user = provider.User.toJSON(options);
 			}
 		}
-	);
+
+		if (options.admin) {
+			json.accessToken = provider.accessToken;
+			json.refreshToken = provider.refreshToken;
+		}
+
+		return json;
+	};
 
 	return OAuthProvider;
 };

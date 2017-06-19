@@ -12,18 +12,6 @@ const File = ({ sequelize, models }) => {
 			}
 		},
 		{
-			classMethods: {
-				associate: function({}) {}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let file = this.get();
-
-					let json = pick(file, ["id", "path", "createdAt", "updatedAt"]);
-
-					return json;
-				}
-			},
 			hooks: {
 				beforeDestroy: file => {
 					return new Promise((resolve, reject) => {
@@ -39,6 +27,16 @@ const File = ({ sequelize, models }) => {
 			}
 		}
 	);
+
+	File.associate = function() {};
+
+	File.prototype.toJSON = function(options = {}) {
+		let file = this.get();
+
+		let json = pick(file, ["id", "path", "createdAt", "updatedAt"]);
+
+		return json;
+	};
 
 	return File;
 };

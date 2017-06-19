@@ -4,6 +4,7 @@ class BookController {
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
+		this.Sequelize = require("sequelize");
 
 		this.config = config;
 
@@ -24,50 +25,75 @@ class BookController {
 
 	getBook(request, response, next) {
 		let query = {},
-			include = [],
-			order = [],
-			limit = undefined,
 			filter = request.query.filter ? request.query.filter : {};
 
+		//seqelize can't do include, limit and orderby association at the same time
+
 		if ("latestOffers" in filter && filter.latestOffers) {
-			order.push([
-				[{ model: this.models.Offer, as: "Offers" }, "createdAt", "DESC"]
-			]);
-			limit = this.config.LATEST_OFFERS_LIMIT;
+			this.models.Offer
+				.findAll({
+					limit: this.config.LATEST_OFFERS_LIMIT,
+					attributes: [
+						"book_id",
+						[
+							this.Sequelize.fn("MAX", this.Sequelize.col("createdAt")),
+							"createdAt"
+						]
+					],
+					order: [this.Sequelize.fn("MAX", this.Sequelize.col("createdAt"))],
+					group: ["book_id"]
+				})
+				.then(offers => {
+					let bookIds = offers.map(offer => {
+						return offer.get("book_id");
+					});
 
-			include.push({
-				model: this.models.Offer,
-				as: "Offers"
-			});
-
-			include.push({ model: this.models.Image, as: "Cover" });
+					return this.models.Book
+						.findAll({
+							include: [{ model: this.models.Image, as: "Cover" }],
+							where: { id: { in: bookIds } }
+						})
+						.then(books => {
+							if (request.hasPermission("admin.book.read")) {
+								response.json(
+									books.map(book => {
+										return book.toJSON({ admin: true });
+									})
+								);
+							} else {
+								response.json(
+									books.map(book => {
+										return book.toJSON();
+									})
+								);
+							}
+							return response.end();
+						});
+				})
+				.catch(next);
 		} else if (!request.user || !request.hasPermission("admin.book.list")) {
 			next(new Error("You are not allowed to list all books!"));
+		} else {
+			this.models.Book
+				.findAll()
+				.then(books => {
+					if (request.hasPermission("admin.book.read")) {
+						response.json(
+							books.map(book => {
+								return book.toJSON({ admin: true });
+							})
+						);
+					} else {
+						response.json(
+							books.map(book => {
+								return book.toJSON();
+							})
+						);
+					}
+					return response.end();
+				})
+				.catch(next);
 		}
-
-		this.models.Book
-			.findAll({
-				include: include,
-				order: order,
-				limit: limit
-			})
-			.then(books => {
-				if (request.hasPermission("admin.book.read")) {
-					response.json(
-						books.map(book => {
-							return book.toJSON({ admin: true });
-						})
-					);
-				} else {
-					response.json(
-						books.map(book => {
-							return book.toJSON();
-						})
-					);
-				}
-				return response.end();
-			})
-			.catch(next);
 	}
 
 	getBookById(request, response, next) {
