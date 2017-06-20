@@ -121,12 +121,13 @@ const Book = ({ config, sequelize, models }) => {
 	};
 
 	Book.lookup = function(text = "", page = 0) {
-		text = "*" + text.replace(/[^A-z0-9\s]/g, "\\$&") + "*";
+		text = "*" + text.replace(/[^A-z0-9_\s]/g, " ") + "*";
 
 		return this.findAll({
 			where: [
-				"MATCH(book.title, book.subtitle, book.description, book.publisher, book.isbn13) AGAINST (? IN BOOLEAN MODE)",
-				[text]
+				"MATCH(book.title, book.subtitle, book.description, book.publisher, book.isbn13) AGAINST ('" +
+					text +
+					"' IN BOOLEAN MODE)"
 			],
 			include: [
 				{

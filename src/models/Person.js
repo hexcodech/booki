@@ -62,12 +62,13 @@ const Person = ({ sequelize, models }) => {
 	};
 
 	Person.lookupByName = function(name) {
-		name = "*" + name.replace(/[^A-z0-9\s]/g, "\\$&") + "*";
+		name = "*" + name.replace(/[^A-z0-9_\s]/g, " ") + "*";
 
 		return this.findAll({
 			where: [
-				"MATCH(nameTitle, nameFirst, nameMiddle, nameLast) AGAINST (? IN BOOLEAN MODE)",
-				[name]
+				"MATCH(nameTitle, nameFirst, nameMiddle, nameLast) AGAINST ('" +
+					name +
+					"' IN BOOLEAN MODE)"
 			]
 		});
 	};
