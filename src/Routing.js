@@ -203,7 +203,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
-	const getCleanup = require("./validation/system/getCleanup.js")(booki);
+	const getCleanup = require("./validation/system/GetCleanup.js")(booki);
 
 	app.get(
 		"/v1/system/stats",

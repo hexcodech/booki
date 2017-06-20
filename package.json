@@ -74,6 +74,7 @@
     "request-promise-native": "^1.0.4",
     "request-stats": "^3.0.0",
     "sequelize": "^4.1.0",
+    "sequelize-cli": "^2.7.0",
     "sharp": "^0.18.1",
     "valid-url": "^1.0.9",
     "winston": "^2.3.1"
