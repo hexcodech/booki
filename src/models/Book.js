@@ -121,42 +121,51 @@ const Book = ({ config, sequelize, models }) => {
 	};
 
 	Book.lookup = function(text = "", page = 0) {
-		text = "*" + text.replace(/[^A-z0-9_\s]/g, " ") + "*";
+		return sequelize
+			.query(
+				"SELECT * FROM books WHERE MATCH(books.title, books.subtitle, books.description, books.publisher, books.isbn13) AGAINST ($text IN BOOLEAN MODE)",
+				{
+					bind: { text: "*" + text.replace(/[^\wÀ-ž\s]/g, " ") + "*" },
+					type: sequelize.QueryTypes.SELECT,
+					model: this
+				}
+			)
+			.then(books => {
+				let ids = books.map(book => {
+					return book.get("id");
+				});
 
-		return this.findAll({
-			where: [
-				"MATCH(book.title, book.subtitle, book.description, book.publisher, book.isbn13) AGAINST ('" +
-					text +
-					"' IN BOOLEAN MODE)"
-			],
-			include: [
-				{
-					model: models.Person,
-					as: "Authors"
-				},
-				{
-					model: models.Image,
-					as: "Cover"
-				},
-				{
-					model: models.Offer,
-					as: "Offers",
+				return this.findAll({
+					where: { id: { $in: ids } },
 					include: [
 						{
-							model: models.User,
-							as: "User",
+							model: models.Person,
+							as: "Authors"
+						},
+						{
+							model: models.Image,
+							as: "Cover"
+						},
+						{
+							model: models.Offer,
+							as: "Offers",
 							include: [
 								{
-									model: models.Image,
-									as: "ProfilePicture",
-									include: [{ model: models.Thumbnail, as: "Thumbnails" }]
+									model: models.User,
+									as: "User",
+									include: [
+										{
+											model: models.Image,
+											as: "ProfilePicture",
+											include: [{ model: models.Thumbnail, as: "Thumbnails" }]
+										}
+									]
 								}
 							]
 						}
 					]
-				}
-			]
-		});
+				});
+			});
 	};
 
 	Book.lookupExternal = function(text = "", page = 0) {

@@ -1,11 +1,14 @@
 class SystemController {
-	constructor({ booki, os, statsHolder }) {
+	constructor({ booki, sequelize, models, statsHolder }) {
 		const bindAll = require("lodash/bindAll");
 
+		this.sequelize = sequelize;
+		this.models = models;
 		this.statsHolder = statsHolder;
+
 		this.os = require("os");
 
-		bindAll(this, ["getStats"]);
+		bindAll(this, ["getStats", "cleanup"]);
 	}
 
 	getStats(request, response, next) {
@@ -70,6 +73,39 @@ class SystemController {
 			response.json(stats);
 			response.end();
 		}, 500);
+	}
+
+	cleanup(request, response, next) {
+		this.sequelize
+			.query(
+				"SELECT images.* FROM images LEFT JOIN users ON images.user_id=users.id LEFT JOIN users as profilePictureUsers ON images.id=profilePictureUsers.profile_picture_id LEFT JOIN books ON images.id=books.cover_image_id WHERE users.id IS NULL OR (profilePictureUsers.id IS NULL AND books.id IS NULL)",
+				{ type: this.sequelize.QueryTypes.SELECT }
+			)
+			.then(images => {
+				let ids = images.map(image => {
+					return image.id;
+				});
+
+				if (request.query.check) {
+					response.json({ deletable: ids });
+					return response.end();
+				} else {
+					//trigger hooks (hopefully)
+					return this.models.Images
+						.destroy({
+							where: {
+								id: {
+									$in: ids
+								}
+							}
+						})
+						.then(() => {
+							response.json({ deleted: ids });
+							return response.end();
+						});
+				}
+			})
+			.catch(next);
 	}
 }
 

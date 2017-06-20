@@ -1,4 +1,5 @@
 const Thumbnail = ({ folders, config, sequelize, models }) => {
+	const path = require("path");
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
@@ -45,8 +46,8 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 	};
 
 	Thumbnail.prototype.getUrl = function() {
-		return (
-			"/static/uploads/" +
+		return path.resolve(
+			"/static/uploads/",
 			this.get("File").get("path").split(folders.uploads)[1]
 		);
 	};

@@ -53,24 +53,25 @@ const Person = ({ sequelize, models }) => {
 	};
 
 	Person.searchByExactName = function(name) {
-		return this.findAll({
-			where: [
-				'CONCAT_WS(" ", nameTitle, nameFirst, nameMiddle, nameLast) = ?',
-				[name]
-			]
-		});
+		return sequelize.query(
+			"SELECT * FROM people WHERE CONCAT_WS(' ', people.nameTitle, people.nameFirst, people.nameMiddle, people.nameLast) = $name",
+			{
+				bind: { name: name },
+				type: sequelize.QueryTypes.SELECT,
+				model: this
+			}
+		);
 	};
 
 	Person.lookupByName = function(name) {
-		name = "*" + name.replace(/[^A-z0-9_\s]/g, " ") + "*";
-
-		return this.findAll({
-			where: [
-				"MATCH(nameTitle, nameFirst, nameMiddle, nameLast) AGAINST ('" +
-					name +
-					"' IN BOOLEAN MODE)"
-			]
-		});
+		return sequelize.query(
+			"SELECT * FROM people WHERE MATCH(people.nameTitle, people.nameFirst, people.nameMiddle, people.nameLast) AGAINST ($name IN BOOLEAN MODE)",
+			{
+				bind: { name: "*" + name.replace(/[^\wÀ-ž\s]/g, " ") + "*" },
+				type: sequelize.QueryTypes.SELECT,
+				model: this
+			}
+		);
 	};
 
 	Person.toJSON = function(options = {}) {

@@ -203,10 +203,19 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
+	const getCleanup = require("./validation/system/getCleanup.js")(booki);
+
 	app.get(
 		"/v1/system/stats",
 		authController.isBearerAuthenticated(["admin.system.stats"]),
 		systemController.getStats
+	);
+
+	app.get(
+		"/v1/system/cleanup",
+		authController.isBearerAuthenticated(["admin.system.cleanup"]),
+		validate(getCleanup),
+		systemController.cleanup
 	);
 
 	//User
@@ -719,7 +728,15 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 			error.message = request.__(error.message);
 
 			response.status(500);
-			response.json({ name: error.name, message: error.message });
+			if (error.message === "validation error") {
+				response.json(error);
+			} else {
+				response.json({
+					name: error.name,
+					message: error.message,
+					status: 500
+				});
+			}
 			response.end();
 		}
 

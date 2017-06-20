@@ -133,8 +133,8 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 	};
 
 	Image.prototype.getUrl = function() {
-		return (
-			"/static/uploads/" +
+		return path.resolve(
+			"/static/uploads/",
 			this.get("File").get("path").split(folders.uploads)[1]
 		);
 	};

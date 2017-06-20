@@ -107,5 +107,14 @@
 	"[{\"fn\":\"DISTINCT\",\"args\":[]},{\"col\":\"book_id\"},\"book_id\"] is not a valid attribute definition. Please use the following format: ['attribute definition', 'alias']": "[{\"fn\":\"DISTINCT\",\"args\":[]},{\"col\":\"book_id\"},\"book_id\"] is not a valid attribute definition. Please use the following format: ['attribute definition', 'alias']",
 	"Expression #1 of ORDER BY clause is not in GROUP BY clause and contains nonaggregated column 'booki.offer.createdAt' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by": "Expression #1 of ORDER BY clause is not in GROUP BY clause and contains nonaggregated column 'booki.offer.createdAt' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by",
 	"Unknown column 'offer.c' in 'order clause'": "Unknown column 'offer.c' in 'order clause'",
-	"Cannot read property 'findAll' of undefined": "Cannot read property 'findAll' of undefined"
+	"Cannot read property 'findAll' of undefined": "Cannot read property 'findAll' of undefined",
+	"Unknown column 'book.title' in 'where clause'": "Unknown column 'book.title' in 'where clause'",
+	"Unknown column 'text' in 'where clause'": "Unknown column 'text' in 'where clause'",
+	"The sent access token is invalid!": "The sent access token is invalid!",
+	"validation error": "validation error",
+	"syntax error, unexpected $end, expecting FTS_TERM or FTS_NUMB or '*'": "syntax error, unexpected $end, expecting FTS_TERM or FTS_NUMB or '*'",
+	"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '*'                  '* IN BOOLEAN MODE)' at line 1": "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '*'                  '* IN BOOLEAN MODE)' at line 1",
+	"Cannot read property 'sequelize' of undefined": "Cannot read property 'sequelize' of undefined",
+	"Cannot read property 'QueryTypes' of undefined": "Cannot read property 'QueryTypes' of undefined",
+	"image.get is not a function": "image.get is not a function"
 }

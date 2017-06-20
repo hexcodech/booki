@@ -72,6 +72,8 @@ class BookController {
 				})
 				.catch(next);
 		} else if (!request.user || !request.hasPermission("admin.book.list")) {
+			console.log(request.user, !request.hasPermission("admin.book.list"));
+
 			next(new Error("You are not allowed to list all books!"));
 		} else {
 			this.models.Book
