@@ -46,7 +46,7 @@ const Thumbnail = ({ folders, config, sequelize, models }) => {
 	};
 
 	Thumbnail.prototype.getUrl = function() {
-		return path.resolve(
+		return path.join(
 			"/static/uploads/",
 			this.get("File").get("path").split(folders.uploads)[1]
 		);
