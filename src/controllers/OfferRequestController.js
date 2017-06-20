@@ -42,7 +42,16 @@ class OfferRequestController {
 
 	getOfferRequestById(request, response, next) {
 		this.models.OfferRequest
-			.findOne({ where: { id: request.params.offerRequestId } })
+			.findOne({
+				where: { id: request.params.offerRequestId },
+				include: [
+					{ model: this.models.User, as: "User" },
+					{
+						model: this.models.Offer,
+						as: "Offer"
+					}
+				]
+			})
 			.then(offerRequest => {
 				if (!offerRequest) {
 					return Promise.reject(new Error("This offer request wasn't found!"));
@@ -93,10 +102,22 @@ class OfferRequestController {
 			this.pick(request.body.offerRequest, ["message"])
 		);
 
-		let userId = request.hasPermission("admin.offerRequest.write") &&
-			request.body.offerRequest.userId
-			? request.body.offerRequest.userId
-			: request.user.get("id");
+		let userId = null,
+			email = null;
+
+		if (request.hasPermission("admin.offerRequest.write")) {
+			if (request.body.offerRequest.userId) {
+				userId = request.body.offerRequest.userId;
+			} else if (request.body.offerRequest.email) {
+				email = request.body.offerRequest.email;
+			} else {
+				userId = request.user.get("id");
+			}
+		} else if (request.body.offerRequest.email) {
+			email = request.body.offerRequest.email;
+		} else {
+			next(new Error("You have either be to be logged in or send an email!"));
+		}
 
 		let promises = [];
 
@@ -112,15 +133,17 @@ class OfferRequestController {
 				})
 		);
 
-		promises.push(
-			this.models.User.findOne({ where: { id: userId } }).then(user => {
-				if (!user) {
-					return Promise.reject(new Error("The given user wasn't found!"));
-				}
+		if (userId) {
+			promises.push(
+				this.models.User.findOne({ where: { id: userId } }).then(user => {
+					if (!user) {
+						return Promise.reject(new Error("The given user wasn't found!"));
+					}
 
-				return Promise.resolve(user);
-			})
-		);
+					return Promise.resolve(user);
+				})
+			);
+		}
 
 		Promise.all(promises)
 			.then(values => {
@@ -129,7 +152,8 @@ class OfferRequestController {
 
 				offerRequest.set({
 					offer_id: request.body.offerRequest.offerId,
-					user_id: userId
+					user_id: userId,
+					email: email
 				});
 
 				if (request.hasPermission("admin.offerRequest.write")) {
@@ -184,26 +208,42 @@ class OfferRequestController {
 					request.hasPermission("admin.offerRequest.editOthers") ||
 					offerRequest.get("user_id") === request.user.get("id")
 				) {
+					let userId = null,
+						email = null;
+
 					offerRequest.set(this.pick(request.body.offerRequest, ["message"]));
 
-					let userId = request.hasPermission("admin.offerRequest.write") &&
-						request.body.offerRequest.userId
-						? request.body.offerRequest.userId
-						: request.user.get("id");
+					if (request.hasPermission("admin.offerRequest.write")) {
+						if (request.body.offerRequest.userId) {
+							userId = request.body.offerRequest.userId;
+						} else if (request.body.offerRequest.email) {
+							email = request.body.offerRequest.email;
+						} else {
+							userId = request.user.get("id");
+						}
+					} else if (request.body.offerRequest.email) {
+						email = request.body.offerRequest.email;
+					} else {
+						next(
+							new Error("You have either be to be logged in or send an email!")
+						);
+					}
 
 					let promises = [];
 
-					promises.push(
-						this.models.User.findOne({ where: { id: userId } }).then(user => {
-							if (!user) {
-								return Promise.reject(
-									new Error("The given user wasn't found!")
-								);
-							}
+					if (userId) {
+						promises.push(
+							this.models.User.findOne({ where: { id: userId } }).then(user => {
+								if (!user) {
+									return Promise.reject(
+										new Error("The given user wasn't found!")
+									);
+								}
 
-							return Promise.resolve();
-						})
-					);
+								return Promise.resolve();
+							})
+						);
+					}
 
 					/*if (request.body.offerRequest.offerId) {
 						promises.push(
@@ -224,7 +264,8 @@ class OfferRequestController {
 						.then(() => {
 							offerRequest.set({
 								offer_id: request.body.offerRequest.bookId,
-								user_id: userId
+								user_id: userId,
+								email: email
 							});
 
 							if (request.hasPermission("admin.offerRequest.write")) {
@@ -281,7 +322,10 @@ class OfferRequestController {
 
 	respondToOfferRequest(request, response, next) {
 		this.models.OfferRequest
-			.findOne({ where: { id: request.params.offerRequestId } })
+			.findOne({
+				where: { id: request.params.offerRequestId },
+				include: [{ model: this.models.User, as: "User" }]
+			})
 			.then(offerRequest => {
 				if (!offerRequest) {
 					return Promise.reject(new Error("This offer request wasn't found!"));
@@ -291,7 +335,10 @@ class OfferRequestController {
 					offerRequest.set("responded", true);
 					offerRequest.save().then(offerRequest => {
 						return response.redirect(
-							"mailto:" + offerRequest.get("User").get("emailVerified")
+							"mailto:" + offerRequest.get("user_id") &&
+								offerRequest.get("User")
+								? offerRequest.get("User").get("emailVerified")
+								: offerRequest.email
 						);
 					});
 				} else {

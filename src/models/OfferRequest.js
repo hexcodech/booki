@@ -98,6 +98,7 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 		]);
 
 		json.userId = offerRequest.user_id;
+		json.email = offerRequest.email;
 
 		if (offerRequest.User) {
 			json.user = offerRequest.User.toJSON(options);
