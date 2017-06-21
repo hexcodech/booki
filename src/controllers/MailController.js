@@ -33,7 +33,6 @@ class MailController {
 		bcc = [],
 		replyTo = null
 	) {
-		console.log("sendMail");
 		return new Promise((resolve, reject) => {
 			let data = {
 				from:
@@ -83,10 +82,7 @@ class MailController {
 				}
 			}
 
-			console.log("sending: " + data);
-
 			this.transporter.sendMail(data, (err, info) => {
-				console.log(err, info);
 				if (err) {
 					return reject(err);
 				}
