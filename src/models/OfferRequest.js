@@ -58,31 +58,44 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			__dirname + "/../templates/emails/offer-request"
 		);
 
-		const offer = this.get("Offer"),
-			offerer = offer.get("User"),
-			requester = this.get("User");
+		return this.reload({
+			include: [
+				{ model: models.User, as: "User" },
+				{
+					model: models.Offer,
+					as: "Offer",
+					include: [{ model: models.User, as: "User" }]
+				}
+			]
+		}).then(() => {
+			const offer = this.get("Offer"),
+				offerer = offer.get("User"),
+				requester = this.get("User");
 
-		return models.Book.findOne({ where: { id: offer.book_id } }).then(book => {
-			return offerRequestMail
-				.render(
-					{
-						request: this.get(),
-						offerer: offerer.get(),
-						requester: requester ? requester.get() : false,
-						email: this.get("email"),
-						book: book.get(),
-						offer: offer.get(),
-						responseUrl:
-							config.HOST +
-								"/v1/offer-request/" +
-								this.get("id") +
-								"/respond?responseKey=" +
-								this.get("responseKey")
-					},
-					offerer.get("locale")
-				)
-				.then(result => {
-					return offerer.sendMail(result.subject, result.html, result.text);
+			return models.Book
+				.findOne({ where: { id: offer.book_id } })
+				.then(book => {
+					return offerRequestMail
+						.render(
+							{
+								request: this.get(),
+								offerer: offerer.get(),
+								requester: requester ? requester.get() : false,
+								email: this.get("email"),
+								book: book.get(),
+								offer: offer.get(),
+								responseUrl:
+									config.HOST +
+										"/v1/offer-request/" +
+										this.get("id") +
+										"/respond?responseKey=" +
+										this.get("responseKey")
+							},
+							offerer.get("locale")
+						)
+						.then(result => {
+							return offerer.sendMail(result.subject, result.html, result.text);
+						});
 				});
 		});
 	};
