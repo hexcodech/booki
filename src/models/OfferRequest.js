@@ -58,6 +58,8 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			__dirname + "/../templates/emails/offer-request"
 		);
 
+		console.log(this.get());
+
 		return this.reload({
 			include: [
 				{ model: models.User, as: "User" },
@@ -71,6 +73,8 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			const offer = this.get("Offer"),
 				offerer = offer.get("User"),
 				requester = this.get("User");
+
+			console.log(offer, offerer, requester);
 
 			return models.Book
 				.findOne({ where: { id: offer.book_id } })
