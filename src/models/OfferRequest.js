@@ -68,7 +68,8 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 					{
 						request: this.get(),
 						offerer: offerer.get(),
-						requester: requester.get(),
+						requester: requester ? requester.get() : false,
+						email: this.get("email"),
 						book: book.get(),
 						offer: offer.get(),
 						responseUrl:

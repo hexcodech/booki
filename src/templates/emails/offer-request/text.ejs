@@ -1,5 +1,5 @@
 Hi <%= offerer.nameDisplay %>,
-<%= offerer.nameDisplay %> would like to buy your book <%= book.title %> for <%= offer.price %> CHF.
+<%= requester ? requester.nameDisplay : "An unregistered user" %> would like to buy your book <%= book.title %> for <%= offer.price %> CHF.
 To respond, please click on the following link: <%= responseUrl %>.
 <% if(request.message) {%>
 	Message:
