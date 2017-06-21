@@ -14,12 +14,19 @@ class MailController {
 		bindAll(this, ["sendMail"]);
 
 		this.transporter = nodemailer.createTransport({
+			pool: true,
 			host: this.config.MAIL_HOST,
 			port: this.config.MAIL_PORT,
-			secure: true,
+			requireTLS: true,
 			auth: {
 				user: this.config.MAIL_USER,
 				pass: this.config.MAIL_PASSWORD
+			}
+		});
+
+		this.transporter.verify((err, success) => {
+			if (err) {
+				console.log(err);
 			}
 		});
 	}
