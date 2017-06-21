@@ -18,6 +18,9 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			responded: {
 				type: Sequelize.BOOLEAN,
 				default: false
+			},
+			email: {
+				type: Sequelize.STRING
 			}
 		},
 		{
