@@ -175,11 +175,11 @@ class OfferRequestController {
 					.then(offerRequest => {
 						return offerRequest.reload({
 							include: [
-								{ model: models.User, as: "User" },
+								{ model: this.models.User, as: "User" },
 								{
-									model: models.Offer,
+									model: this.models.Offer,
 									as: "Offer",
-									include: [{ model: models.User, as: "User" }]
+									include: [{ model: this.models.User, as: "User" }]
 								}
 							]
 						});
