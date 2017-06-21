@@ -342,10 +342,10 @@ class OfferRequestController {
 					offerRequest.set("responded", true);
 					offerRequest.save().then(offerRequest => {
 						return response.redirect(
-							"mailto:" + offerRequest.get("user_id") &&
-								offerRequest.get("User")
-								? offerRequest.get("User").get("emailVerified")
-								: offerRequest.email
+							"mailto:" +
+								(offerRequest.get("user_id") && offerRequest.get("User")
+									? offerRequest.get("User").get("emailVerified")
+									: offerRequest.email)
 						);
 					});
 				} else {
