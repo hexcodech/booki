@@ -699,7 +699,6 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	app.post(
 		"/v1/offer-request",
-		authController.isBearerAuthenticated(),
 		validate(postOfferRequestValidation),
 		offerRequestController.postOfferRequest
 	);

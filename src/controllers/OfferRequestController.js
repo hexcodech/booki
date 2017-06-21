@@ -105,7 +105,7 @@ class OfferRequestController {
 		let userId = null,
 			email = null;
 
-		if (request.hasPermission("admin.offerRequest.write")) {
+		if (request.user && request.hasPermission("admin.offerRequest.write")) {
 			if (request.body.offerRequest.userId) {
 				userId = request.body.offerRequest.userId;
 			} else if (request.body.offerRequest.email) {
