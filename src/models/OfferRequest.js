@@ -62,7 +62,9 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			offerer = offer.get("User"),
 			requester = this.get("User");
 
+		console.log("init");
 		return models.Book.findOne({ where: { id: offer.book_id } }).then(book => {
+			console.log("rendering");
 			return offerRequestMail
 				.render(
 					{
@@ -82,6 +84,7 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 					offerer.get("locale")
 				)
 				.then(result => {
+					console.log("sending mail", result.subject, result.text);
 					return offerer.sendMail(result.subject, result.html, result.text);
 				});
 		});
