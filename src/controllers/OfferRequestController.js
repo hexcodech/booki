@@ -173,12 +173,19 @@ class OfferRequestController {
 				return offerRequest
 					.save()
 					.then(offerRequest => {
-						return offerRequest.reload();
+						return offerRequest.reload({
+							include: [
+								{ model: models.User, as: "User" },
+								{
+									model: models.Offer,
+									as: "Offer",
+									include: [{ model: models.User, as: "User" }]
+								}
+							]
+						});
 					})
 					.then(offerRequest => {
-						return offerRequest.sendMail().then(() => {
-							return Promise.resolve(offerRequest);
-						});
+						return offerRequest.sendMail();
 					})
 					.then(() => {
 						//if everything worked, mark offer as sold
