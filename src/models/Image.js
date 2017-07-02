@@ -63,7 +63,7 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 		});
 	};
 
-	(Image.generatePath = function(id) {
+	Image.generatePath = function(id) {
 		let d = new Date();
 
 		return path.resolve(
@@ -74,7 +74,9 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 			id,
 			cryptoUtilities.generateRandomString(3).replace(/\//g, "-") + ".png"
 		);
-	}), (Image.store = function(imageData, user) {
+	};
+
+	Image.store = function(imageData, user) {
 		return models.File.create({}).then(fileInstance => {
 			let dim = sizeOf(imageData),
 				saveTo = this.generatePath(fileInstance.get("id"));
@@ -120,7 +122,7 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 					});
 				});
 		});
-	});
+	};
 
 	Image.prototype.cleanThumbnails = function() {
 		let thumbnails = this.get("Thumbnails");

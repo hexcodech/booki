@@ -6,6 +6,7 @@ const Book = ({ config, sequelize, models }) => {
 	const request = require("request");
 	const async = require("async");
 
+	const request = require("request-promise-native");
 	const amazon = require("amazon-product-api");
 
 	const amzClient = amazon.createClient({
@@ -65,6 +66,10 @@ const Book = ({ config, sequelize, models }) => {
 			verified: {
 				type: Sequelize.BOOLEAN,
 				default: false
+			},
+
+			amazonUrl: {
+				type: Sequelize.STRING(512)
 			}
 		},
 		{
@@ -168,10 +173,7 @@ const Book = ({ config, sequelize, models }) => {
 			});
 	};
 
-	Book.lookupExternal = function(text = "", page = 0) {
-		let amazonBooks = [];
-
-		//combine with external sources
+	Book.lookupExternal = function(text = "", user = null, page = 0) {
 		return amzClient
 			.itemSearch({
 				keywords: text,
@@ -180,37 +182,62 @@ const Book = ({ config, sequelize, models }) => {
 				domain: "webservices.amazon.de"
 			})
 			.then(results => {
-				amazonBooks = results
-					.map(result => {
-						let attr = result.ItemAttributes[0];
+				return new Promise((resolve, reject) => {
+					async.map(
+						results,
+						(result, callback) => {
+							let attr = result.ItemAttributes[0];
 
-						if (!attr.ISBN || !attr.ISBN[0]) {
-							return null;
+							if (!attr.ISBN || !attr.ISBN[0]) {
+								return null;
+							}
+
+							let book = this.build({
+								isbn13:
+									attr.ISBN[0].length == 10
+										? "978" + attr.ISBN[0]
+										: attr.ISBN[0],
+								title: attr.Title[0],
+								subtitle: attr.Title[1] ? attr.Title[1] : "",
+								language: attr.Languages[0].Language.Name,
+								description: "",
+								publisher: attr.Publisher[0],
+								publicationDate: attr.PublicationDate
+									? attr.PublicationDate[0]
+									: 0,
+								pageCount: attr.NumberOfPages ? attr.NumberOfPages[0] : 0,
+								verified: false,
+								amazonUrl: result.DetailPageURL[0]
+							});
+
+							return book
+								.save()
+								.then(() => {
+									return book.setAuthorsRaw(attr.Author);
+								})
+								.then(() => {
+									return request(result.LargeImage[0].URL);
+								})
+								.then((response, buffer) => {
+									return models.Image.store(buffer, user);
+								})
+								.then(image => {
+									return book.setCover(image);
+								})
+								.then(() => {
+									callback();
+								})
+								.catch(callback);
+						},
+						(err, books) => {
+							if (err) {
+								return reject(err);
+							}
+
+							return resolve(books);
 						}
-
-						return {
-							isbn13: attr.ISBN[0].length == 10
-								? "978" + attr.ISBN[0]
-								: attr.ISBN[0],
-							title: attr.Title[0],
-							subtitle: attr.Title[1] ? attr.Title[1] : "",
-							language: attr.Languages[0].Language.Name,
-							description: "",
-							publisher: attr.Publisher[0],
-							publicationDate: attr.PublicationDate
-								? attr.PublicationDate[0]
-								: 0,
-							pageCount: attr.NumberOfPages ? attr.NumberOfPages[0] : 0,
-							verified: false,
-
-							url: result.DetailPageURL[0],
-							authors: attr.Author,
-							thumbnail: result.LargeImage[0].URL
-						};
-					})
-					.filter(e => e); //removes falsy elements
-
-				return amazonBooks;
+					);
+				});
 			})
 			.catch(errors => {
 				for (let i = 0; i < errors.length; i++) {

@@ -6,8 +6,6 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 	const async = require("async");
-	const sizeOf = require("image-size");
-	const request = require("request-promise-native");
 
 	const EmailTemplate = require("email-templates").EmailTemplate;
 	const mailController = new (require("../controllers/MailController"))(config);
