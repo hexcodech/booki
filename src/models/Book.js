@@ -3,10 +3,9 @@ const Book = ({ config, sequelize, models }) => {
 	const pick = require("lodash/pick");
 
 	const Sequelize = require("sequelize");
-	const request = require("request");
+	const request = require("request-promise-native");
 	const async = require("async");
 
-	const request = require("request-promise-native");
 	const amazon = require("amazon-product-api");
 
 	const amzClient = amazon.createClient({
