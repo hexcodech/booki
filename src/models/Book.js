@@ -209,7 +209,7 @@ const Book = ({ config, sequelize, models }) => {
 								amazonUrl: result.DetailPageURL[0]
 							});
 
-							return book
+							book
 								.save()
 								.then(() => {
 									return book.setAuthorsRaw(attr.Author);
@@ -224,7 +224,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
-									callback();
+									callback(book);
 								})
 								.catch(callback);
 						},
