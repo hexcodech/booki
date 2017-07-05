@@ -224,6 +224,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
+									console.log(book);
 									callback(null, book);
 								})
 								.catch(callback);
@@ -232,6 +233,8 @@ const Book = ({ config, sequelize, models }) => {
 							if (err) {
 								return reject(err);
 							}
+
+							console.log("returned", books);
 
 							return resolve(books.filter(el => el));
 						}
