@@ -188,7 +188,7 @@ const Book = ({ config, sequelize, models }) => {
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
-								return null;
+								callback(null, false);
 							}
 
 							let book = this.build({
@@ -224,7 +224,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
-									callback(book);
+									callback(null, book);
 								})
 								.catch(callback);
 						},
@@ -233,7 +233,7 @@ const Book = ({ config, sequelize, models }) => {
 								return reject(err);
 							}
 
-							return resolve(books);
+							return resolve(books.filter(el => el));
 						}
 					);
 				});
