@@ -209,6 +209,8 @@ const Book = ({ config, sequelize, models }) => {
 								amazonUrl: result.DetailPageURL[0]
 							});
 
+							console.log(result, book);
+
 							book
 								.save()
 								.then(() => {
@@ -224,6 +226,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
+									console.log("callback", book);
 									callback(null, book);
 								})
 								.catch(callback);
