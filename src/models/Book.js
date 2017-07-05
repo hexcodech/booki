@@ -236,7 +236,10 @@ const Book = ({ config, sequelize, models }) => {
 								.then(() => {
 									callback(null, book);
 								})
-								.catch(callback);
+								.catch((arg1, arg2) => {
+									console.log(arg1, arg2);
+									callback(arg1, arg2);
+								});
 						},
 						(err, books) => {
 							if (err) {

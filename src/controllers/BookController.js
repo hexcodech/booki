@@ -351,6 +351,7 @@ class BookController {
 		this.models.Book
 			.lookupExternal(request.query.search, request.user)
 			.then(books => {
+				console.log(books);
 				if (request.hasPermission("admin.book.read")) {
 					response.json(
 						books.map(book => {
