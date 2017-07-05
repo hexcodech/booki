@@ -194,7 +194,7 @@ const Book = ({ config, sequelize, models }) => {
 							let book = this.build({
 								isbn13:
 									attr.ISBN[0].length == 10
-										? this.constructor.isbn10ToIsbn13(attr.ISBN[0])
+										? Book.isbn10ToIsbn13(attr.ISBN[0])
 										: attr.ISBN[0],
 								title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
 								subtitle: attr.Title && attr.Title[1] ? attr.Title[1] : "",
