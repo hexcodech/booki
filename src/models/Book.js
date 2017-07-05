@@ -198,13 +198,13 @@ const Book = ({ config, sequelize, models }) => {
 										: attr.ISBN[0],
 								title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
 								subtitle: attr.Title && attr.Title[1] ? attr.Title[1] : "",
-								language:
+								/*language:
 									attr.Languages &&
 									attr.Languages[0] &&
 									attr.Languages[0].Language &&
 									attr.Languages[0].Language.Name
 										? attr.Languages[0].Language.Name
-										: "",
+										: "",*/
 								description: "",
 								publisher:
 									attr.Publisher && attr.Publisher[0] ? attr.Publisher[0] : "",
