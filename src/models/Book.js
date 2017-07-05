@@ -185,9 +185,11 @@ const Book = ({ config, sequelize, models }) => {
 					async.map(
 						results,
 						(result, callback) => {
+							console.log(result);
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
+								console.log("skipped");
 								return callback(null, false);
 							}
 
@@ -236,13 +238,11 @@ const Book = ({ config, sequelize, models }) => {
 								.then(() => {
 									callback(null, book);
 								})
-								.catch((arg1, arg2) => {
-									console.log(arg1, arg2);
-									callback(arg1, arg2);
-								});
+								.catch(callback);
 						},
 						(err, books) => {
 							if (err) {
+								console.log("rejected");
 								return reject(err);
 							}
 
