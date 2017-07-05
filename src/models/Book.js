@@ -252,15 +252,20 @@ const Book = ({ config, sequelize, models }) => {
 				});
 			})
 			.catch(errors => {
-				for (let i = 0; i < errors.length; i++) {
-					if (
-						errors[i].Error[0].Code[0] === "AWS.ECommerceService.NoExactMatches"
-					) {
-						return [];
+				if (Array.isArray(errors)) {
+					for (let i = 0; i < errors.length; i++) {
+						if (
+							errors[i].Error[0].Code[0] ===
+							"AWS.ECommerceService.NoExactMatches"
+						) {
+							return [];
+						}
 					}
-				}
 
-				return errors;
+					return Promise.reject(errors);
+				} else {
+					return Promise.reject(errors);
+				}
 			});
 	};
 
