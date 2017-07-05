@@ -181,25 +181,20 @@ const Book = ({ config, sequelize, models }) => {
 				domain: "webservices.amazon.de"
 			})
 			.then(results => {
-				console.log(results);
 				return new Promise((resolve, reject) => {
-					console.log("returning promise..");
 					async.map(
 						results,
 						(result, callback) => {
-							console.log("callback");
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
-								callback(null, false);
+								return callback(null, false);
 							}
-
-							console.log(attr.ISBN);
 
 							let book = this.build({
 								isbn13:
 									attr.ISBN[0].length == 10
-										? "978" + attr.ISBN[0]
+										? this.constructor.isbn10ToIsbn13(attr.ISBN[0])
 										: attr.ISBN[0],
 								title: attr.Title[0],
 								subtitle: attr.Title[1] ? attr.Title[1] : "",
@@ -213,8 +208,6 @@ const Book = ({ config, sequelize, models }) => {
 								verified: false,
 								amazonUrl: result.DetailPageURL[0]
 							});
-
-							console.log(result, book);
 
 							book
 								.save()
@@ -231,7 +224,6 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
-									console.log("callback", book);
 									callback(null, book);
 								})
 								.catch(callback);
@@ -257,6 +249,17 @@ const Book = ({ config, sequelize, models }) => {
 
 				return errors;
 			});
+	};
+
+	Book.prototype.isbn10ToIsbn13 = function(isbn10) {
+		let isbn9 = "978" + isbn10.toString().slice(0, -1),
+			checkDigit = 0; //remove check digit and calculate the new one
+
+		for (let i = 0; i < isbn9.length; i++) {
+			checkDigit += parseInt(isbn9.charAt(i)) * (i % 2 === 0 ? 3 : 1);
+		}
+
+		checkDigit = ((10 - parseInt(checkDigit.toString()) % 10) % 10).toString();
 	};
 
 	Book.prototype.setAuthorsRaw = function(authors) {
