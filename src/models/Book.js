@@ -181,24 +181,20 @@ const Book = ({ config, sequelize, models }) => {
 				domain: "webservices.amazon.de"
 			})
 			.then(results => {
-				console.log("return async.map promise");
 				return new Promise((resolve, reject) => {
-					console.log("async.map");
 					async.map(
 						results,
 						(result, callback) => {
-							console.log("async.map iteration");
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
-								console.log("skipping");
 								return callback(null, false);
 							}
 
 							let book = this.build({
 								isbn13:
 									attr.ISBN[0].length == 10
-										? this.constructor.isbn10ToIsbn13(attr.ISBN[0])
+										? Book.isbn10ToIsbn13(attr.ISBN[0])
 										: attr.ISBN[0],
 								title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
 								subtitle: attr.Title && attr.Title[1] ? attr.Title[1] : "",
@@ -222,7 +218,6 @@ const Book = ({ config, sequelize, models }) => {
 										? result.DetailPageURL[0]
 										: ""
 							});
-							console.log("book built");
 
 							book
 								.save()
@@ -239,7 +234,6 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
-									console.log("callback with book", book);
 									callback(null, book);
 								})
 								.catch(callback);
@@ -248,8 +242,6 @@ const Book = ({ config, sequelize, models }) => {
 							if (err) {
 								return reject(err);
 							}
-
-							console.log("returned", books);
 
 							return resolve(books.filter(el => el));
 						}

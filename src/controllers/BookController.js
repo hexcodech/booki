@@ -72,8 +72,6 @@ class BookController {
 				})
 				.catch(next);
 		} else if (!request.user || !request.hasPermission("admin.book.list")) {
-			console.log(request.user, !request.hasPermission("admin.book.list"));
-
 			next(new Error("You are not allowed to list all books!"));
 		} else {
 			this.models.Book
@@ -353,8 +351,6 @@ class BookController {
 		this.models.Book
 			.lookupExternal(request.query.search, request.user)
 			.then(books => {
-				console.log(books);
-				console.log("book array returned");
 				if (request.hasPermission("admin.book.read")) {
 					response.json(
 						books.map(book => {
