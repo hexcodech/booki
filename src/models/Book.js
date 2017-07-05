@@ -181,15 +181,20 @@ const Book = ({ config, sequelize, models }) => {
 				domain: "webservices.amazon.de"
 			})
 			.then(results => {
+				console.log(results);
 				return new Promise((resolve, reject) => {
+					console.log("returning promise..");
 					async.map(
 						results,
 						(result, callback) => {
+							console.log("callback");
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
 								callback(null, false);
 							}
+
+							console.log(attr.ISBN);
 
 							let book = this.build({
 								isbn13:
