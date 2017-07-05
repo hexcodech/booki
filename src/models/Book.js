@@ -181,13 +181,17 @@ const Book = ({ config, sequelize, models }) => {
 				domain: "webservices.amazon.de"
 			})
 			.then(results => {
+				console.log("return async.map promise");
 				return new Promise((resolve, reject) => {
+					console.log("async.map");
 					async.map(
 						results,
 						(result, callback) => {
+							console.log("async.map iteration");
 							let attr = result.ItemAttributes[0];
 
 							if (!attr.ISBN || !attr.ISBN[0]) {
+								console.log("skipping");
 								return callback(null, false);
 							}
 
@@ -208,6 +212,7 @@ const Book = ({ config, sequelize, models }) => {
 								verified: false,
 								amazonUrl: result.DetailPageURL[0]
 							});
+							console.log("book built");
 
 							book
 								.save()
@@ -224,7 +229,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setCover(image);
 								})
 								.then(() => {
-									console.log(book);
+									console.log("callback with book", book);
 									callback(null, book);
 								})
 								.catch(callback);
