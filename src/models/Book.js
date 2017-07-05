@@ -225,7 +225,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setAuthorsRaw(attr.Author);
 								})
 								.then(() => {
-									return request(result.LargeImage[0].URL);
+									return request({ uri: result.LargeImage[0].URL });
 								})
 								.then((response, buffer) => {
 									return models.Image.store(buffer, user);
@@ -273,6 +273,8 @@ const Book = ({ config, sequelize, models }) => {
 		}
 
 		checkDigit = ((10 - parseInt(checkDigit.toString()) % 10) % 10).toString();
+
+		return isbn9 + checkDigit;
 	};
 
 	Book.prototype.setAuthorsRaw = function(authors) {
