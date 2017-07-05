@@ -194,7 +194,7 @@ const Book = ({ config, sequelize, models }) => {
 							let book = this.build({
 								isbn13:
 									attr.ISBN[0].length == 10
-										? Book.isbn10ToIsbn13(attr.ISBN[0])
+										? this.constructor.isbn10ToIsbn13(attr.ISBN[0])
 										: attr.ISBN[0],
 								title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
 								subtitle: attr.Title && attr.Title[1] ? attr.Title[1] : "",
@@ -264,7 +264,7 @@ const Book = ({ config, sequelize, models }) => {
 			});
 	};
 
-	Book.prototype.isbn10ToIsbn13 = function(isbn10) {
+	Book.isbn10ToIsbn13 = function(isbn10) {
 		let isbn9 = "978" + isbn10.toString().slice(0, -1),
 			checkDigit = 0; //remove check digit and calculate the new one
 
