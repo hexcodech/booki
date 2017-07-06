@@ -219,7 +219,7 @@ const Book = ({ config, sequelize, models }) => {
 										: ""
 							});
 
-							console.log("result", result);
+							console.log(require("util").inspect(result, { depth: null }));
 
 							console.log(
 								"url",
