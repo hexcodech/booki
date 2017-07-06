@@ -19,6 +19,7 @@ const Book = ({ config, sequelize, models }) => {
 		{
 			isbn13: {
 				type: Sequelize.STRING,
+				unique: true,
 				validate: {
 					isIsbn: value => {
 						if (value.indexOf("-") !== -1 && value.length !== 13) {
@@ -172,7 +173,7 @@ const Book = ({ config, sequelize, models }) => {
 			});
 	};
 
-	Book.lookupExternal = function(text = "", user = null, page = 0) {
+	Book.lookupExternal = function(text = "", user = null) {
 		return amzClient
 			.itemSearch({
 				keywords: text,
@@ -190,6 +191,8 @@ const Book = ({ config, sequelize, models }) => {
 							if (!attr.ISBN || !attr.ISBN[0]) {
 								return callback(null, false);
 							}
+
+							//TODO check if unique
 
 							let book = this.build({
 								isbn13:
@@ -222,34 +225,43 @@ const Book = ({ config, sequelize, models }) => {
 							let url = "",
 								size = 0,
 								maxSize = 0;
-							for (let i = 0; i < results.ImageSets; i++) {
-								for (let key in result.ImageSets[i]) {
+
+							for (let i = 0; i < result.ImageSets.length; i++) {
+								for (let key in result.ImageSets[i].ImageSet[0]) {
 									if (
-										!result.ImageSets[0].hasOwnProperty(key) ||
+										!result.ImageSets[i].ImageSet[0].hasOwnProperty(key) ||
 										!key.includes("Image")
 									) {
 										continue;
 									}
 
-									for (let j = 0; j < result.ImageSets[i][key].length; j++) {
+									for (
+										let j = 0;
+										j < result.ImageSets[i].ImageSet[0][key].length;
+										j++
+									) {
 										for (
 											let k = 0;
-											k < result.ImageSets[i][key][j].Width.length;
+											k < result.ImageSets[i].ImageSet[0][key][j].Width.length;
 											k++
 										) {
 											if (
-												result.ImageSets[i][key][j].Width[k]["$"].Units !==
-												"pixels"
+												result.ImageSets[i].ImageSet[0][key][j].Width[k]["$"]
+													.Units !== "pixels"
 											) {
 												continue;
 											}
 											size =
-												parseInt(result.ImageSets[i][key][j].Width[k]["_"]) *
-												parseInt(result.ImageSets[i][key][j].Height[k]["_"]);
+												parseInt(
+													result.ImageSets[i].ImageSet[0][key][j].Width[k]["_"]
+												) *
+												parseInt(
+													result.ImageSets[i].ImageSet[0][key][j].Height[k]["_"]
+												);
 
 											if (size > maxSize) {
 												maxSize = size;
-												url = result.ImageSets[i][key][j].URL[k];
+												url = result.ImageSets[i].ImageSet[0][key][j].URL[k];
 											}
 										}
 									}
@@ -262,9 +274,9 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setAuthorsRaw(attr.Author);
 								})
 								.then(() => {
-									return request({ uri: url });
+									return request({ uri: url, encoding: null });
 								})
-								.then((response, buffer) => {
+								.then(buffer => {
 									return models.Image.store(buffer, user);
 								})
 								.then(image => {

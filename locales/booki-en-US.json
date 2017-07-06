@@ -116,5 +116,15 @@
 	"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '*'                  '* IN BOOLEAN MODE)' at line 1": "You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '*'                  '* IN BOOLEAN MODE)' at line 1",
 	"Cannot read property 'sequelize' of undefined": "Cannot read property 'sequelize' of undefined",
 	"Cannot read property 'QueryTypes' of undefined": "Cannot read property 'QueryTypes' of undefined",
-	"image.get is not a function": "image.get is not a function"
+	"image.get is not a function": "image.get is not a function",
+	"RequestError": "RequestError",
+	"Error: options.uri is a required argument": "Error: options.uri is a required argument",
+	"Cannot read property 'length' of undefined": "Cannot read property 'length' of undefined",
+	"lel": "lel",
+	"SequelizeUniqueConstraintError": "SequelizeUniqueConstraintError",
+	"Validation error": "Validation error",
+	"invalid invocation": "invalid invocation",
+	"Path must be a string without null bytes": "Path must be a string without null bytes",
+	"Path must be a string. Received 35": "Path must be a string. Received 35",
+	"Cannot read property 'get' of null": "Cannot read property 'get' of null"
 }

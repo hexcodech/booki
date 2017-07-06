@@ -68,10 +68,10 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 
 		return path.resolve(
 			folders.uploads,
-			d.getFullYear() + "",
-			d.getMonth() + 1 + "",
+			d.getFullYear().toString(),
+			(d.getMonth() + 1).toString(),
 			//prevent the use as public image hosting api
-			id,
+			id.toString(),
 			cryptoUtilities.generateRandomString(3).replace(/\//g, "-") + ".png"
 		);
 	};
