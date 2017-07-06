@@ -219,13 +219,29 @@ const Book = ({ config, sequelize, models }) => {
 										: ""
 							});
 
-							console.log(require("util").inspect(result, { depth: null }));
+							let url = "",
+								size = 0,
+								maxSize = 0;
+							if (result.ImageSets && result.ImageSets.length > 0) {
+								for (let key in result.ImageSets[0]) {
+									if (
+										!result.ImageSets[0].hasOwnProperty(key) ||
+										!key.includes("Image")
+									) {
+										continue;
+									}
 
-							console.log(
-								"url",
-								result.LargeImage[0].URL,
-								typeof result.LargeImage[0].URL
-							);
+									if (result.ImageSets[0][key].length > 0) {
+										size =
+											parseInt(result.ImageSets[0][key][0].Width[0]["_"]) *
+											parseInt(result.ImageSets[0][key][0].Height[0]["_"]);
+										if (size > maxSize) {
+											maxSize = size;
+											url = result.ImageSets[0][key][0].URL[0];
+										}
+									}
+								}
+							}
 
 							book
 								.save()
@@ -233,7 +249,7 @@ const Book = ({ config, sequelize, models }) => {
 									return book.setAuthorsRaw(attr.Author);
 								})
 								.then(() => {
-									return request({ uri: result.LargeImage[0].URL });
+									return request({ uri: url });
 								})
 								.then((response, buffer) => {
 									return models.Image.store(buffer, user);
