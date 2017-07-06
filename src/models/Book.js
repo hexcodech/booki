@@ -219,7 +219,13 @@ const Book = ({ config, sequelize, models }) => {
 										: ""
 							});
 
-							console.log("url", result.LargeImage[0].URL);
+							console.log("result", result);
+
+							console.log(
+								"url",
+								result.LargeImage[0].URL,
+								typeof result.LargeImage[0].URL
+							);
 
 							book
 								.save()
@@ -273,7 +279,7 @@ const Book = ({ config, sequelize, models }) => {
 			checkDigit = 0; //remove check digit and calculate the new one
 
 		for (let i = 0; i < isbn9.length; i++) {
-			checkDigit += parseInt(isbn9.charAt(i)) * (i % 2 === 0 ? 3 : 1);
+			checkDigit += parseInt(isbn9.charAt(i)) * ((i - 1) % 2 === 0 ? 3 : 1);
 		}
 
 		checkDigit = ((10 - parseInt(checkDigit.toString()) % 10) % 10).toString();
