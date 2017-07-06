@@ -222,8 +222,8 @@ const Book = ({ config, sequelize, models }) => {
 							let url = "",
 								size = 0,
 								maxSize = 0;
-							if (result.ImageSets && result.ImageSets.length > 0) {
-								for (let key in result.ImageSets[0]) {
+							for (let i = 0; i < results.ImageSets; i++) {
+								for (let key in result.ImageSets[i]) {
 									if (
 										!result.ImageSets[0].hasOwnProperty(key) ||
 										!key.includes("Image")
@@ -231,13 +231,26 @@ const Book = ({ config, sequelize, models }) => {
 										continue;
 									}
 
-									if (result.ImageSets[0][key].length > 0) {
-										size =
-											parseInt(result.ImageSets[0][key][0].Width[0]["_"]) *
-											parseInt(result.ImageSets[0][key][0].Height[0]["_"]);
-										if (size > maxSize) {
-											maxSize = size;
-											url = result.ImageSets[0][key][0].URL[0];
+									for (let j = 0; j < result.ImageSets[i][key].length; j++) {
+										for (
+											let k = 0;
+											k < result.ImageSets[i][key][j].Width.length;
+											k++
+										) {
+											if (
+												result.ImageSets[i][key][j].Width[k]["$"].Units !==
+												"pixels"
+											) {
+												continue;
+											}
+											size =
+												parseInt(result.ImageSets[i][key][j].Width[k]["_"]) *
+												parseInt(result.ImageSets[i][key][j].Height[k]["_"]);
+
+											if (size > maxSize) {
+												maxSize = size;
+												url = result.ImageSets[i][key][j].URL[k];
+											}
 										}
 									}
 								}
