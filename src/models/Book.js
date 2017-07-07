@@ -192,98 +192,130 @@ const Book = ({ config, sequelize, models }) => {
 								return callback(null, false);
 							}
 
-							//TODO check if unique
+							let isbn13 =
+								attr.ISBN[0].length == 10
+									? Book.isbn10ToIsbn13(attr.ISBN[0])
+									: attr.ISBN[0];
 
-							let book = this.build({
-								isbn13:
-									attr.ISBN[0].length == 10
-										? Book.isbn10ToIsbn13(attr.ISBN[0])
-										: attr.ISBN[0],
-								title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
-								subtitle: attr.Title && attr.Title[1] ? attr.Title[1] : "",
-								/*language:
-									attr.Languages &&
-									attr.Languages[0] &&
-									attr.Languages[0].Language &&
-									attr.Languages[0].Language.Name
-										? attr.Languages[0].Language.Name
-										: "",*/
-								description: "",
-								publisher:
-									attr.Publisher && attr.Publisher[0] ? attr.Publisher[0] : "",
-								publicationDate: attr.PublicationDate
-									? attr.PublicationDate[0]
-									: 0,
-								pageCount: attr.NumberOfPages ? attr.NumberOfPages[0] : 0,
-								verified: false,
-								amazonUrl:
-									result.DetailPageURL && result.DetailPageURL[0]
-										? result.DetailPageURL[0]
-										: ""
-							});
+							//check if already in db
+							this.findOne({ where: { isbn13: isbn13 } })
+								.then(book => {
+									if (book) {
+										//return book in db
+										callback(null, book);
+									} else {
+										//save to db
+										let book = this.build({
+											isbn13: isbn13,
+											title: attr.Title && attr.Title[0] ? attr.Title[0] : "",
+											subtitle:
+												attr.Title && attr.Title[1] ? attr.Title[1] : "",
+											/*language:
+											attr.Languages &&
+											attr.Languages[0] &&
+											attr.Languages[0].Language &&
+											attr.Languages[0].Language.Name
+												? attr.Languages[0].Language.Name
+												: "",*/
+											description: "",
+											publisher:
+												attr.Publisher && attr.Publisher[0]
+													? attr.Publisher[0]
+													: "",
+											publicationDate: attr.PublicationDate
+												? attr.PublicationDate[0]
+												: 0,
+											pageCount: attr.NumberOfPages ? attr.NumberOfPages[0] : 0,
+											verified: false,
+											amazonUrl:
+												result.DetailPageURL && result.DetailPageURL[0]
+													? result.DetailPageURL[0]
+													: ""
+										});
 
-							let url = "",
-								size = 0,
-								maxSize = 0;
+										let url = "",
+											size = 0,
+											maxSize = 0;
 
-							for (let i = 0; i < result.ImageSets.length; i++) {
-								for (let key in result.ImageSets[i].ImageSet[0]) {
-									if (
-										!result.ImageSets[i].ImageSet[0].hasOwnProperty(key) ||
-										!key.includes("Image")
-									) {
-										continue;
-									}
+										for (let i = 0; i < result.ImageSets.length; i++) {
+											for (let key in result.ImageSets[i].ImageSet[0]) {
+												if (
+													!result.ImageSets[i].ImageSet[0].hasOwnProperty(
+														key
+													) ||
+													!key.includes("Image")
+												) {
+													continue;
+												}
 
-									for (
-										let j = 0;
-										j < result.ImageSets[i].ImageSet[0][key].length;
-										j++
-									) {
-										for (
-											let k = 0;
-											k < result.ImageSets[i].ImageSet[0][key][j].Width.length;
-											k++
-										) {
-											if (
-												result.ImageSets[i].ImageSet[0][key][j].Width[k]["$"]
-													.Units !== "pixels"
-											) {
-												continue;
-											}
-											size =
-												parseInt(
-													result.ImageSets[i].ImageSet[0][key][j].Width[k]["_"]
-												) *
-												parseInt(
-													result.ImageSets[i].ImageSet[0][key][j].Height[k]["_"]
-												);
+												for (
+													let j = 0;
+													j < result.ImageSets[i].ImageSet[0][key].length;
+													j++
+												) {
+													for (
+														let k = 0;
+														k <
+														result.ImageSets[i].ImageSet[0][key][j].Width
+															.length;
+														k++
+													) {
+														if (
+															result.ImageSets[i].ImageSet[0][key][j].Width[k][
+																"$"
+															].Units !== "pixels"
+														) {
+															continue;
+														}
+														size =
+															parseInt(
+																result.ImageSets[i].ImageSet[0][key][j].Width[
+																	k
+																]["_"]
+															) *
+															parseInt(
+																result.ImageSets[i].ImageSet[0][key][j].Height[
+																	k
+																]["_"]
+															);
 
-											if (size > maxSize) {
-												maxSize = size;
-												url = result.ImageSets[i].ImageSet[0][key][j].URL[k];
+														if (size > maxSize) {
+															maxSize = size;
+															url =
+																result.ImageSets[i].ImageSet[0][key][j].URL[k];
+														}
+													}
+												}
 											}
 										}
-									}
-								}
-							}
 
-							book
-								.save()
-								.then(() => {
-									return book.setAuthorsRaw(attr.Author);
-								})
-								.then(() => {
-									return request({ uri: url, encoding: null });
-								})
-								.then(buffer => {
-									return models.Image.store(buffer, user);
-								})
-								.then(image => {
-									return book.setCover(image);
-								})
-								.then(() => {
-									callback(null, book);
+										book
+											.save()
+											.then(() => {
+												return book.setAuthorsRaw(attr.Author);
+											})
+											.then(() => {
+												return request({ uri: url, encoding: null });
+											})
+											.then(buffer => {
+												return models.Image.store(buffer, user);
+											})
+											.then(image => {
+												return book.setCover(image);
+											})
+											.then(() => {
+												return book.reload({
+													include: [
+														{ model: models.Image, as: "Cover" },
+														{ model: models.Person, as: "Authors" }
+													]
+												});
+											})
+											.then(() => {
+												callback(null, book);
+											})
+											.catch(callback);
+									}
 								})
 								.catch(callback);
 						},
