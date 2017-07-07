@@ -221,8 +221,11 @@ class AuthController {
 											return token.save().then(() => {
 												//check whether the user has the required permissions
 												if (
-													request.requiredPermissions &&
-													user.doesHavePermissions(request.requiredPermissions)
+													(request.requiredPermissions &&
+														user.doesHavePermissions(
+															request.requiredPermissions
+														)) ||
+													request.requiredPermissions.length === 0
 												) {
 													//request.hasPermission not possible yet, as request.user
 													//isn't set yet

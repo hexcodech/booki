@@ -98,12 +98,11 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	app.get(
 		"/v1/auth/logged-in",
 		authController.isBearerAuthenticated(),
+		(request, response, next) => {
+			return response.end('{"loggedIn": true}');
+		},
 		(error, request, response, next) => {
-			if (error || !request.user) {
-				return response.end('{"loggedIn": false}');
-			}
-
-			response.end('{"loggedIn": true}');
+			response.end('{"loggedIn": false}');
 		}
 	);
 
