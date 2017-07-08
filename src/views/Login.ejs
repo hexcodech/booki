@@ -2,43 +2,42 @@
 <html>
 	<head>
 		<title><%= __("Booki") %> - <%= __("Login / Register") %></title>
-		
 		<meta charset="utf-8">
-		
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link href="/static/res/css/booki.min.css" rel="stylesheet" type="text/css">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,400i" rel="stylesheet">
-		
+
 		<script>
 			document.addEventListener('DOMContentLoaded', function() {
 				document.getElementById("showRegister").addEventListener("click", function(){
-					document.getElementById("login").style.display		= "none";
+					document.getElementById("login").style.display    = "none";
 					document.getElementById("register").style.display	= "block";
 				});
-				
+
 				document.getElementById("showLogin").addEventListener("click", function(){
-					document.getElementById("login").style.display		= "block";
+					document.getElementById("login").style.display    = "block";
 					document.getElementById("register").style.display	= "none";
 				});
-				
+
 				document.getElementById("showResetPassword").addEventListener("click", function(){
-					document.getElementById("resetPassword").style.display	= "block";
-					document.getElementById("login").style.display			= "none";
+					document.getElementById("resetPassword").style.display = "block";
+					document.getElementById("login").style.display         = "none";
 				});
-				
+
 				document.getElementById("rememberPassword").addEventListener("click", function(){
-					document.getElementById("resetPassword").style.display	= "none";
-					document.getElementById("login").style.display			= "block";
+					document.getElementById("resetPassword").style.display = "none";
+					document.getElementById("login").style.display         = "block";
 				});
 			});
 		</script>
-		
+
 	</head>
-	
+
 	<body>
 		<nav class="navbar navbar-dark bg-primary">
 			<a class="navbar-brand" href="#"><img src="/static/res/img/logo/logo.svg"></a>
 		</nav>
-		
+
 		<div class="modal static">
 			<div class="modal-dialog" role="document">
 				<div class="modal-content">
