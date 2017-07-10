@@ -24,6 +24,8 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 			}
 		},
 		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			defaultScope: {
 				/*include: [
 					{
@@ -77,10 +79,10 @@ const OfferRequest = ({ config, sequelize, models, cryptoUtilities }) => {
 						offer: offer.get(),
 						responseUrl:
 							config.HOST +
-								"/v1/offer-request/" +
-								this.get("id") +
-								"/respond?responseKey=" +
-								this.get("responseKey")
+							"/v1/offer-request/" +
+							this.get("id") +
+							"/respond?responseKey=" +
+							this.get("responseKey")
 					},
 					offerer.get("locale")
 				)

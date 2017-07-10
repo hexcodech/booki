@@ -2,14 +2,21 @@ const Condition = ({ sequelize, models }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
-	let Condition = sequelize.define("condition", {
-		key: {
-			type: Sequelize.STRING
+	let Condition = sequelize.define(
+		"condition",
+		{
+			key: {
+				type: Sequelize.STRING
+			},
+			priceFactor: {
+				type: Sequelize.FLOAT
+			}
 		},
-		priceFactor: {
-			type: Sequelize.FLOAT
+		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
-	});
+	);
 
 	Condition.associate = function({ Offer }) {
 		this.hasMany(Offer, {

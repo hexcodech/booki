@@ -23,6 +23,8 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 			}
 		},
 		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			defaultScope: {
 				include: [
 					{

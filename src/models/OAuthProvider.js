@@ -2,18 +2,25 @@ const OAuthProvider = ({ sequelize }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
-	let OAuthProvider = sequelize.define("oauth_provider", {
-		type: {
-			type: Sequelize.ENUM,
-			values: ["google", "facebook"]
+	let OAuthProvider = sequelize.define(
+		"oauth_provider",
+		{
+			type: {
+				type: Sequelize.ENUM,
+				values: ["google", "facebook"]
+			},
+			accessToken: {
+				type: Sequelize.STRING
+			},
+			refreshToken: {
+				type: Sequelize.STRING
+			}
 		},
-		accessToken: {
-			type: Sequelize.STRING
-		},
-		refreshToken: {
-			type: Sequelize.STRING
+		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
-	});
+	);
 
 	OAuthProvider.associate = function({ User }) {
 		this.belongsTo(User, {

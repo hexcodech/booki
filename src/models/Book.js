@@ -73,6 +73,8 @@ const Book = ({ config, sequelize, models }) => {
 			}
 		},
 		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			indexes: [
 				{
 					type: "FULLTEXT",

@@ -2,17 +2,24 @@ const ThumbnailType = ({ sequelize }) => {
 	const pick = require("lodash/pick");
 	const Sequelize = require("sequelize");
 
-	let ThumbnailType = sequelize.define("thumbnail_type", {
-		name: {
-			type: Sequelize.STRING
+	let ThumbnailType = sequelize.define(
+		"thumbnail_type",
+		{
+			name: {
+				type: Sequelize.STRING
+			},
+			width: {
+				type: Sequelize.INTEGER
+			},
+			height: {
+				type: Sequelize.INTEGER
+			}
 		},
-		width: {
-			type: Sequelize.INTEGER
-		},
-		height: {
-			type: Sequelize.INTEGER
+		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
-	});
+	);
 
 	ThumbnailType.associate = function({ Thumbnail }) {
 		this.hasMany(Thumbnail, {

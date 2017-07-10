@@ -206,6 +206,9 @@ class Booki {
 					min: 0,
 					idle: 10000
 				},
+				dialectOptions: {
+					charset: "utf8mb4"
+				},
 				logging: null
 			}
 		);

@@ -12,6 +12,8 @@ const File = ({ sequelize, models }) => {
 			}
 		},
 		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			hooks: {
 				beforeDestroy: file => {
 					return new Promise((resolve, reject) => {

@@ -1,14 +1,21 @@
 const OAuthAccessToken = ({ config, sequelize, models, cryptoUtilities }) => {
 	const Sequelize = require("sequelize");
 
-	let OAuthAccessToken = sequelize.define("oauth_access_token", {
-		hash: {
-			type: Sequelize.STRING
+	let OAuthAccessToken = sequelize.define(
+		"oauth_access_token",
+		{
+			hash: {
+				type: Sequelize.STRING
+			},
+			expires: {
+				type: Sequelize.DATE
+			}
 		},
-		expires: {
-			type: Sequelize.DATE
+		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
-	});
+	);
 
 	OAuthAccessToken.associate = function({ User, OAuthClient }) {
 		this.belongsTo(User, {
