@@ -225,7 +225,8 @@ class AuthController {
 														user.doesHavePermissions(
 															request.requiredPermissions
 														)) ||
-													request.requiredPermissions.length === 0
+													(request.requiredPermissions &&
+														request.requiredPermissions.length === 0)
 												) {
 													//request.hasPermission not possible yet, as request.user
 													//isn't set yet
