@@ -699,6 +699,23 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	app.post(
 		"/v1/offer-request",
 		validate(postOfferRequestValidation),
+		authController.passport.authenticate(
+			"bearer",
+			{ session: false },
+			(err, user, info) => {
+				if (err) {
+					return next(err);
+				}
+
+				if (!user) {
+					request.user = null;
+				} else {
+					request.user = user;
+				}
+
+				next();
+			}
+		),
 		offerRequestController.postOfferRequest
 	);
 
