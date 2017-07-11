@@ -481,7 +481,9 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 
 	User.prototype.getPermissionArray = function() {
 		if (!this.get("Permissions")) {
-			console.log("Permissions weren't included in this instance of User!");
+			console.log(
+				new Error("Permissions weren't included in this instance of User!")
+			);
 			return [];
 		}
 		return this.get("Permissions").map(permission => {
