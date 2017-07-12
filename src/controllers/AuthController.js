@@ -293,35 +293,37 @@ class AuthController {
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
-							return user.save().then(user => {
-								return user
-									.getOAuthProviders({ where: { type: "facebook" } })
-									.then(providers => {
-										if (providers.length > 0) {
-											let provider = providers[0];
+							return user
+								.save()
+								.then(user => {
+									return user
+										.getOAuthProviders({ where: { type: "facebook" } })
+										.then(providers => {
+											if (providers.length > 0) {
+												let provider = providers[0];
 
-											provider.set({
-												accessToken,
-												refreshToken
-											});
-
-											return provider.save();
-										} else {
-											return this.models.OAuthProvider
-												.create({
-													type: "facebook",
+												provider.set({
 													accessToken,
 													refreshToken
-												})
-												.then(provider => {
-													return provider.setUser(user);
 												});
-										}
-									});
-							});
-						})
-						.then(user => {
-							return done(null, user);
+
+												return provider.save();
+											} else {
+												return this.models.OAuthProvider
+													.create({
+														type: "facebook",
+														accessToken,
+														refreshToken
+													})
+													.then(provider => {
+														return provider.setUser(user);
+													});
+											}
+										});
+								})
+								.then(() => {
+									return done(null, user);
+								});
 						})
 						.catch(done);
 				}
@@ -345,35 +347,37 @@ class AuthController {
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
-							return user.save().then(user => {
-								return user
-									.getOAuthProviders({ where: { type: "google" } })
-									.then(providers => {
-										if (providers.length > 0) {
-											let provider = providers[0];
+							return user
+								.save()
+								.then(user => {
+									return user
+										.getOAuthProviders({ where: { type: "google" } })
+										.then(providers => {
+											if (providers.length > 0) {
+												let provider = providers[0];
 
-											provider.set({
-												accessToken,
-												refreshToken
-											});
-
-											return provider.save();
-										} else {
-											return this.models.OAuthProvider
-												.create({
-													type: "google",
+												provider.set({
 													accessToken,
 													refreshToken
-												})
-												.then(provider => {
-													return provider.setUser(user);
 												});
-										}
-									});
-							});
-						})
-						.then(user => {
-							return done(null, user);
+
+												return provider.save();
+											} else {
+												return this.models.OAuthProvider
+													.create({
+														type: "google",
+														accessToken,
+														refreshToken
+													})
+													.then(provider => {
+														return provider.setUser(user);
+													});
+											}
+										});
+								})
+								.then(() => {
+									return done(null, user);
+								});
 						})
 						.catch(done);
 				}
