@@ -232,11 +232,11 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 		console.log("findOrCreateUserByPassportProfile");
 		return this.getUserByPassportProfile(profile).then(user => {
 			if (user) {
-				console.log("updateFromPassportProfile");
+				console.log("updateFromPassportProfile", user, profile);
 				//update values for the current user
 				return user.updateFromPassportProfile(profile);
 			} else {
-				console.log("createFromPassportProfile");
+				console.log("createFromPassportProfile", user, profile);
 				//we have to create a new user
 				return this.createFromPassportProfile(profile);
 			}
@@ -270,6 +270,7 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 					});
 			})
 			.then(() => {
+				console.log(user);
 				return user.reload();
 			});
 	};
@@ -298,6 +299,7 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 					});
 			})
 			.then(() => {
+				console.log(this);
 				return this.reload();
 			});
 	};
