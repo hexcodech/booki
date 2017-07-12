@@ -45,7 +45,15 @@ class AuthController {
 
 		this.passport.deserializeUser((userId, done) => {
 			this.models.User
-				.findOne({ where: { id: userId } })
+				.findOne({
+					where: { id: userId },
+					include: [
+						{
+							model: this.models.Permission,
+							as: "Permissions"
+						}
+					]
+				})
 				.then(user => {
 					done(null, user);
 				})
@@ -705,7 +713,7 @@ class AuthController {
 				action_name: "Authentication/FacebookLogin",
 				urlref: request.get("Referrer"),
 				ua: this.config.PIWIK_TRACKING_USER_AGENT,
-				uid: user.emailVerified
+				uid: user.get("emailVerified")
 			});
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
@@ -718,7 +726,7 @@ class AuthController {
 				action_name: "Authentication/GoogleLogin",
 				urlref: request.get("Referrer"),
 				ua: this.config.PIWIK_TRACKING_USER_AGENT,
-				uid: user.emailVerified
+				uid: user.get("emailVerified")
 			});
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
