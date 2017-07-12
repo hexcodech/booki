@@ -187,12 +187,6 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 			where: {
 				emailVerified: { $in: profile.emails.map(obj => obj.value) }
 			}
-		}).then(user => {
-			if (user) {
-				return user;
-			} else {
-				return null;
-			}
 		});
 	};
 
@@ -260,19 +254,21 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 			url = url.replace("?sz=50", "?sz=500");
 		}
 
-		return user.save().then(user => {
-			return request
-				.get({ uri: url, encoding: null })
-				.then(buffer => {
-					return models.Image.store(buffer, user);
-				})
-				.then(image => {
-					return user.setProfilePicture(image);
-				})
-				.then(() => {
-					return user.reload();
-				});
-		});
+		return user
+			.save()
+			.then(user => {
+				return request
+					.get({ uri: url, encoding: null })
+					.then(buffer => {
+						return models.Image.store(buffer, user);
+					})
+					.then(image => {
+						return user.setProfilePicture(image);
+					});
+			})
+			.then(() => {
+				return user.reload();
+			});
 	};
 
 	User.prototype.updateFromPassportProfile = function(profile) {
@@ -287,19 +283,20 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 			url = url.replace("?sz=50", "?sz=500");
 		}
 
-		return this.save().then(user => {
-			return request
-				.get({ uri: url, encoding: null })
-				.then(buffer => {
-					return models.Image.store(buffer, user);
-				})
-				.then(image => {
-					return user.setProfilePicture(image);
-				})
-				.then(() => {
-					return user.reload();
-				});
-		});
+		return this.save()
+			.then(user => {
+				return request
+					.get({ uri: url, encoding: null })
+					.then(buffer => {
+						return models.Image.store(buffer, user);
+					})
+					.then(image => {
+						return user.setProfilePicture(image);
+					});
+			})
+			.then(() => {
+				return this.reload();
+			});
 	};
 
 	User.prototype.sendMail = function(

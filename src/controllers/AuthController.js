@@ -346,6 +346,7 @@ class AuthController {
 					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
+							console.log(user);
 							user.set("locale", request.getLocale());
 							return user
 								.save()
