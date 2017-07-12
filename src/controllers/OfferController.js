@@ -66,7 +66,8 @@ class OfferController {
 				include: [
 					{
 						model: this.models.User,
-						as: "User"
+						as: "User",
+						include: [{ model: this.models.Permission, as: "Permissions" }]
 					},
 					{
 						model: this.models.Condition,
@@ -128,10 +129,10 @@ class OfferController {
 			this.pick(request.body.offer, ["description", "price"])
 		);
 
-		let userId = request.hasPermission("admin.offer.write") &&
-			request.body.offer.userId
-			? request.body.offer.userId
-			: request.user.get("id");
+		let userId =
+			request.hasPermission("admin.offer.write") && request.body.offer.userId
+				? request.body.offer.userId
+				: request.user.get("id");
 
 		let promises = [];
 
@@ -213,10 +214,11 @@ class OfferController {
 						this.pick(request.body.offer, ["description", "price", "sold"])
 					);
 
-					let userId = request.hasPermission("admin.offer.write") &&
+					let userId =
+						request.hasPermission("admin.offer.write") &&
 						request.body.offer.userId
-						? request.body.offer.userId
-						: request.user.get("id");
+							? request.body.offer.userId
+							: request.user.get("id");
 
 					let promises = [];
 

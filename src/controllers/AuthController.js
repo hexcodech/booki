@@ -346,7 +346,7 @@ class AuthController {
 					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
-							console.log(user);
+							console.log("google strat", user);
 							user.set("locale", request.getLocale());
 							return user
 								.save()
@@ -713,7 +713,7 @@ class AuthController {
 
 	authFacebookCallback(request, response, next) {
 		this.passport.authenticate("facebook", (err, user, info) => {
-			console.log(user);
+			console.log("fb auth", user);
 			this.piwikTracker.track({
 				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
 				action_name: "Authentication/FacebookLogin",
@@ -727,7 +727,7 @@ class AuthController {
 
 	authGoogleCallback(request, response, next) {
 		this.passport.authenticate("google", (err, user, info) => {
-			console.log(user);
+			console.log("google auth", user);
 			this.piwikTracker.track({
 				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
 				action_name: "Authentication/GoogleLogin",

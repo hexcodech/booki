@@ -229,11 +229,14 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 	};
 
 	User.findOrCreateUserByPassportProfile = function(profile) {
+		console.log("findOrCreateUserByPassportProfile");
 		return this.getUserByPassportProfile(profile).then(user => {
 			if (user) {
+				console.log("updateFromPassportProfile");
 				//update values for the current user
 				return user.updateFromPassportProfile(profile);
 			} else {
+				console.log("createFromPassportProfile");
 				//we have to create a new user
 				return this.createFromPassportProfile(profile);
 			}
