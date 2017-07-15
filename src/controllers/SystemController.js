@@ -90,6 +90,7 @@ class SystemController {
 					{ type: this.sequelize.QueryTypes.SELECT }
 				)
 				.then(images => {
+					console.log("found useless images");
 					let ids = images.map(image => image.id);
 					console.log("ids", ids);
 					return Promise.resolve(ids);
@@ -112,12 +113,15 @@ class SystemController {
 								include: [{ model: this.models.File, as: "File" }]
 							})
 							.then(images => {
+								console.log("create set..");
 								images = new Set(
 									images.map(Image => Image.get("File").get("path"))
 								);
+								console.log("Diffing...");
 								let toDelete = new Set(
 									actualImages.filter(image => !images.has(image))
 								);
+								console.log("toDelete", toDelete);
 								resolve(Array.from(toDelete));
 							});
 					}
