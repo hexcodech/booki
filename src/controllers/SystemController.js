@@ -123,7 +123,8 @@ class SystemController {
 								);
 								console.log("toDelete", toDelete);
 								resolve(Array.from(toDelete));
-							});
+							})
+							.catch(next);
 					}
 				);
 			})
@@ -137,7 +138,7 @@ class SystemController {
 					return response.end();
 				} else {
 					//trigger hooks (hopefully)
-					this.models.Images
+					return this.models.Images
 						.destroy({
 							where: {
 								id: {
