@@ -1,12 +1,14 @@
 class SystemController {
-	constructor({ booki, sequelize, models, statsHolder }) {
+	constructor({ booki, sequelize, models, folders, statsHolder }) {
 		const bindAll = require("lodash/bindAll");
 
 		this.sequelize = sequelize;
 		this.models = models;
 		this.statsHolder = statsHolder;
+		this.folders = folders;
 
 		this.os = require("os");
+		this.exec = require("child_process").exec;
 
 		bindAll(this, ["getStats", "cleanup"]);
 	}
@@ -76,34 +78,71 @@ class SystemController {
 	}
 
 	cleanup(request, response, next) {
-		this.sequelize
-			.query(
-				"SELECT images.* FROM images LEFT JOIN users ON images.user_id=users.id LEFT JOIN users as profilePictureUsers ON images.id=profilePictureUsers.profile_picture_id LEFT JOIN books ON images.id=books.cover_image_id WHERE users.id IS NULL OR (profilePictureUsers.id IS NULL AND books.id IS NULL)",
-				{ type: this.sequelize.QueryTypes.SELECT }
-			)
-			.then(images => {
-				let ids = images.map(image => {
-					return image.id;
-				});
+		let promises = [];
 
-				if (request.query.check) {
-					response.json({ deletable: ids });
-					return response.end();
-				} else {
-					//trigger hooks (hopefully)
-					return this.models.Images
-						.destroy({
-							where: {
-								id: {
-									$in: ids
+		promises.push(
+			this.sequelize
+				.query(
+					"SELECT images.* FROM images LEFT JOIN users ON images.user_id=users.id LEFT JOIN users as profilePictureUsers ON images.id=profilePictureUsers.profile_picture_id LEFT JOIN books ON images.id=books.cover_image_id WHERE users.id IS NULL OR (profilePictureUsers.id IS NULL AND books.id IS NULL)",
+					{ type: this.sequelize.QueryTypes.SELECT }
+				)
+				.then(images => {
+					let ids = images.map(image => {
+						return image.id;
+					});
+
+					if (request.query.check) {
+						response.json({ deletable: ids });
+						return response.end();
+					} else {
+						//trigger hooks (hopefully)
+						return this.models.Images
+							.destroy({
+								where: {
+									id: {
+										$in: ids
+									}
 								}
-							}
-						})
-						.then(() => {
-							response.json({ deleted: ids });
-							return response.end();
-						});
-				}
+							})
+							.then(() => {
+								return Promise.resolve(ids);
+							});
+					}
+				})
+		);
+
+		promises.push(
+			new Promise((resolve, reject) => {
+				exec(
+					"cd " + this.folders.uploads + " && find . -type file",
+					(err, stdout, stderr) => {
+						if (err) {
+							reject(err);
+						}
+
+						let actualImages = stdout.split("\n").map(s => s.substring(1));
+						this.models.Images
+							.findAll({
+								include: [{ model: this.models.File, as: "File" }]
+							})
+							.then(images => {
+								images = new Set(
+									images.map(Image => Image.get("File").get("path"))
+								);
+								let toDelete = new Set(actualImages.filter((image => !images.has(image)));
+
+								console.log("Diff", toDelete);
+								resolve(Array.from(toDelete));
+							});
+					}
+				);
+			})
+		);
+
+		Promise.all(promises)
+			.then(params => {
+				response.json({ deletedIds: params[0], unlinkedFiles: params[1] });
+				return response.end();
 			})
 			.catch(next);
 	}

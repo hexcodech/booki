@@ -202,7 +202,9 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
-	const getCleanup = require("./validation/system/GetCleanup.js")(booki);
+	const getCleanupValidation = require("./validation/system/GetCleanupValidation.js")(
+		booki
+	);
 
 	app.get(
 		"/v1/system/stats",
@@ -213,7 +215,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	app.get(
 		"/v1/system/cleanup",
 		authController.isBearerAuthenticated(["admin.system.cleanup"]),
-		validate(getCleanup),
+		validate(getCleanupValidation),
 		systemController.cleanup
 	);
 

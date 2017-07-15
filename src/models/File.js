@@ -17,12 +17,20 @@ const File = ({ sequelize, models }) => {
 			hooks: {
 				beforeDestroy: file => {
 					return new Promise((resolve, reject) => {
-						fs.unlink(file.get("path"), err => {
-							if (err) {
-								return reject(err);
-							}
+						fs.stat(file.get("path"), (err, stat) => {
+							if (err == null) {
+								fs.unlink(file.get("path"), err => {
+									if (err) {
+										return reject(err);
+									}
 
-							resolve();
+									resolve();
+								});
+							} else if (err.code == "ENOENT") {
+								resolve();
+							} else {
+								reject(new Error("Some other error: " + err.code));
+							}
 						});
 					});
 				}
