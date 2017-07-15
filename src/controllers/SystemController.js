@@ -103,22 +103,18 @@ class SystemController {
 							reject(err);
 						}
 
-						let actualImages = stdout
+						let actualFiles = stdout
 							.split("\n")
 							.filter(n => n)
 							.map(s => this.folders.uploads + s.substring(1));
-						this.models.Image
-							.findAll({
-								include: [{ model: this.models.File, as: "File" }]
-							})
-							.then(images => {
-								images = new Set(
-									images.map(image => image.get("File").get("path"))
+						this.models.File
+							.findAll()
+							.then(files => {
+								files = new Set(
+									files.map(file => file.get("path")).filter(n => n)
 								);
-								console.log("actual paths", actualImages);
-								console.log("db paths", images);
 
-								resolve(actualImages.filter(image => !images.has(image)));
+								resolve(actualFiles.filter(file => !files.has(file)));
 							})
 							.catch(next);
 					}
@@ -130,7 +126,7 @@ class SystemController {
 			.then(params => {
 				if (request.query.check) {
 					response.json({
-						deletableIds: params[0],
+						deletableImageIds: params[0],
 						deletableUnlinkedFiles: params[1]
 					});
 					return response.end();
@@ -151,7 +147,7 @@ class SystemController {
 								}
 
 								response.json({
-									deletedIds: params[0],
+									deletedImageIds: params[0],
 									deletedUnlinkedFiles: params[1]
 								});
 								return response.end();
