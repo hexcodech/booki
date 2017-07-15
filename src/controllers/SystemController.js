@@ -108,7 +108,7 @@ class SystemController {
 
 						let actualImages = stdout.split("\n").map(s => s.substring(1));
 						console.log("actualImages", actualImages);
-						this.models.Images
+						this.models.Image
 							.findAll({
 								include: [{ model: this.models.File, as: "File" }]
 							})
