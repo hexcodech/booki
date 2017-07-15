@@ -82,7 +82,6 @@ class SystemController {
 	cleanup(request, response, next) {
 		let promises = [];
 
-		console.log("Cleanup..");
 		promises.push(
 			this.sequelize
 				.query(
@@ -90,9 +89,7 @@ class SystemController {
 					{ type: this.sequelize.QueryTypes.SELECT }
 				)
 				.then(images => {
-					console.log("found useless images");
 					let ids = images.map(image => image.id);
-					console.log("ids", ids);
 					return Promise.resolve(ids);
 				})
 		);
@@ -106,22 +103,21 @@ class SystemController {
 							reject(err);
 						}
 
-						let actualImages = stdout.split("\n").map(s => s.substring(1));
-						console.log("actualImages", actualImages);
+						let actualImages = stdout
+							.split("\n")
+							.map(s => this.folders.uploads + s.substring(1));
 						this.models.Image
 							.findAll({
 								include: [{ model: this.models.File, as: "File" }]
 							})
 							.then(images => {
-								console.log("create set..");
 								images = new Set(
 									images.map(Image => Image.get("File").get("path"))
 								);
-								console.log("Diffing...");
 								let toDelete = new Set(
 									actualImages.filter(image => !images.has(image))
 								);
-								console.log("toDelete", toDelete);
+
 								resolve(Array.from(toDelete));
 							})
 							.catch(next);
@@ -132,9 +128,11 @@ class SystemController {
 
 		Promise.all(promises)
 			.then(params => {
-				console.log("check", request.query.check);
 				if (request.query.check) {
-					response.json({ deletableIds: params[0], unlinkedFiles: params[1] });
+					response.json({
+						deletableIds: params[0],
+						deletableUnlinkedFiles: params[1]
+					});
 					return response.end();
 				} else {
 					//trigger hooks (hopefully)
