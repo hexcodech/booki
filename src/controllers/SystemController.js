@@ -105,6 +105,7 @@ class SystemController {
 
 						let actualImages = stdout
 							.split("\n")
+							.filter(n => n)
 							.map(s => this.folders.uploads + s.substring(1));
 						this.models.Image
 							.findAll({
@@ -112,13 +113,12 @@ class SystemController {
 							})
 							.then(images => {
 								images = new Set(
-									images.map(Image => Image.get("File").get("path"))
+									images.map(image => image.get("File").get("path"))
 								);
-								let toDelete = new Set(
-									actualImages.filter(image => !images.has(image))
-								);
+								console.log("actual paths", actualImages);
+								console.log("db paths", images);
 
-								resolve(Array.from(toDelete));
+								resolve(actualImages.filter(image => !images.has(image)));
 							})
 							.catch(next);
 					}
