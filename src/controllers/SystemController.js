@@ -97,7 +97,7 @@ class SystemController {
 
 		promises.push(
 			new Promise((resolve, reject) => {
-				exec(
+				this.exec(
 					"cd " + this.folders.uploads + " && find . -type file",
 					(err, stdout, stderr) => {
 						if (err) {
