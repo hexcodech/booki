@@ -168,6 +168,13 @@ class Booki {
 			debug: "magenta"
 		});
 
+		process.on("unhandledRejection", (reason, p) => {
+			logger.log(
+				"critical",
+				"Unhandled Rejection at: Promise " + p + " reason: " + reason
+			);
+		});
+
 		return Promise.resolve({ winston, logger });
 	}
 
