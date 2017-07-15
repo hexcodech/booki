@@ -82,6 +82,7 @@ class SystemController {
 	cleanup(request, response, next) {
 		let promises = [];
 
+		console.log("Cleanup..");
 		promises.push(
 			this.sequelize
 				.query(
@@ -90,7 +91,7 @@ class SystemController {
 				)
 				.then(images => {
 					let ids = images.map(image => image.id);
-
+					console.log("ids", ids);
 					return Promise.resolve(ids);
 				})
 		);
@@ -105,6 +106,7 @@ class SystemController {
 						}
 
 						let actualImages = stdout.split("\n").map(s => s.substring(1));
+						console.log("actualImages", actualImages);
 						this.models.Images
 							.findAll({
 								include: [{ model: this.models.File, as: "File" }]
@@ -125,12 +127,13 @@ class SystemController {
 
 		Promise.all(promises)
 			.then(params => {
+				console.log("check", request.query.check);
 				if (request.query.check) {
 					response.json({ deletableIds: params[0], unlinkedFiles: params[1] });
 					return response.end();
 				} else {
 					//trigger hooks (hopefully)
-					return this.models.Images
+					this.models.Images
 						.destroy({
 							where: {
 								id: {
@@ -139,21 +142,17 @@ class SystemController {
 							}
 						})
 						.then(() => {
-							async.each(
-								params[1],
-								(path, callback) => fs.unlink(path, callback),
-								err => {
-									if (err) {
-										next(err);
-									}
-
-									response.json({
-										deletedIds: params[0],
-										deletedUnlinkedFiles: params[1]
-									});
-									return response.end();
+							async.each(params[1], fs.unlink, err => {
+								if (err) {
+									next(err);
 								}
-							);
+
+								response.json({
+									deletedIds: params[0],
+									deletedUnlinkedFiles: params[1]
+								});
+								return response.end();
+							});
 						});
 				}
 			})
