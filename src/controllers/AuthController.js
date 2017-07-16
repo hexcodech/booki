@@ -290,7 +290,6 @@ class AuthController {
 					profileFields: ["id", "emails", "name", "displayName", "photos"]
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					console.log("fb", profile);
 					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
