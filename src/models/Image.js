@@ -168,7 +168,9 @@ const Image = ({ folders, config, sequelize, models, cryptoUtilities }) => {
 										path.dirname(p),
 										path.basename(p, ext) +
 											"-" +
-											cryptoUtilities.generateRandomString(3) +
+											cryptoUtilities
+												.generateRandomString(3)
+												.replace(/\//g, "-") +
 											"-" +
 											w +
 											"x" +
