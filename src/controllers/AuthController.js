@@ -287,7 +287,7 @@ class AuthController {
 					callbackURL: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH,
 
 					passReqToCallback: true,
-					profileFields: ["id", "emails", "name"]
+					profileFields: ["id", "emails", "name", "photos"]
 				},
 				(request, accessToken, refreshToken, profile, done) => {
 					this.models.User
@@ -331,7 +331,9 @@ class AuthController {
 			)
 		);
 
-		this.authFacebook = [this.passport.authenticate("facebook")];
+		this.authFacebook = [
+			this.passport.authenticate("facebook", { scope: ["email"] })
+		];
 
 		//With Google
 		this.passport.use(
