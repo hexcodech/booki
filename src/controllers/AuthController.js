@@ -712,13 +712,16 @@ class AuthController {
 
 	authFacebookCallback(request, response, next) {
 		this.passport.authenticate("facebook", (err, user, info) => {
-			this.piwikTracker.track({
-				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-				action_name: "Authentication/FacebookLogin",
-				urlref: request.get("Referrer"),
-				ua: this.config.PIWIK_TRACKING_USER_AGENT,
-				uid: user.get("emailVerified")
-			});
+			if (!err && user) {
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/FacebookLogin",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT,
+					uid: user.get("emailVerified")
+				});
+			}
+
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
 	}
