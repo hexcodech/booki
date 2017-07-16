@@ -286,7 +286,8 @@ class AuthController {
 					clientSecret: this.config.FACEBOOK_APP_SECRET,
 					callbackURL: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH,
 
-					passReqToCallback: true
+					passReqToCallback: true,
+					profileFields: ["id", "emails", "name"]
 				},
 				(request, accessToken, refreshToken, profile, done) => {
 					this.models.User
