@@ -1,1 +1,23 @@
-{}
+{
+	"Booki": "Booki",
+	"Login / Register": "Login / Registrieren",
+	"Email address": "E-Mail Adresse",
+	"Password": "Passwort",
+	"Forgot your password?": "Hast du dein Passwort vergessen?",
+	"Login": "Login",
+	"Don't have an account?": "Kein Account?",
+	"First name": "Vorname",
+	"Register": "Registrieren",
+	"Already have an account?": "Bereits ein Account?",
+	"Reset password": "Passwort zurücksetzen",
+	"Remember your password?": "Remember your password?",
+	"Sign in with": "Anmelden mit",
+	"Facebook": "Facebook",
+	"Google": "Google",
+	"Verify email": "E-Mail verifizieren",
+	"Email": "E-Mail",
+	"Email verification code": "E-Mail Verifikationscode",
+	"Your new password": "Dein neues Passwort",
+	"Error": "Fehler",
+	"validation error": "Validationsfehler"
+}

@@ -54,6 +54,7 @@
     "express": "^4.14.0",
     "express-session": "^1.14.2",
     "express-validation": "^1.0.0",
+    "find-in-files": "^0.4.0",
     "helmet": "^3.4.0",
     "i18n": "^0.8.3",
     "image-size": "^0.5.1",
