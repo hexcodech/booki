@@ -4,7 +4,7 @@ const findInFiles = require("find-in-files");
 const mappings = require("../locales/booki-en-US.json");
 
 findInFiles
-	.find(/__\(["'](.+)["']\)/, path.resolve(__dirname, "../src"))
+	.find(/__\(["'](.+?)["']\)/, path.resolve(__dirname, "../src"))
 	.then(results => {
 		const json = {},
 			mappingValues = Object.values(mappings),
