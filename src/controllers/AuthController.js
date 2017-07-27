@@ -808,7 +808,7 @@ class AuthController {
 			.findOne({
 				where: { emailVerified: request.body.email }
 			})
-			.then(() => {
+			.then(user => {
 				if (user) {
 					let user = user;
 					user
