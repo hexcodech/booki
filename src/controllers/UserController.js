@@ -293,6 +293,8 @@ class UserController {
 				if (request.hasPermission("admin.user.write")) {
 					//if the user has this permission we need to update more fields
 
+					let promises2 = [];
+
 					user.set(
 						this.omitBy(
 							this.pick(request.body.user, [
@@ -305,21 +307,18 @@ class UserController {
 					);
 
 					if (
-						!request.body.user.permissions ||
-						!Array.isArray(request.body.user.permissions)
+						request.body.user.permissions &&
+						Array.isArray(request.body.user.permissions) &&
+						request.hasPermission("admin.user.permissions.change")
 					) {
-						request.body.user.permissions = [];
+						promises2.push(
+							user.setPermissionsRaw(request.body.user.permissions)
+						);
 					}
 
-					if (!request.hasPermission("admin.user.permissions.change")) {
-						//this will skip the permision changes
-						request.body.user.permissions = [];
-					}
+					promises2.push(user.save());
 
-					return Promise.all([
-						user.save(),
-						user.setPermissionsRaw(request.body.user.permissions)
-					]).then(() => {
+					return Promise.all(promises2).then(() => {
 						//added relations, refreshing the user instance in order to include
 						//the newly added permissions
 
