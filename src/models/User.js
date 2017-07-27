@@ -492,6 +492,8 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 	User.prototype.doesHavePermissions = function(permissionsNeeded = []) {
 		let permissions = this.getPermissionArray();
 
+		console.log("doesHavePermissions", permissions);
+
 		let missing = permissionsNeeded.filter(permission => {
 			for (let i = 0; i < permissions.length; i++) {
 				// has exactly this permission or has a higher level permission
@@ -598,6 +600,18 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 					"passwordAlgorithm",
 					"passwordResetCode",
 					"passwordResetCodeExpirationDate",
+					"locale"
+				])
+			);
+		} else if (options.owner) {
+			json.permissions = this.getPermissionArray();
+
+			json = Object.assign(
+				json,
+				pick(user, [
+					"emailVerified",
+					"emailUnverified",
+					"passwordAlgorithm",
 					"locale"
 				])
 			);
