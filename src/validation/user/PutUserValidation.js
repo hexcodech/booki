@@ -44,7 +44,7 @@ module.exports = function({ config }) {
 
 				profilePictureId: Joi.number().integer().positive().allow(null),
 
-				newPassword: Joi.string().min(8).max(256).allow("", null),
+				newPassword: Joi.boolean().allow("", null),
 
 				newEmail: Joi.string().email().allow("", null)
 			}
