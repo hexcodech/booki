@@ -810,7 +810,6 @@ class AuthController {
 			})
 			.then(user => {
 				if (user) {
-					let user = user;
 					user
 						.updatePassword(request.body.password, request.body.resetCode)
 						.then(() => {
