@@ -492,8 +492,6 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 	User.prototype.doesHavePermissions = function(permissionsNeeded = []) {
 		let permissions = this.getPermissionArray();
 
-		console.log("doesHavePermissions", permissions);
-
 		let missing = permissionsNeeded.filter(permission => {
 			for (let i = 0; i < permissions.length; i++) {
 				// has exactly this permission or has a higher level permission
