@@ -586,7 +586,7 @@ const User = ({ config, sequelize, models, cryptoUtilities }) => {
 			});
 		}
 
-		if (options.owner || options.admin) {
+		if (options.admin) {
 			json.permissions = this.getPermissionArray();
 
 			json = Object.assign(
