@@ -1,7 +1,7 @@
 version: "3.2"
 services:
   booki-api:
-    image: hexcodech/booki:latest
+    image: hexcodech/booki:release
     build:
       context: .
       dockerfile: Dockerfile
