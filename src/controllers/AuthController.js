@@ -3,19 +3,11 @@
  */
 
 class AuthController {
-	constructor({
-		booki,
-		config,
-		i18n,
-		models,
-		errorController,
-		passport,
-		piwikTracker
-	}) {
-		const bindAll = require("lodash/bindAll");
+	constructor({ booki, config, i18n, models, passport, piwikTracker }) {
 		this.ejs = require("ejs");
 		this.oauth2orize = require("oauth2orize");
 		this.oauth2Server = this.oauth2orize.createServer();
+		this.EncodingUtilities = new (require("../utilities/EncodingUtilities"))();
 
 		const LocalStrategy = require("passport-local").Strategy;
 		const BearerStrategy = require("passport-http-bearer").Strategy;
@@ -25,31 +17,29 @@ class AuthController {
 		//Store passed parameters
 		this.config = config;
 		this.i18n = i18n;
-		this.errorController = errorController;
 
 		this.passport = passport;
 
-		this.User = models.User;
-		this.OAuthClient = models.OAuthClient;
-		this.OAuthAccessToken = models.OAuthAccessToken;
-		this.OAuthCode = models.OAuthCode;
-		this.OAuthProvider = models.OAuthProvider;
+		this.models = models;
 
 		this.piwikTracker = piwikTracker;
 
-		bindAll(this, [
+		[
 			"loginView",
 			"mailVerificationView",
 			"auth",
 			"authFacebookCallback",
 			"authGoogleCallback",
-			"catchInternalError",
-			"catchInternalErrorView",
 			"passwordResetView",
 			"initPasswordReset",
 			"passwordReset",
-			"verifyEmail"
-		]);
+			"verifyEmail",
+			"showValidationErrors",
+			"catchInternalError",
+			"catchInternalErrorView"
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 
 		//setup passport serialization
 		this.passport.serializeUser((user, done) => {
@@ -57,18 +47,20 @@ class AuthController {
 		});
 
 		this.passport.deserializeUser((userId, done) => {
-			this.User
-				.findOne({ where: { id: userId } })
+			this.models.User
+				.findOne({
+					where: { id: userId },
+					include: [
+						{
+							model: this.models.Permission,
+							as: "Permissions"
+						}
+					]
+				})
 				.then(user => {
 					done(null, user);
 				})
-				.catch(err => {
-					done(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				.catch(done);
 		});
 
 		//Local registration
@@ -81,7 +73,7 @@ class AuthController {
 				locale = request.getLocale();
 			}
 
-			this.User
+			this.models.User
 				.register(firstName, email, locale)
 				.then(() => {
 					this.piwikTracker.track({
@@ -95,9 +87,7 @@ class AuthController {
 						"/views/verify-email?register=true&email=" + email
 					);
 				})
-				.catch(error => {
-					next(error);
-				});
+				.catch(next);
 		};
 
 		//OAuth client authentication
@@ -107,8 +97,16 @@ class AuthController {
 			new LocalStrategy(
 				{ usernameField: "clientId", passwordField: "clientSecret" },
 				(clientId, clientSecret, callback) => {
-					this.OAuthClient
-						.findOne({ where: { id: clientId } })
+					this.models.OAuthClient
+						.findOne({
+							where: { id: clientId },
+							include: [
+								{
+									model: models.OAuthRedirectUri,
+									as: "OAuthRedirectUris"
+								}
+							]
+						})
 						.then(client => {
 							if (!client) {
 								return callback(null, false);
@@ -120,16 +118,10 @@ class AuthController {
 									return callback(null, client);
 								})
 								.catch(err => {
-									return callback(new this.errorController.errors.LoginError());
+									return callback(new Error("The secret is invalid!"));
 								});
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
@@ -143,13 +135,13 @@ class AuthController {
 		this.passport.use(
 			"local",
 			new LocalStrategy((email, password, done) => {
-				this.User
+				this.models.User
 					.findOne({
 						where: { emailVerified: email }
 					})
 					.then(user => {
 						if (!user || user.get("passwordHash").length === 0) {
-							return done(new this.errorController.errors.LoginError());
+							return done(new Error("The user couldn't be found!"));
 						}
 
 						user
@@ -157,21 +149,9 @@ class AuthController {
 							.then(success => {
 								return done(null, success ? user : null);
 							})
-							.catch(err => {
-								return done(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
+							.catch(done);
 					})
-					.catch(err => {
-						return done(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(done);
 			})
 		);
 
@@ -207,43 +187,40 @@ class AuthController {
 				},
 				(request, accessToken, callback) => {
 					//keeping the database clean
-					this.OAuthAccessToken
+					this.models.OAuthAccessToken
 						.destroy({
 							where: { expires: { $lt: new Date() } }
 						})
 						.then(() => {
-							this.OAuthAccessToken
+							return this.models.OAuthAccessToken
 								.findByToken(accessToken)
 								.then(token => {
 									// No token found
 									if (!token) {
-										return callback(
-											new this.errorController.errors.TokenInvalidError()
-										);
+										return callback(new Error("The sent token is invalid!"));
 									}
 
-									this.User
-										.findOne({ where: { id: token.get("user_id") } })
+									return this.models.User
+										.findOne({
+											where: { id: token.get("user_id") },
+											include: [
+												{
+													model: this.models.Permission,
+													as: "Permissions"
+												}
+											]
+										})
 										.then(user => {
 											if (!user) {
 												// No user was found, so the token is invalid
-												return token
-													.destroy()
-													.then(() => {
-														return callback(
-															new this.errorController.errors
-																.TokenInvalidError(),
-															false
-														);
-													})
-													.catch(err => {
-														return callback(
-															new this.errorController.errors.DatabaseError({
-																message: err.message
-															}),
-															false
-														);
-													});
+												return token.destroy().then(() => {
+													return callback(
+														new Error(
+															"The sent token isn't associated with a user!"
+														),
+														false
+													);
+												});
 											}
 
 											//extend token lifetime
@@ -252,61 +229,32 @@ class AuthController {
 												Date.now() + this.config.ACCESS_TOKEN_LIFETIME * 1000
 											);
 
-											token
-												.save()
-												.then(() => {
-													//check whether the user has the required permissions
-													if (
-														request.requiredPermissions &&
+											return token.save().then(() => {
+												//check whether the user has the required permissions
+												if (
+													!request.requiredPermissions ||
+													request.requiredPermissions.length === 0 ||
+													(request.requiredPermissions &&
 														user.doesHavePermissions(
 															request.requiredPermissions
-														)
-													) {
-														//request.hasPermission not possible yet, as request.user
-														//isn't set yet
-														return callback(null, user);
-													}
+														))
+												) {
+													//request.hasPermission not possible yet, as request.user
+													//isn't set yet
+													return callback(null, user);
+												}
 
-													return callback(
-														new this.errorController.errors.ForbiddenError(),
-														false
-													);
-												})
-												.catch(err => {
-													return callback(
-														new this.errorController.errors.DatabaseError({
-															message: err.message
-														}),
-														false
-													);
-												});
-										})
-										.catch(err => {
-											return callback(
-												new this.errorController.errors.DatabaseError({
-													message: err.message
-												}),
-												false
-											);
+												return callback(
+													new Error(
+														"You don't have the permission to do this!"
+													),
+													false
+												);
+											});
 										});
-								})
-								.catch(err => {
-									return callback(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										}),
-										false
-									);
 								});
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								}),
-								false
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
@@ -315,11 +263,21 @@ class AuthController {
 			return (request, response, next) => {
 				request.requiredPermissions = permissions;
 
-				this.passport.authenticate("bearer", { session: false })(
-					request,
-					response,
-					next
-				);
+				this.passport.authenticate(
+					"bearer",
+					{ session: false },
+					(err, user, info) => {
+						if (err) {
+							return next(err);
+						}
+
+						if (!user) {
+							return next(new Error("The sent access token is invalid!"));
+						}
+
+						request.logIn(user, next);
+					}
+				)(request, response, next);
 			};
 		};
 
@@ -331,51 +289,54 @@ class AuthController {
 					clientSecret: this.config.FACEBOOK_APP_SECRET,
 					callbackURL: this.config.HOST + this.config.FACEBOOK_CALLBACK_PATH,
 
-					passReqToCallback: true
+					passReqToCallback: true,
+					profileFields: ["id", "emails", "name", "displayName", "photos"]
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					this.User
+					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
-							return user.save().then(user => {
-								return user
-									.getOAuthProviders({ where: { type: "facebook" } })
-									.then(providers => {
-										if (providers.length > 0) {
-											let provider = providers[0];
+							return user
+								.save()
+								.then(user => {
+									return user
+										.getOAuthProviders({ where: { type: "facebook" } })
+										.then(providers => {
+											if (providers.length > 0) {
+												let provider = providers[0];
 
-											provider.set({
-												accessToken,
-												refreshToken
-											});
-
-											return provider.save();
-										} else {
-											return this.OAuthProvider
-												.create({
-													type: "facebook",
+												provider.set({
 													accessToken,
 													refreshToken
-												})
-												.then(provider => {
-													return provider.setUser(user);
 												});
-										}
-									});
-							});
+
+												return provider.save();
+											} else {
+												return this.models.OAuthProvider
+													.create({
+														type: "facebook",
+														accessToken,
+														refreshToken
+													})
+													.then(provider => {
+														return provider.setUser(user);
+													});
+											}
+										});
+								})
+								.then(() => {
+									return done(null, user);
+								});
 						})
-						.then(user => {
-							return done(null, user);
-						})
-						.catch(error => {
-							return done(error);
-						});
+						.catch(done);
 				}
 			)
 		);
 
-		this.authFacebook = [this.passport.authenticate("facebook")];
+		this.authFacebook = [
+			this.passport.authenticate("facebook", { scope: ["email"] })
+		];
 
 		//With Google
 		this.passport.use(
@@ -388,43 +349,43 @@ class AuthController {
 					passReqToCallback: true
 				},
 				(request, accessToken, refreshToken, profile, done) => {
-					this.User
+					this.models.User
 						.findOrCreateUserByPassportProfile(profile)
 						.then(user => {
 							user.set("locale", request.getLocale());
-							return user.save().then(user => {
-								return user
-									.getOAuthProviders({ where: { type: "google" } })
-									.then(providers => {
-										if (providers.length > 0) {
-											let provider = providers[0];
+							return user
+								.save()
+								.then(user => {
+									return user
+										.getOAuthProviders({ where: { type: "google" } })
+										.then(providers => {
+											if (providers.length > 0) {
+												let provider = providers[0];
 
-											provider.set({
-												accessToken,
-												refreshToken
-											});
-
-											return provider.save();
-										} else {
-											return this.OAuthProvider
-												.create({
-													type: "google",
+												provider.set({
 													accessToken,
 													refreshToken
-												})
-												.then(provider => {
-													return provider.setUser(user);
 												});
-										}
-									});
-							});
+
+												return provider.save();
+											} else {
+												return this.models.OAuthProvider
+													.create({
+														type: "google",
+														accessToken,
+														refreshToken
+													})
+													.then(provider => {
+														return provider.setUser(user);
+													});
+											}
+										});
+								})
+								.then(() => {
+									return done(null, user);
+								});
 						})
-						.then(user => {
-							return done(null, user);
-						})
-						.catch(error => {
-							return done(error);
-						});
+						.catch(done);
 				}
 			)
 		);
@@ -441,18 +402,20 @@ class AuthController {
 		});
 
 		this.oauth2Server.deserializeClient((id, callback) => {
-			this.OAuthClient
-				.findOne({ where: { id: id } })
+			this.models.OAuthClient
+				.findOne({
+					where: { id: id },
+					include: [
+						{
+							model: this.models.OAuthRedirectUri,
+							as: "OAuthRedirectUris"
+						}
+					]
+				})
 				.then(client => {
 					return callback(null, client);
 				})
-				.catch(err => {
-					return callback(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				.catch(callback);
 		});
 
 		this.oauth2Server.grant(
@@ -462,18 +425,19 @@ class AuthController {
 
 					if (!client.verifyRedirectUri(redirectUri)) {
 						return callback(
-							new this.errorController.errors.InvalidRedirectUriError(),
-							null
+							new Error(
+								"The sent redirect uri isn't registered with this oauth client!"
+							)
 						);
 					}
 
-					let codeValue = this.OAuthCode.generateCode();
+					let codeValue = this.models.OAuthCode.generateCode();
 
 					let expirationDate =
 						Date.now() + this.config.AUTH_CODE_LIFETIME * 1000;
 
-					let code = this.OAuthCode.build({
-						hash: this.OAuthCode.hashCode(codeValue),
+					let code = this.models.OAuthCode.build({
+						hash: this.models.OAuthCode.hashCode(codeValue),
 						expires: expirationDate,
 						user_id: user.get("id"),
 						oauth_client_id: client.get("id")
@@ -486,25 +450,19 @@ class AuthController {
 						.then(() => {
 							return callback(null, codeValue);
 						})
-						.catch(err => {
-							return callback(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						.catch(callback);
 				}
 			)
 		);
 
 		this.oauth2Server.exchange(
 			this.oauth2orize.exchange.code((client, code, redirectUri, callback) => {
-				this.OAuthCode
+				this.models.OAuthCode
 					.findByCode(code)
 					.then(authCode => {
 						if (authCode.get("expires") < Date.now()) {
 							return callback(
-								new this.errorController.errors.AuthCodeExpiredError()
+								new Error("The sent auth code has already expired!")
 							);
 						}
 						//Delete the auth code now that it has been used
@@ -512,7 +470,7 @@ class AuthController {
 							userId = authCode.get("user_id");
 
 						let promises = [
-							this.OAuthCode.destroy({
+							this.models.OAuthCode.destroy({
 								where: {
 									$or: [
 										{
@@ -531,7 +489,7 @@ class AuthController {
 
 						// Create an access token
 						let tokenData = {
-							token: this.OAuthAccessToken.generateToken(),
+							token: this.models.OAuthAccessToken.generateToken(),
 							clientId: clientId,
 							userId: userId,
 							expires: expirationDate
@@ -539,8 +497,8 @@ class AuthController {
 
 						//the 'key' here is 'hash' and not 'token' as in 'tokenData'!
 						promises.push(
-							this.OAuthAccessToken.create({
-								hash: this.OAuthAccessToken.hashToken(tokenData.token),
+							this.models.OAuthAccessToken.create({
+								hash: this.models.OAuthAccessToken.hashToken(tokenData.token),
 								expires: expirationDate,
 								user_id: userId,
 								oauth_client_id: clientId
@@ -551,21 +509,9 @@ class AuthController {
 							.then(() => {
 								callback(null, tokenData);
 							})
-							.catch(err => {
-								return callback(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
+							.catch(callback);
 					})
-					.catch(err => {
-						return callback(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(callback);
 			})
 		);
 
@@ -573,24 +519,28 @@ class AuthController {
 
 		this.authorization = [
 			this.oauth2Server.authorization((clientId, redirectUri, callback) => {
-				this.OAuthClient
-					.findOne({ where: { id: clientId } })
+				this.models.OAuthClient
+					.findOne({
+						where: { id: clientId },
+						include: [
+							{
+								model: this.models.OAuthRedirectUri,
+								as: "OAuthRedirectUris"
+							}
+						]
+					})
 					.then(client => {
 						if (client && client.verifyRedirectUri(redirectUri)) {
 							return callback(null, client, redirectUri);
 						} else {
 							return callback(
-								new this.errorController.errors.InvalidRedirectUriError()
+								new Error(
+									"The sent redirect uri isn't registered with this oauth client!"
+								)
 							);
 						}
 					})
-					.catch(err => {
-						return callback(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(callback);
 			}),
 			(request, response, next) => {
 				//Check whether request qualifies for immediate approval
@@ -610,13 +560,7 @@ class AuthController {
 						}
 						return next(null);
 					})
-					.catch(err => {
-						return next(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+					.catch(next);
 			},
 			(request, response, next) => {
 				this.ejs.renderFile(
@@ -637,11 +581,7 @@ class AuthController {
 					{},
 					(err, str) => {
 						if (err) {
-							return next(
-								new errorController.errors.RenderError({
-									message: err.message
-								})
-							);
+							return next(err);
 						}
 
 						response.setHeader("Content-Type", "text/html");
@@ -660,7 +600,7 @@ class AuthController {
 			emailVerificationCode = request.body.emailVerificationCode,
 			password = request.body.password;
 
-		this.User
+		this.models.User
 			.findOne({ where: { emailUnverified: email } })
 			.then(user => {
 				user
@@ -681,24 +621,14 @@ class AuthController {
 									});
 									response.redirect("/views/login");
 								})
-								.catch(error => {
-									next(error);
-								});
+								.catch(next);
 						} else {
 							response.redirect("/views/login");
 						}
 					})
-					.catch(error => {
-						next(error);
-					});
+					.catch(next);
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	loginView(request, response, next) {
@@ -715,11 +645,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new this.errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -752,11 +678,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -774,67 +696,60 @@ class AuthController {
 
 	auth(request, response, next, err, user, info) {
 		if (err) {
-			console.log(err);
-			return next(
-				new this.errorController.errors.AuthenticationError({
-					message: err.message
-				})
-			);
+			return next(err);
 		}
 
 		if (!user) {
-			return next(
-				new this.errorController.errors.AuthenticationError({
-					message: err.message
-				})
-			);
+			return next(new Error("Couldn't find a user!"));
 		}
 
-		request.logIn(user, error => {
-			if (error) {
-				return next(error);
+		request.logIn(user, err => {
+			if (err) {
+				return next(err);
 			}
 
-			if (user) {
-				if (request.session.requestedURL) {
-					response.redirect(request.session.requestedURL);
-				} else {
-					response.redirect(this.config.DEFAULT_REDIRECT_URI);
-				}
+			if (request.session.requestedURL) {
+				response.redirect(request.session.requestedURL);
 			} else {
-				return next(new this.errorController.errors.AuthenticationError());
+				response.redirect(this.config.DEFAULT_REDIRECT_URI);
 			}
 		});
 	}
 
 	authFacebookCallback(request, response, next) {
 		this.passport.authenticate("facebook", (err, user, info) => {
-			this.piwikTracker.track({
-				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-				action_name: "Authentication/FacebookLogin",
-				urlref: request.get("Referrer"),
-				ua: this.config.PIWIK_TRACKING_USER_AGENT,
-				uid: user.emailVerified
-			});
+			if (!err && user) {
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/FacebookLogin",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT,
+					uid: user.get("emailVerified")
+				});
+			}
+
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
 	}
 
 	authGoogleCallback(request, response, next) {
 		this.passport.authenticate("google", (err, user, info) => {
-			this.piwikTracker.track({
-				url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
-				action_name: "Authentication/GoogleLogin",
-				urlref: request.get("Referrer"),
-				ua: this.config.PIWIK_TRACKING_USER_AGENT,
-				uid: user.emailVerified
-			});
+			if (!err && user) {
+				this.piwikTracker.track({
+					url: this.config.PIWIK_TRACKING_SITE_BASE_URL + request.path,
+					action_name: "Authentication/GoogleLogin",
+					urlref: request.get("Referrer"),
+					ua: this.config.PIWIK_TRACKING_USER_AGENT,
+					uid: user.get("emailVerified")
+				});
+			}
+
 			this.auth(request, response, next, err, user, info);
 		})(request, response, next);
 	}
 
 	initPasswordReset(request, response, next) {
-		this.User
+		this.models.User
 			.findOne({
 				where: { emailVerified: request.body.email }
 			})
@@ -848,9 +763,7 @@ class AuthController {
 								"/views/password-reset?email=" + request.body.email
 							);
 						})
-						.catch(error => {
-							return next(error);
-						});
+						.catch(next);
 				} else {
 					//ALWAYS redirect to not leak whether this email is registered
 					return response.redirect(
@@ -858,13 +771,7 @@ class AuthController {
 					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	passwordResetView(request, response, next) {
@@ -883,11 +790,7 @@ class AuthController {
 			{},
 			(err, str) => {
 				if (err) {
-					return next(
-						new this.errorController.errors.RenderError({
-							message: err.message
-						})
-					);
+					return next(err);
 				}
 
 				this.piwikTracker.track({
@@ -904,13 +807,12 @@ class AuthController {
 	}
 
 	passwordReset(request, response, next) {
-		this.User
+		this.models.User
 			.findOne({
 				where: { emailVerified: request.body.email }
 			})
-			.then(() => {
+			.then(user => {
 				if (user) {
-					let user = user;
 					user
 						.updatePassword(request.body.password, request.body.resetCode)
 						.then(() => {
@@ -923,43 +825,42 @@ class AuthController {
 							});
 							response.redirect("/views/login");
 						})
-						.catch(error => {
-							//Return always the same error to not leak whether this email
-							//is registered
-							return next(
-								new this.errorController.errors.PasswordResetCodeInvalidError(),
-								null
-							);
-						});
+						.catch(next);
 				} else {
 					//Return always the same error to not leak whether this email
 					//is registered
-					return next(
-						new this.errorController.errors.PasswordResetCodeInvalidError(),
-						null
-					);
+					return next(new Error("The password reset code was invalid!"));
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
-	catchInternalError(error, request, response, next) {
-		if (error) {
-			console.log(error);
-			return response.redirect(this.config.LOGIN_PATH);
+	showValidationErrors(url) {
+		return (err, request, response, next) => {
+			if (err.message === "validation error") {
+				return response.redirect(
+					url.includes("?")
+						? url + "&" + this.EncodingUtilities.serializeValidationError(err)
+						: url + "/?" + this.EncodingUtilities.serializeValidationError(err)
+				);
+			}
+			next(err);
+		};
+	}
+
+	catchInternalError(err, request, response, next) {
+		if (err) {
+			response.redirect(this.config.LOGIN_PATH);
+			throw err;
+
+			return;
 		} else {
 			next();
 		}
 	}
 
-	catchInternalErrorView(error, request, response, next) {
-		if (error) {
+	catchInternalErrorView(err, request, response, next) {
+		if (err) {
 			this.ejs.renderFile(
 				__dirname + "/../views/Error.ejs",
 				{
@@ -969,16 +870,21 @@ class AuthController {
 							locale: request.getLocale()
 						});
 					},
-					error: error
+					error: err
 				},
 				{},
-				(err, str) => {
-					if (err) {
-						console.log(err);
+				(err2, str) => {
+					if (err2) {
 						response.end(
-							`Yes, there was just an error while rendering the error...
-						The original error was: ${JSON.stringify(error)}`
+							"Yes, there was just an error while rendering the error..."
 						);
+
+						console.log(`The original error was: ${JSON.stringify(err)}
+						and the new one is: ${JSON.stringify(err2)}`);
+
+						throw err;
+
+						return;
 					}
 
 					response.setHeader("Content-Type", "text/html");

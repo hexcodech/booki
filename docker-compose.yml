@@ -38,6 +38,7 @@ services:
     stop_grace_period: 15s
     volumes:
       - ./uploads:/uploads
+      - ./logs:/logs
 
 secrets:
   booki-config:

@@ -4,7 +4,8 @@ module.exports = ({}) => {
 	return {
 		body: {
 			email: Joi.string().email().required(),
-			resetCode: Joi.string().required()
+			resetCode: Joi.string().required(),
+			password: Joi.string().min(8).max(255)
 		}
 	};
 };

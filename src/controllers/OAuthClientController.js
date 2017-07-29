@@ -1,77 +1,67 @@
 class OAuthClientController {
-	constructor({
-		booki,
-		config,
-		errorController,
-		getLocale,
-		generateRandomString,
-		models
-	}) {
-		const bindAll = require("lodash/bindAll");
+	constructor({ booki, config, getLocale, generateRandomString, models }) {
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
 
 		this.config = config;
-		this.errorController = errorController;
 
 		this.getLocale = getLocale;
 		this.generateRandomString = generateRandomString;
 
-		this.OAuthClient = models.OAuthClient;
-		this.OAuthRedirectUri = models.OAuthRedirectUri;
-		this.User = models.User;
+		this.models = models;
 
-		bindAll(this, [
+		[
 			"getOAuthClient",
 			"postOAuthClient",
 			"getOAuthClientById",
 			"putOAuthClient",
 			"deleteOAuthClient"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getOAuthClient(request, response, next) {
-		let query = {}, include = [], userId = null;
+		let query = {},
+			userId = null;
 
-		if (request.hasPermission("admin.user.query")) {
+		if (request.hasPermission("admin.client.query")) {
 			query = request.body.query;
 		} else {
 			query = this.pick(request.body.client, ["id", "name", "trusted"]);
+		}
 
+		if (!request.hasPermission("admin.client.list")) {
 			userId = request.user.id;
 		}
 
-		if (
-			request.body.client &&
-			request.body.client.userId &&
-			request.hasPermission("admin.client.filters")
-		) {
-			userId = request.body.client.userId;
-		}
-
 		if (userId) {
-			include.push({
-				model: this.User,
-				as: "User",
-				where: { id: userId }
-			});
+			query.user_id = userId;
 		}
 
-		this.OAuthClient
-			.findAll({ where: query, include: include })
+		this.models.OAuthClient
+			.findAll({
+				where: query,
+				include: [
+					{
+						model: this.models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
+					}
+				]
+			})
 			.then(clients => {
 				if (clients) {
-					if (request.hasPermission("admin.client.hiddenData.read")) {
+					if (request.hasPermission("admin.client.read")) {
 						response.json(
 							clients.map(client => {
-								return client.toJSON({ hiddenData: true });
+								return client.toJSON({ admin: true });
 							})
 						);
 					} else {
 						response.json(
 							clients.map(client => {
-								return client.toJSON();
+								return client.toJSON({ owner: true });
 							})
 						);
 					}
@@ -81,66 +71,61 @@ class OAuthClientController {
 					return response.end("[]");
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getOAuthClientById(request, response, next) {
-		this.OAuthClient
+		let query = { id: request.params.clientId };
+
+		if (!request.hasPermission("admin.client.list")) {
+			query.user_id = request.user.id;
+		}
+
+		this.models.OAuthClient
 			.findOne({
-				where: { id: request.params.clientId },
+				where: query,
 				include: [
 					{
-						model: this.User,
-						as: "User",
-						where: { id: request.user.id }
+						model: this.models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
 					}
 				]
 			})
 			.then(client => {
-				if (client) {
-					if (request.hasPermission("admin.client.hiddenData.read")) {
-						response.json(client.toJSON({ hiddenData: true }));
-					} else {
-						response.json(client.toJSON());
-					}
-
-					return response.end();
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+				if (!client) {
+					return Promise.reject(new Error("This client wasn't found!"));
 				}
+
+				if (request.hasPermission("admin.client.read")) {
+					response.json(
+						client.toJSON({
+							admin: true,
+							owner: client.user_id === request.user.id
+						})
+					);
+				} else {
+					response.json(
+						client.toJSON({ owner: client.user_id === request.user.id })
+					);
+				}
+
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	postOAuthClient(request, response, next) {
-		const secret = this.OAuthClient.generateSecret();
+		const secret = this.models.OAuthClient.generateSecret();
 		let promises = [];
 
-		let client = this.OAuthClient.build({
+		let client = this.models.OAuthClient.build({
 			name: request.body.client.name,
 			user_id: request.user.id
 		});
 
 		client.setSecret(secret);
 
-		if (
-			request.hasPermissions([
-				"admin.client.create",
-				"admin.client.hiddenData.write"
-			])
-		) {
+		if (request.hasPermissions(["admin.client.create", "admin.client.write"])) {
 			if (request.body.client.userId) {
 				client.set("user_id", request.body.client.userId);
 			}
@@ -161,7 +146,7 @@ class OAuthClientController {
 				if (request.body.client.redirectUris) {
 					request.body.client.redirectUris.forEach(uri => {
 						promises.push(
-							this.OAuthRedirectUri.create({
+							this.models.OAuthRedirectUri.create({
 								uri: uri,
 								oauth_client_id: client.get("id")
 							})
@@ -169,192 +154,160 @@ class OAuthClientController {
 					});
 				}
 
-				Promise.all(promises)
-					.then(() => {
-						client
-							.reload()
-							.then(() => {
-								let json = {};
-
-								if (request.hasPermission("admin.client.hiddenData.read")) {
-									json = client.toJSON({ hiddenData: true });
-								} else {
-									json = client.toJSON();
+				return Promise.all(promises).then(() => {
+					return client
+						.reload({
+							include: [
+								{
+									model: this.models.OAuthRedirectUri,
+									as: "OAuthRedirectUris"
 								}
+							]
+						})
+						.then(() => {
+							let json = {};
 
-								json.secret = secret; //attach secret to response
-								response.json(json);
+							if (request.hasPermission("admin.client.read")) {
+								json = client.toJSON({ admin: true });
+							} else {
+								json = client.toJSON({ owner: true });
+							}
 
-								return response.end();
-							})
-							.catch(err => {
-								return next(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
-					})
-					.catch(err => {
-						return next(
-							new this.errorController.errors.DatabaseError({
-								message: err.message
-							})
-						);
-					});
+							json.secret = secret; //attach secret to response
+							response.json(json);
+
+							return response.end();
+						});
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	putOAuthClient(request, response, next) {
-		this.OAuthClient
-			.findOne({ where: { id: request.params.clientId } })
-			.then(client => {
-				if (client) {
-					let promises = [];
-
-					if (
-						request.hasPermissions([
-							"admin.client.editOthers",
-							"admin.client.hiddenData.write"
-						])
-					) {
-						client.set(
-							this.omitBy(
-								this.pick(request.body.client, ["id", "trusted"]),
-								this.isNil
-							)
-						);
-
-						if (request.body.client.userId) {
-							promises.push(client.setUser(request.body.client.userId));
-						}
-					} else if (
-						client.userId !== request.user.id &&
-						!request.hasPermission("admin.client.editOthers")
-					) {
-						return next(new this.errorController.errors.ForbiddenError());
+		this.models.OAuthClient
+			.findOne({
+				where: { id: request.params.clientId },
+				include: [
+					{
+						model: this.models.OAuthRedirectUri,
+						as: "OAuthRedirectUris"
 					}
+				]
+			})
+			.then(client => {
+				if (!client) {
+					return Promise.reject(new Error("This client wasn't found!"));
+				}
 
+				let promises = [];
+
+				if (
+					request.hasPermissions([
+						"admin.client.editOthers",
+						"admin.client.write"
+					])
+				) {
 					client.set(
-						this.omitBy(this.pick(request.body.client, ["name"]), this.isNil)
+						this.omitBy(
+							this.pick(request.body.client, ["id", "trusted"]),
+							this.isNil
+						)
 					);
 
-					if (request.body.client.redirectUris) {
-						const currentUris = client.get("OAuthRedirectUris"),
-							newUris = request.body.client.redirectUris;
+					if (request.body.client.userId) {
+						promises.push(client.setUser(request.body.client.userId));
+					}
+				} else if (
+					client.userId !== request.user.id &&
+					!request.hasPermission("admin.client.editOthers")
+				) {
+					return next(new Error("You are not allowed to update this client!"));
+				}
 
-						//To remove
-						for (let i = 0; i < currentUris.length; i++) {
-							if (newUris.indexOf(currentUris[i].get("uri")) === -1) {
-								promises.push(currentUris[i].destroy());
-							}
-						}
+				client.set(
+					this.omitBy(this.pick(request.body.client, ["name"]), this.isNil)
+				);
 
-						//To add
-						let tempCurrentUris = currentUris.map(uri => {
-							return uri.get("uri");
-						});
+				if (request.body.client.redirectUris) {
+					const currentUris = client.get("OAuthRedirectUris"),
+						newUris = request.body.client.redirectUris;
 
-						for (let i = 0; i < newUris.length; i++) {
-							if (tempCurrentUris.indexOf(newUris[i]) === -1) {
-								let uri = this.OAuthRedirectUri.build({
-									uri: newUris[i],
-									oauth_client_id: client.get("id")
-								});
-
-								promises.push(uri.save());
-							}
+					//To remove
+					for (let i = 0; i < currentUris.length; i++) {
+						if (newUris.indexOf(currentUris[i].get("uri")) === -1) {
+							promises.push(currentUris[i].destroy());
 						}
 					}
 
-					promises.push(client.save());
+					//To add
+					let tempCurrentUris = currentUris.map(uri => {
+						return uri.get("uri");
+					});
 
-					Promise.all(promises)
-						.then(() => {
-							client
-								.reload()
-								.then(() => {
-									if (request.hasPermission("admin.client.hiddenData.read")) {
-										response.json(client.toJSON({ hiddenData: true }));
-									} else {
-										response.json(client.toJSON());
-									}
+					for (let i = 0; i < newUris.length; i++) {
+						if (tempCurrentUris.indexOf(newUris[i]) === -1) {
+							let uri = this.models.OAuthRedirectUri.build({
+								uri: newUris[i],
+								oauth_client_id: client.get("id")
+							});
 
-									return response.end();
-								})
-								.catch(err => {
-									return next(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								});
-						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
-				} else {
-					return next(new this.errorController.errors.NotFoundError());
+							promises.push(uri.save());
+						}
+					}
 				}
+
+				promises.push(client.save());
+
+				return Promise.all(promises).then(() => {
+					return client
+						.reload({
+							include: [
+								{
+									model: this.models.OAuthRedirectUri,
+									as: "OAuthRedirectUris"
+								}
+							]
+						})
+						.then(() => {
+							if (request.hasPermission("admin.client.read")) {
+								response.json(client.toJSON({ admin: true }));
+							} else {
+								response.json(client.toJSON({ owner: true }));
+							}
+
+							return response.end();
+						});
+				});
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					}),
-					null
-				);
-			});
+			.catch(next);
 	}
 
 	deleteOAuthClient(request, response, next) {
-		this.OAuthClient
+		this.models.OAuthClient
 			.findOne({ where: { id: request.params.clientId } })
 			.then(client => {
-				if (client) {
-					if (
-						client.userId === request.user.id ||
-						request.hasPermission("admin.client.deleteOthers")
-					) {
-						client
-							.destroy()
-							.then(() => {
-								response.json({ success: true });
-								response.end();
-							})
-							.catch(err => {
-								return next(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									}),
-									null
-								);
-							});
-					} else {
-						return next(new this.errorController.errors.ForbiddenError());
-					}
+				if (!client) {
+					return Promise.reject(new Error("This client wasn't found!"));
+				}
+
+				if (
+					client.userId === request.user.id ||
+					request.hasPermission("admin.client.deleteOthers")
+				) {
+					return client
+						.destroy()
+						.then(() => {
+							response.json({ success: true });
+							response.end();
+						})
+						.catch(next);
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(
+						new Error("You are not allowed to delete this client!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

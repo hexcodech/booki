@@ -1,14 +1,5 @@
 class ImageController {
-	constructor({
-		booki,
-		config,
-		models,
-		errorController,
-		folders,
-		cryptoUtilities
-	}) {
-		const bindAll = require("lodash/bindAll");
-
+	constructor({ booki, config, models, folders, cryptoUtilities }) {
 		this.path = require("path");
 		this.mkdirp = require("mkdirp-promise");
 
@@ -20,56 +11,53 @@ class ImageController {
 
 		this.config = config;
 		this.folders = folders;
-		this.errorController = errorController;
 
-		this.File = models.File;
-		this.Image = models.Image;
+		this.models = models;
 
-		bindAll(this, ["getImage", "postImage", "putImage", "deleteImage"]);
+		["getImage", "postImage", "putImage", "deleteImage"].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getImage(request, response, next) {
-		this.Image
-			.findAll()
-			.then(images => {
-				if (images) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
-						response.json(
-							images.map(image => {
-								return image.toJSON({ hiddenData: true });
-							})
-						);
-					} else {
-						response.json(
-							images.map(image => {
-								return image.toJSON();
-							})
-						);
+		this.models.Image
+			.findAll({
+				include: [
+					{
+						model: this.models.Thumbnail,
+						as: "Thumbnails"
+					},
+					{
+						model: this.models.File,
+						as: "File"
 					}
-					return response.end();
-				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				]
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.then(images => {
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						images.map(image => {
+							return image.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						images.map(image => {
+							return image.toJSON();
+						})
+					);
+				}
+				return response.end();
+			})
+			.catch(next);
 	}
 
 	postImage(request, response, next) {
 		try {
 			let busboy = new this.Busboy({ headers: request.headers });
 			busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
-				console.log(mimetype);
-
 				if (!mimetype.startsWith("image/")) {
-					return next(new this.errorController.errors.InvalidImageError());
+					return next(new Error("The file isn't an image!"));
 				}
 
 				let data = Buffer.from([]);
@@ -78,7 +66,7 @@ class ImageController {
 					data = Buffer.concat([data, newData]);
 
 					if (data.length > this.config.MAX_UPLOAD_FILE_SIZE) {
-						return next(new this.errorController.errors.InvalidImageError());
+						return next(new Error("The file exceeds the max upload limit!"));
 					}
 				});
 
@@ -88,39 +76,41 @@ class ImageController {
 						mimetype.startsWith("image/") &&
 						data.length <= this.config.MAX_UPLOAD_FILE_SIZE
 					) {
-						this.Image
+						this.models.Image
 							.store(data, request.user)
 							.then(image => {
-								if (request.hasPermission("admin.image.hiddenData.read")) {
-									response.json(image.toJSON({ hiddenData: true }));
+								if (request.hasPermission("admin.image.read")) {
+									response.json(image.toJSON({ admin: true }));
 								} else {
 									response.json(image.toJSON());
 								}
 								response.end();
 							})
-							.catch(error => {
-								return next(error);
-							});
+							.catch(next);
 					} else {
-						return next(new this.errorController.errors.InvalidImageError());
+						return next(
+							new Error(
+								"Either the file isn't an image or it exceeds the max upload limit!"
+							)
+						);
 					}
 				});
 			});
 
 			request.pipe(busboy);
 		} catch (err) {
-			return next(
-				new this.errorController.errors.BadRequestError({
-					message: err.message
-				})
-			);
+			return next(err);
 		}
 	}
 
 	putImage(request, response, next) {
-		this.Image
+		this.models.Image
 			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
+				if (!image) {
+					return Promise.reject(new Error("This image wasn't found!"));
+				}
+
 				if (
 					request.hasPermission("admin.image.editOthers") ||
 					image.get("user_id") === request.user.get("id")
@@ -143,24 +133,23 @@ class ImageController {
 										mimetype.startsWith("image/") &&
 										file.byteLength <= this.config.MAX_UPLOAD_FILE_SIZE
 									) {
-										this.Image
+										//TODO delete old file
+										this.models.Image
 											.store(data, request.user)
 											.then(image => {
-												if (
-													request.hasPermission("admin.image.hiddenData.read")
-												) {
-													response.json(image.toJSON({ hiddenData: true }));
+												if (request.hasPermission("admin.image.read")) {
+													response.json(image.toJSON({ admin: true }));
 												} else {
 													response.json(image.toJSON());
 												}
 												response.end();
 											})
-											.catch(error => {
-												return next(error);
-											});
+											.catch(next);
 									} else {
 										return next(
-											new this.errorController.errors.InvalidImageError()
+											new Error(
+												"Either the file isn't an image or it exceeds the max upload limit!"
+											)
 										);
 									}
 								});
@@ -169,23 +158,19 @@ class ImageController {
 
 						request.pipe(busboy);
 					} catch (err) {
-						return next(new this.errorController.errors.BadRequestError());
+						return next(err);
 					}
 				} else {
-					return next(new this.errorController.errors.ForbiddenError());
+					return Promise.reject(
+						new Error("You are not allowed to update this image!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	deleteImage(request, response, next) {
-		this.Image
+		this.models.Image
 			.findOne({ where: { id: request.params.imageId } })
 			.then(image => {
 				if (
@@ -193,31 +178,20 @@ class ImageController {
 					(request.hasPermission("admin.image.deleteOthers") ||
 						image.get("user_id") === request.user.get("id"))
 				) {
-					image
+					return image
 						.destroy()
 						.then(() => {
 							response.json({ success: true });
 							response.end();
 						})
-						.catch(err => {
-							return next(
-								new this.errorController.errors.DatabaseError({
-									message: err.message
-								})
-							);
-						});
+						.catch(next);
 				} else {
-					return next(new this.errorController.errors.ForbiddenError());
+					return Promise.reject(
+						new Error("You are not allowed to delete this image!")
+					);
 				}
 			})
-			.catch(err => {
-				console.log(err);
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

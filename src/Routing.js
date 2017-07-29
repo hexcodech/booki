@@ -22,8 +22,8 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		}
 	);
 
-	app.get("/", (response, request) => {
-		request.end(easteregg);
+	app.get("/", (request, response) => {
+		response.end(easteregg);
 	});
 
 	const validate = schema => {
@@ -60,7 +60,14 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 			if (user && user.get) {
 				return user.get("locale");
 			} else if (request !== null) {
-				return i18n.getLocale(request);
+				let lang = request.headers["accept-language"]
+					.toLowerCase()
+					.split(",")[0]
+					.split("-");
+
+				return lang.length === 0
+					? lang[0] + "-" + lang[0].toUpperCase()
+					: lang[0] + "-" + lang[1].toUpperCase();
 			} else {
 				return config.LOCALES[0];
 			}
@@ -96,6 +103,17 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	);
 
 	app.get(
+		"/v1/auth/logged-in",
+		authController.isBearerAuthenticated(),
+		(request, response, next) => {
+			return response.end('{"loggedIn": true}');
+		},
+		(error, request, response, next) => {
+			response.end('{"loggedIn": false}');
+		}
+	);
+
+	app.get(
 		"/views/login",
 		authController.loginView, //Tracked in analytics
 		authController.catchInternalErrorView
@@ -128,6 +146,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		"/v1/auth/password-reset",
 		validate(passwordResetValidation),
 		authController.passwordReset, //Tracked in analytics
+		authController.showValidationErrors("/views/password-reset"),
 		authController.catchInternalErrorView
 	);
 
@@ -141,6 +160,20 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		"/v1/auth/local/verify-email",
 		validate(verifyMailValidation),
 		authController.verifyEmail, //Tracked in analytics
+		(error, request, response, next) => {
+			if (request.body.register) {
+				authController.showValidationErrors(
+					"/views/verify-email?register=true"
+				)(error, request, response, next);
+			} else {
+				authController.showValidationErrors("/views/verify-email")(
+					error,
+					request,
+					response,
+					next
+				);
+			}
+		},
 		authController.catchInternalErrorView
 	);
 	app.get(
@@ -191,10 +224,21 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		booki
 	);
 
+	const getCleanupValidation = require("./validation/system/GetCleanupValidation.js")(
+		booki
+	);
+
 	app.get(
 		"/v1/system/stats",
 		authController.isBearerAuthenticated(["admin.system.stats"]),
 		systemController.getStats
+	);
+
+	app.get(
+		"/v1/system/cleanup",
+		authController.isBearerAuthenticated(["admin.system.cleanup"]),
+		validate(getCleanupValidation),
+		systemController.cleanup
 	);
 
 	//User
@@ -465,6 +509,10 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	const bookController = new (require("./controllers/BookController"))(booki);
 
+	const getBookValidation = require("./validation/book/GetBookValidation")(
+		booki
+	);
+
 	const getBookByIdValidation = require("./validation/book/GetBookByIdValidation")(
 		booki
 	);
@@ -500,11 +548,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		bookController.getBookById
 	);
 
-	app.get(
-		"/v1/book",
-		authController.isBearerAuthenticated(["admin.book.list"]),
-		bookController.getBook
-	);
+	app.get("/v1/book", validate(getBookValidation), bookController.getBook);
 
 	app.post(
 		"/v1/book",
@@ -678,14 +722,32 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 
 	app.post(
 		"/v1/offer-request",
-		authController.isBearerAuthenticated(["admin.offerRequest.create"]),
 		validate(postOfferRequestValidation),
+		(request, response, next) => {
+			authController.passport.authenticate(
+				"bearer",
+				{ session: false },
+				(err, user, info) => {
+					if (err) {
+						return next(err);
+					}
+
+					if (!user) {
+						request.user = null;
+					} else {
+						request.user = user;
+					}
+
+					next();
+				}
+			)(request, response, next);
+		},
 		offerRequestController.postOfferRequest
 	);
 
 	app.put(
 		"/v1/offer-request/:offerRequestId",
-		authController.isBearerAuthenticated(["admin.offerRequest.udate"]),
+		authController.isBearerAuthenticated(["admin.offerRequest.update"]),
 		validate(putOfferRequestValidation),
 		offerRequestController.putOfferRequest
 	);
@@ -700,10 +762,22 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 	//last error catch
 
 	app.use((error, request, response, next) => {
-		//TODO improve error handling
 		if (error) {
 			logger.log("error", error);
-			response.json(error);
+
+			error.name = request.__(error.name);
+			error.message = request.__(error.message);
+
+			response.status(500);
+			if (error.message === "validation error") {
+				response.json(error);
+			} else {
+				response.json({
+					name: error.name,
+					message: error.message,
+					status: 500
+				});
+			}
 			response.end();
 		}
 

@@ -17,30 +17,38 @@ const OAuthProvider = ({ sequelize }) => {
 			}
 		},
 		{
-			classMethods: {
-				associate: function({ User }) {
-					this.belongsTo(User, {
-						as: "User",
-						foreignKey: "user_id"
-					});
-				}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let provider = this.get();
-
-					let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);
-
-					if (hiddenData) {
-						json.accessToken = provider.accessToken;
-						json.refreshToken = provider.refreshToken;
-					}
-
-					return json;
-				}
-			}
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
 	);
+
+	OAuthProvider.associate = function({ User }) {
+		this.belongsTo(User, {
+			as: "User",
+			foreignKey: "user_id"
+		});
+	};
+
+	OAuthProvider.prototype.toJSON = function(options = {}) {
+		let provider = this.get();
+
+		let json = pick(provider, ["id", "type", "createdAt", "updatedAt"]);
+
+		if (options.owner || options.admin) {
+			json.userId = provider.user_id;
+
+			if (provider.User) {
+				json.user = provider.User.toJSON(options);
+			}
+		}
+
+		if (options.admin) {
+			json.accessToken = provider.accessToken;
+			json.refreshToken = provider.refreshToken;
+		}
+
+		return json;
+	};
 
 	return OAuthProvider;
 };

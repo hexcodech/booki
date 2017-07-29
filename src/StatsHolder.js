@@ -1,12 +1,12 @@
 class StatsHolder {
 	constructor(config) {
-		const bindAll = require("lodash/bindAll");
-
 		//bandwidth
 		this.requests = [];
 		this.bandwidthInterval = config.STATS_BANDWIDTH_INTERVAL;
 
-		bindAll(this, ["requestCompleted", "getBandwidth"]);
+		["requestCompleted", "getBandwidth"].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	requestCompleted(request) {

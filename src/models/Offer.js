@@ -18,8 +18,10 @@ const Offer = ({ sequelize, models }) => {
 			}
 		},
 		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			defaultScope: {
-				include: [
+				/*include: [
 					{
 						model: models.User,
 						as: "User"
@@ -28,56 +30,58 @@ const Offer = ({ sequelize, models }) => {
 						model: models.Condition,
 						as: "Condition"
 					}
-				]
-			},
-
-			classMethods: {
-				associate: function({ Book, User, Condition }) {
-					this.belongsTo(Book, {
-						as: "Book",
-						foreignKey: "book_id"
-					});
-					this.belongsTo(User, {
-						as: "User",
-						foreignKey: "user_id"
-					});
-					this.belongsTo(Condition, {
-						as: "Condition",
-						foreignKey: "condition_id"
-					});
-				}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let offer = this.get(); //invoking virtual getters
-
-					let json = pick(offer, [
-						"id",
-						"description",
-						"price",
-						"sold",
-						"createdAt",
-						"updatedAt"
-					]);
-
-					json.bookId = offer.book_id;
-					json.userId = offer.user_id;
-
-					if (offer.User) {
-						json.user = offer.User.toJSON(options);
-					}
-
-					if (offer.Condition) {
-						json.condition = offer.Condition.toJSON(options);
-					}
-
-					json.conditionId = offer.condition_id;
-
-					return json;
-				}
+				]*/
 			}
 		}
 	);
+
+	Offer.associate = function({ Book, User, Condition }) {
+		this.belongsTo(Book, {
+			as: "Book",
+			foreignKey: "book_id"
+		});
+		this.belongsTo(User, {
+			as: "User",
+			foreignKey: "user_id"
+		});
+		this.belongsTo(Condition, {
+			as: "Condition",
+			foreignKey: "condition_id"
+		});
+	};
+
+	Offer.prototype.toJSON = function(options = {}) {
+		let offer = this.get(); //invoking virtual getters
+
+		let json = pick(offer, [
+			"id",
+			"description",
+			"price",
+			"sold",
+			"createdAt",
+			"updatedAt"
+		]);
+
+		json.bookId = offer.book_id;
+
+		if (offer.Book) {
+			json.book = offer.Book.toJSON(options);
+		}
+
+		json.userId = offer.user_id;
+
+		if (offer.User) {
+			json.user = offer.User.toJSON(options);
+		}
+
+		json.conditionId = offer.condition_id;
+
+		if (offer.Condition) {
+			json.condition = offer.Condition.toJSON(options);
+		}
+
+		return json;
+	};
 
 	return Offer;
 };

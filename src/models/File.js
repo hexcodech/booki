@@ -12,33 +12,41 @@ const File = ({ sequelize, models }) => {
 			}
 		},
 		{
-			classMethods: {
-				associate: function({ Image }) {}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let file = this.get();
-
-					let json = pick(file, ["id", "path", "createdAt", "updatedAt"]);
-
-					return json;
-				}
-			},
+			charset: "utf8",
+			collate: "utf8_unicode_ci",
 			hooks: {
 				beforeDestroy: file => {
 					return new Promise((resolve, reject) => {
-						fs.unlink(file.get("path"), err => {
-							if (err) {
-								return reject(err);
-							}
+						fs.stat(file.get("path"), (err, stat) => {
+							if (err == null) {
+								fs.unlink(file.get("path"), err => {
+									if (err) {
+										return reject(err);
+									}
 
-							resolve();
+									resolve();
+								});
+							} else if (err.code == "ENOENT") {
+								resolve();
+							} else {
+								reject(new Error("Some other error: " + err.code));
+							}
 						});
 					});
 				}
 			}
 		}
 	);
+
+	File.associate = function() {};
+
+	File.prototype.toJSON = function(options = {}) {
+		let file = this.get();
+
+		let json = pick(file, ["id", "path", "createdAt", "updatedAt"]);
+
+		return json;
+	};
 
 	return File;
 };

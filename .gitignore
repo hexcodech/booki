@@ -38,8 +38,9 @@ node_modules
 # WebStorm files
 .idea
 
-# Config file
+# Config files
 config.json
+migrations-config.json
 
 # MacOS Stuff
 .DS_Store

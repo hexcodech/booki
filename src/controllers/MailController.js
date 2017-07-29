@@ -4,23 +4,28 @@
  */
 
 class MailController {
-	constructor(config, errorController) {
-		const bindAll = require("lodash/bindAll");
+	constructor(config) {
 		const nodemailer = require("nodemailer");
 
 		//store the passed parameters
 		this.config = config;
-		this.errorController = errorController;
 
-		bindAll(this, ["sendMail"]);
+		this.sendMail = this.sendMail.bind(this);
 
 		this.transporter = nodemailer.createTransport({
+			pool: true,
 			host: this.config.MAIL_HOST,
 			port: this.config.MAIL_PORT,
-			secure: true,
+			requireTLS: true,
 			auth: {
 				user: this.config.MAIL_USER,
 				pass: this.config.MAIL_PASSWORD
+			}
+		});
+
+		this.transporter.verify((err, success) => {
+			if (err) {
+				console.log(err);
 			}
 		});
 	}
@@ -36,11 +41,8 @@ class MailController {
 	) {
 		return new Promise((resolve, reject) => {
 			let data = {
-				from: '"' +
-					this.config.MAIL_FROM_NAME +
-					'" <' +
-					this.config.MAIL_USER +
-					">"
+				from:
+					'"' + this.config.MAIL_FROM_NAME + '" <' + this.config.MAIL_USER + ">"
 			};
 
 			let requiredFields = [
@@ -64,7 +66,11 @@ class MailController {
 
 			for (let i = 0; i < requiredFields.length; i++) {
 				if (!requiredFields[i].value) {
-					return reject(new this.errorController.errors.InputValidationError());
+					return reject(
+						new Error(
+							requiredFields[i].value + " is required to send the email!"
+						)
+					);
 				}
 			}
 
@@ -82,13 +88,9 @@ class MailController {
 				}
 			}
 
-			this.transporter.sendMail(data, (error, info) => {
-				if (error) {
-					return reject(
-						new this.errorController.errors.ApiError({
-							message: error.message
-						})
-					);
+			this.transporter.sendMail(data, (err, info) => {
+				if (err) {
+					return reject(err);
 				}
 
 				resolve();

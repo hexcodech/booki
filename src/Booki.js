@@ -9,15 +9,20 @@ class Booki {
 		this.booki = this;
 
 		this.folders = {
-			uploads: path.resolve(__dirname, "../static/uploads/")
+			uploads: path.resolve(__dirname, "../static/uploads"),
+			logs: path.resolve(__dirname, "../logs")
 		};
 
 		if (process.env.DOCKER) {
 			console.log("Running inside docker!");
 			console.log("Using config located at /run/secrets/booki-config.json");
 			this.config = require("/run/secrets/booki-config.json");
-			console.log("Using upload folder: /uploads/");
-			this.folders.uploads = "/uploads/";
+
+			console.log("Using upload folder: /uploads");
+			this.folders.uploads = "/uploads";
+
+			console.log("Using log folder: /logs");
+			this.folders.logs = "/logs";
 		} else {
 			this.config = require("../config.json");
 		}
@@ -30,21 +35,17 @@ class Booki {
 		);
 
 		//setup with dependencies
-		this.setupLogger()
-			.then(({ winston, logger }) => {
-				this.winston = winston;
-				this.logger = logger;
+		this.checkIfWritable(this.folders)
+			.then(() => {
+				return this.setupLogger(this.folders).then(({ winston, logger }) => {
+					this.winston = winston;
+					this.logger = logger;
 
-				return Promise.all([
-					this.setupI18n(logger, this.config).then(i18n => {
-						this.i18n = i18n;
+					return Promise.all([
+						this.setupI18n(logger, this.config).then(i18n => {
+							this.i18n = i18n;
 
-						return Promise.all([
-							this.loadErrorController(i18n).then(errorController => {
-								this.errorController = errorController;
-							}),
-
-							this.setupHttpServer(
+							return this.setupHttpServer(
 								logger,
 								this.config,
 								i18n,
@@ -59,21 +60,20 @@ class Booki {
 										this.statsHolder = statsHolder;
 									})
 								]);
-							})
-						]);
-					}),
+							});
+						}),
 
-					this.connectToDatabase(logger, this.config).then(sequelize => {
-						this.sequelize = sequelize;
-					})
-				]);
+						this.connectToDatabase(logger, this.config).then(sequelize => {
+							this.sequelize = sequelize;
+						})
+					]);
+				});
 			})
 			.then(() => {
 				return this.loadModels(
 					this.logger,
 					this.folders,
 					this.config,
-					this.errorController,
 					this.sequelize,
 					this.cryptoUtilities
 				);
@@ -98,16 +98,40 @@ class Booki {
 				require("./Routing")(this);
 			})
 			.catch(e => {
-				if (this.logger) {
-					this.logger.log("critical", e);
-				} else {
-					console.log("ERROR", e);
-					process.exit(1);
-				}
+				console.log(e);
+				process.exit(1);
 			});
 	}
 
-	setupLogger() {
+	checkIfWritable(folders) {
+		const fs = require("fs");
+
+		let keys = Object.keys(folders),
+			promises = [];
+
+		for (let i = 0; i < keys.length; i++) {
+			promises.push(
+				new Promise((resolve, reject) => {
+					if (!fs.existsSync(folders[keys[i]])) {
+						reject(
+							new Error("The folder " + folders[keys[i]] + " doesn't exist!")
+						);
+					}
+					fs.access(folders[keys[i]], fs.W_OK, err => {
+						if (err) {
+							reject(new Error("Can't write to " + folders[keys[i]]));
+						}
+
+						resolve();
+					});
+				})
+			);
+		}
+
+		return Promise.all(promises);
+	}
+
+	setupLogger(folders) {
 		let winston = require("winston");
 
 		let logger = new winston.Logger({
@@ -121,8 +145,9 @@ class Booki {
 				new winston.transports.File({
 					name: "file-log",
 					level: "debug",
-					filename: "booki.log",
-					colorize: true,
+					filename: folders.logs + "/booki.log",
+					handleExceptions: true,
+					colorize: false,
 					prettyPrint: true
 				})
 			],
@@ -141,6 +166,13 @@ class Booki {
 			warning: "yellow",
 			info: "blue",
 			debug: "magenta"
+		});
+
+		process.on("unhandledRejection", (reason, p) => {
+			logger.log(
+				"critical",
+				"Unhandled Rejection at: Promise " + p + " reason: " + reason
+			);
 		});
 
 		return Promise.resolve({ winston, logger });
@@ -163,12 +195,6 @@ class Booki {
 		return Promise.resolve(i18n);
 	}
 
-	loadErrorController(i18n) {
-		return Promise.resolve(
-			new (require("./controllers/ErrorController"))(i18n)
-		);
-	}
-
 	connectToDatabase(logger, config) {
 		logger.log("info", "Connecting to the database...");
 
@@ -187,6 +213,9 @@ class Booki {
 					min: 0,
 					idle: 10000
 				},
+				dialectOptions: {
+					charset: "utf8mb4"
+				},
 				logging: null
 			}
 		);
@@ -201,6 +230,7 @@ class Booki {
 		const expressSession = require("express-session");
 		const bodyParser = require("body-parser");
 		const helmet = require("helmet");
+		const compression = require("compression");
 
 		let app = new express();
 
@@ -214,6 +244,9 @@ class Booki {
 
 		//Configure the server
 		logger.log("info", "Configuring express...");
+
+		//gzip
+		app.use(compression());
 
 		//static resources
 
@@ -285,14 +318,7 @@ class Booki {
 		return Promise.resolve(statsHolder);
 	}
 
-	loadModels(
-		logger,
-		folders,
-		config,
-		errorController,
-		sequelize,
-		cryptoUtilities
-	) {
+	loadModels(logger, folders, config, sequelize, cryptoUtilities) {
 		logger.log("info", "Loading models...");
 
 		const Sequelize = require("sequelize");
@@ -328,7 +354,6 @@ class Booki {
 			models[model] = require("./models/" + model)({
 				folders,
 				config,
-				errorController,
 				sequelize,
 				models,
 				cryptoUtilities

@@ -1,171 +1,175 @@
 class OfferController {
-	constructor({ booki, models, errorController }) {
-		const bindAll = require("lodash/bindAll");
+	constructor({ booki, models }) {
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
 
-		this.errorController = errorController;
+		this.models = models;
 
-		this.Offer = models.Offer;
-
-		this.Book = models.Book;
-		this.User = models.User;
-		this.Condition = models.Condition;
-
-		bindAll(this, [
+		[
 			"getOffer",
 			"getOfferById",
 			"getOfferByBookId",
 			"postOffer",
 			"putOffer",
 			"deleteOffer"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getOffer(request, response, next) {
-		this.Offer
-			.findAll()
-			.then(offers => {
-				if (offers) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON({ hiddenData: true });
-							})
-						);
-					} else {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON();
-							})
-						);
-					}
-					return response.end();
-				}
+		let query = {},
+			include = [],
+			order = [],
+			limit = undefined,
+			filter = request.query.filter ? request.query.filter : {};
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
-			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
+		if (!request.hasPermission("admin.offer.list")) {
+			query.user_id = request.user.id;
+
+			include.push({
+				model: this.models.Book,
+				as: "Book"
 			});
+		}
+
+		this.models.Offer
+			.findAll({
+				where: query,
+				include: include,
+				order: order,
+				limit: limit
+			})
+			.then(offers => {
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON();
+						})
+					);
+				}
+				return response.end();
+			})
+			.catch(next);
 	}
 
 	getOfferById(request, response, next) {
-		this.Offer
-			.findOne({ where: { id: request.params.offerId } })
-			.then(offer => {
-				if (offer) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
-						response.json(offer.toJSON({ hiddenData: true }));
-					} else {
-						response.json(offer.toJSON());
+		this.models.Offer
+			.findOne({
+				where: { id: request.params.offerId },
+				include: [
+					{
+						model: this.models.User,
+						as: "User",
+						include: [{ model: this.models.Permission, as: "Permissions" }]
+					},
+					{
+						model: this.models.Condition,
+						as: "Condition"
 					}
-					return response.end();
+				]
+			})
+			.then(offer => {
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
 				}
 
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(offer.toJSON({ admin: true }));
+				} else {
+					response.json(offer.toJSON());
+				}
+				return response.end();
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	getOfferByBookId(request, response, next) {
-		this.Offer
-			.findAll({ where: { book_id: request.params.bookId } })
-			.then(offers => {
-				if (offers) {
-					if (request.hasPermission("admin.offer.hiddenData.read")) {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON({ hiddenData: true });
-							})
-						);
-					} else {
-						response.json(
-							offers.map(offer => {
-								return offer.toJSON();
-							})
-						);
+		this.models.Offer
+			.findAll({
+				where: { book_id: request.params.bookId },
+				include: [
+					{
+						model: this.models.User,
+						as: "User"
+					},
+					{
+						model: this.models.Condition,
+						as: "Condition"
 					}
-					return response.end();
-				}
-
-				return next(
-					new this.errorController.errors.UnexpectedQueryResultError()
-				);
+				]
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.then(offers => {
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						offers.map(offer => {
+							return offer.toJSON();
+						})
+					);
+				}
+				return response.end();
+			})
+			.catch(next);
 	}
 
 	postOffer(request, response, next) {
-		let offer = this.Offer.build(
+		let offer = this.models.Offer.build(
 			this.pick(request.body.offer, ["description", "price"])
 		);
 
-		let userId = request.hasPermission("admin.offer.hiddenData.write") &&
-			request.body.offer.userId
-			? request.body.offer.userId
-			: request.user.get("id");
+		let userId =
+			request.hasPermission("admin.offer.write") && request.body.offer.userId
+				? request.body.offer.userId
+				: request.user.get("id");
 
 		let promises = [];
 
 		promises.push(
-			this.User.findOne({ where: { id: userId } }).then(user => {
-				if (user) {
-					return Promise.resolve();
-				} else {
-					return Promise.reject(
-						new this.errorController.errors.NotFoundError()
-					);
+			this.models.User.findOne({ where: { id: userId } }).then(user => {
+				if (!user) {
+					return Promise.reject(new Error("The given user wasn't found!"));
 				}
+
+				return Promise.resolve();
 			})
 		);
 
 		promises.push(
-			this.Book
+			this.models.Book
 				.findOne({ where: { id: request.body.offer.bookId } })
 				.then(book => {
-					if (book) {
-						return Promise.resolve();
-					} else {
-						return Promise.reject(
-							new this.errorController.errors.NotFoundError()
-						);
+					if (!book) {
+						return Promise.reject(new Error("The given book wasn't found!"));
 					}
+
+					return Promise.resolve();
 				})
 		);
 
 		promises.push(
-			this.Condition
+			this.models.Condition
 				.findOne({ where: { id: request.body.offer.conditionId } })
 				.then(condition => {
-					if (condition) {
-						return Promise.resolve();
-					} else {
+					if (!condition) {
 						return Promise.reject(
-							new this.errorController.errors.NotFoundError()
+							new Error("The given condition wasn't found!")
 						);
 					}
+
+					return Promise.resolve();
 				})
 		);
 
@@ -177,184 +181,148 @@ class OfferController {
 					condition_id: request.body.offer.conditionId
 				});
 
-				if (request.hasPermission("admin.offer.hiddenData.write")) {
+				if (request.hasPermission("admin.offer.write")) {
 					offer.set(
 						this.omitBy(this.pick(request.body.offer, ["id"]), this.isNil)
 					);
 				}
 
-				return offer.save().catch(err => {
-					return Promise.reject(
-						new this.errorController.errors.DatabaseError({
-							message: err.message
-						})
-					);
-				});
+				return offer.save();
 			})
 			.then(offer => {
-				if (request.hasPermission("admin.offer.hiddenData.read")) {
-					response.json(offer.toJSON({ hiddenData: true }));
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(offer.toJSON({ admin: true }));
 				} else {
 					response.json(offer.toJSON());
 				}
 			})
-			.catch(error => {
-				return next(error);
-			});
+			.catch(next);
 	}
 
 	putOffer(request, response, next) {
-		this.Offer
+		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
-				if (offer) {
-					if (
-						request.hasPermission("admin.offer.editOthers") ||
-						offer.get("user_id") === request.user.get("id")
-					) {
-						offer.set(
-							this.pick(request.body.offer, ["description", "price", "sold"])
-						);
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
+				}
 
-						let userId = request.hasPermission(
-							"admin.offer.hiddenData.write"
-						) && request.body.offer.userId
+				if (
+					request.hasPermission("admin.offer.editOthers") ||
+					offer.get("user_id") === request.user.get("id")
+				) {
+					offer.set(
+						this.pick(request.body.offer, ["description", "price", "sold"])
+					);
+
+					let userId =
+						request.hasPermission("admin.offer.write") &&
+						request.body.offer.userId
 							? request.body.offer.userId
 							: request.user.get("id");
 
-						let promises = [];
+					let promises = [];
 
+					promises.push(
+						this.models.User.findOne({ where: { id: userId } }).then(user => {
+							if (!user) {
+								return Promise.reject(
+									new Error("The given user wasn't found!")
+								);
+							}
+
+							return Promise.resolve();
+						})
+					);
+
+					if (request.body.offer.bookId) {
 						promises.push(
-							this.User.findOne({ where: { id: userId } }).then(user => {
-								if (user) {
+							this.models.Book
+								.findOne({ where: { id: request.body.offer.bookId } })
+								.then(book => {
+									if (!book) {
+										return Promise.reject(
+											new Error("The given Book wasn't found!")
+										);
+									}
+
 									return Promise.resolve();
-								} else {
-									return Promise.reject(
-										new this.errorController.errors.NotFoundError()
-									);
-								}
-							})
+								})
 						);
-
-						if (request.body.offer.bookId) {
-							promises.push(
-								this.Book
-									.findOne({ where: { id: request.body.offer.bookId } })
-									.then(book => {
-										if (book) {
-											return Promise.resolve();
-										} else {
-											return Promise.reject(
-												new this.errorController.errors.NotFoundError()
-											);
-										}
-									})
-							);
-						}
-
-						if (request.body.offer.conditionId) {
-							promises.push(
-								this.Condition
-									.findOne({ where: { id: request.body.offer.conditionId } })
-									.then(condition => {
-										if (condition) {
-											return Promise.resolve();
-										} else {
-											return Promise.reject(
-												new this.errorController.errors.NotFoundError()
-											);
-										}
-									})
-							);
-						}
-
-						Promise.all(promises)
-							.then(() => {
-								offer.set({
-									book_id: request.body.offer.bookId,
-									user_id: userId,
-									condition_id: request.body.offer.conditionId
-								});
-
-								if (request.hasPermission("admin.offer.hiddenData.write")) {
-									offer.set(
-										this.omitBy(
-											this.pick(request.body.offer, ["id"]),
-											this.isNil
-										)
-									);
-								}
-
-								return offer.save().catch(err => {
-									return Promise.reject(
-										new this.errorController.errors.DatabaseError({
-											message: err.message
-										})
-									);
-								});
-							})
-							.then(offer => {
-								if (request.hasPermission("admin.offer.hiddenData.read")) {
-									response.json(offer.toJSON({ hiddenData: true }));
-								} else {
-									response.json(offer.toJSON());
-								}
-							})
-							.catch(error => {
-								return next(error);
-							});
-					} else {
-						return next(new this.errorController.errors.ForbiddenError());
 					}
+
+					if (request.body.offer.conditionId) {
+						promises.push(
+							this.models.Condition
+								.findOne({ where: { id: request.body.offer.conditionId } })
+								.then(condition => {
+									if (!condition) {
+										return Promise.reject(
+											new Error("The given condition wasn't found!")
+										);
+									}
+
+									return Promise.resolve();
+								})
+						);
+					}
+
+					return Promise.all(promises)
+						.then(() => {
+							offer.set({
+								book_id: request.body.offer.bookId,
+								user_id: userId,
+								condition_id: request.body.offer.conditionId
+							});
+
+							if (request.hasPermission("admin.offer.write")) {
+								offer.set(
+									this.omitBy(this.pick(request.body.offer, ["id"]), this.isNil)
+								);
+							}
+
+							return offer.save();
+						})
+						.then(offer => {
+							if (request.hasPermission("admin.offer.read")) {
+								response.json(offer.toJSON({ admin: true }));
+							} else {
+								response.json(offer.toJSON());
+							}
+						})
+						.catch(next);
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(
+						new Error("You are not allowed to update this offer!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 
 	deleteOffer(request, response, next) {
-		this.Offer
+		this.models.Offer
 			.findOne({ where: { id: request.params.offerId } })
 			.then(offer => {
-				if (offer) {
-					if (
-						request.hasPermission("admin.offer.deleteOthers") ||
-						offer.get("user_id") === request.user.get("id")
-					) {
-						offer
-							.destroy()
-							.then(() => {
-								response.json({ success: true });
-								response.end();
-							})
-							.catch(err => {
-								return next(
-									new this.errorController.errors.DatabaseError({
-										message: err.message
-									})
-								);
-							});
-					} else {
-						return next(new this.errorController.errors.ForbiddenError());
-					}
+				if (!offer) {
+					return Promise.reject(new Error("This offer wasn't found!"));
+				}
+
+				if (
+					request.hasPermission("admin.offer.deleteOthers") ||
+					offer.get("user_id") === request.user.get("id")
+				) {
+					offer.destroy().then(() => {
+						response.json({ success: true });
+						response.end();
+					});
 				} else {
-					return next(new this.errorController.errors.NotFoundError());
+					return Promise.reject(
+						new Error("You are not allowed to delete this offer!")
+					);
 				}
 			})
-			.catch(err => {
-				return next(
-					new this.errorController.errors.DatabaseError({
-						message: err.message
-					})
-				);
-			});
+			.catch(next);
 	}
 }
 

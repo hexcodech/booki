@@ -1,11 +1,18 @@
 class SystemController {
-	constructor({ booki, os, statsHolder }) {
-		const bindAll = require("lodash/bindAll");
-
+	constructor({ booki, sequelize, models, folders, statsHolder }) {
+		this.sequelize = sequelize;
+		this.models = models;
 		this.statsHolder = statsHolder;
-		this.os = require("os");
+		this.folders = folders;
 
-		bindAll(this, ["getStats"]);
+		this.os = require("os");
+		this.fs = require("fs");
+		this.async = require("async");
+		this.exec = require("child_process").exec;
+
+		["getStats", "cleanup"].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getStats(request, response, next) {
@@ -70,6 +77,85 @@ class SystemController {
 			response.json(stats);
 			response.end();
 		}, 500);
+	}
+
+	cleanup(request, response, next) {
+		let promises = [];
+
+		promises.push(
+			this.sequelize
+				.query(
+					"SELECT images.* FROM images LEFT JOIN users ON images.user_id=users.id LEFT JOIN users as profilePictureUsers ON images.id=profilePictureUsers.profile_picture_id LEFT JOIN books ON images.id=books.cover_image_id WHERE users.id IS NULL OR (profilePictureUsers.id IS NULL AND books.id IS NULL)",
+					{ type: this.sequelize.QueryTypes.SELECT }
+				)
+				.then(images => {
+					let ids = images.map(image => image.id);
+					return Promise.resolve(ids);
+				})
+		);
+
+		promises.push(
+			new Promise((resolve, reject) => {
+				this.exec(
+					"cd " + this.folders.uploads + " && find . -type f",
+					(err, stdout, stderr) => {
+						if (err) {
+							reject(err);
+						}
+
+						let actualFiles = stdout
+							.split("\n")
+							.filter(n => n)
+							.map(s => this.folders.uploads + s.substring(1));
+						this.models.File
+							.findAll()
+							.then(files => {
+								files = new Set(
+									files.map(file => file.get("path")).filter(n => n)
+								);
+
+								resolve(actualFiles.filter(file => !files.has(file)));
+							})
+							.catch(next);
+					}
+				);
+			})
+		);
+
+		Promise.all(promises)
+			.then(params => {
+				if (request.query.check) {
+					response.json({
+						deletableImageIds: params[0],
+						deletableUnlinkedFiles: params[1]
+					});
+					return response.end();
+				} else {
+					//trigger hooks (hopefully)
+					return this.models.Images
+						.destroy({
+							where: {
+								id: {
+									$in: ids
+								}
+							}
+						})
+						.then(() => {
+							async.each(params[1], fs.unlink, err => {
+								if (err) {
+									next(err);
+								}
+
+								response.json({
+									deletedImageIds: params[0],
+									deletedUnlinkedFiles: params[1]
+								});
+								return response.end();
+							});
+						});
+				}
+			})
+			.catch(next);
 	}
 }
 

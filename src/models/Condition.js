@@ -13,25 +13,25 @@ const Condition = ({ sequelize, models }) => {
 			}
 		},
 		{
-			classMethods: {
-				associate: function({ Offer }) {
-					this.hasMany(Offer, {
-						as: "Offers",
-						foreignKey: "condition_id"
-					});
-				}
-			},
-			instanceMethods: {
-				toJSON: function(options = {}) {
-					let condition = this.get();
-
-					let json = pick(condition, ["id", "key", "priceFactor"]);
-
-					return json;
-				}
-			}
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
 	);
+
+	Condition.associate = function({ Offer }) {
+		this.hasMany(Offer, {
+			as: "Offers",
+			foreignKey: "condition_id"
+		});
+	};
+
+	Condition.prototype.toJSON = function(options = {}) {
+		let condition = this.get();
+
+		let json = pick(condition, ["id", "key", "priceFactor"]);
+
+		return json;
+	};
 
 	return Condition;
 };
