@@ -1,1 +1,1 @@
-new (require('./Booki.js'))();
+new (require("./Booki.js"))();

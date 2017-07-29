@@ -1,11 +1,9 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
 		query: {
-			search: Joi.string().min(1),
+			search: Joi.string().min(1)
 		}
-	}
-
+	};
 };

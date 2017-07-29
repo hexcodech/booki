@@ -7,18 +7,24 @@
 		"uuidString": "8FD20BD1-890E-45B3-8DCA-F384EB641ED2"
 		}
 	],
-"creatorBuild": "25813",
+"creatorBuild": "25849",
 "files": {
+	"\/.dockerignore": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/.dockerignore",
+		"oF": 0
+		},
 	"\/.gitignore": {
 		"ft": 8192,
 		"oA": 2,
 		"oAP": "\/.gitignore",
 		"oF": 0
 		},
-	"\/booki.log": {
+	"\/.travis.yml": {
 		"ft": 8192,
 		"oA": 2,
-		"oAP": "\/booki.log",
+		"oAP": "\/.travis.yml",
 		"oF": 0
 		},
 	"\/config-sample.json": {
@@ -36,6 +42,30 @@
 		"oF": 0,
 		"oO": 0,
 		"oS": 1
+		},
+	"\/docker-compose-staging.yml": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/docker-compose-staging.yml",
+		"oF": 0
+		},
+	"\/docker-compose-testing.yml": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/docker-compose-testing.yml",
+		"oF": 0
+		},
+	"\/docker-compose.yml": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/docker-compose.yml",
+		"oF": 0
+		},
+	"\/Dockerfile": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/Dockerfile",
+		"oF": 0
 		},
 	"\/locales\/booki-af-ZA.json": {
 		"ft": 524288,
@@ -273,6 +303,14 @@
 		"ft": 524288,
 		"oA": 1,
 		"oAP": "\/locales\/booki-de-LU-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/locales\/booki-deCH.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/locales\/booki-deCH-min.json",
 		"oF": 0,
 		"oO": 0,
 		"oS": 1
@@ -1125,11 +1163,54 @@
 		"oO": 0,
 		"oS": 1
 		},
-	"\/mongodb.sh": {
-		"ft": 8192,
-		"oA": 2,
-		"oAP": "\/mongodb.sh",
+	"\/logs": {
+		"ft": 65536,
+		"oA": 1,
+		"oAP": "\/build\/logs",
 		"oF": 0
+		},
+	"\/migrations-config-sample.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/migrations-config-sample-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/migrations-config.json": {
+		"ft": 524288,
+		"oA": 1,
+		"oAP": "\/migrations-config-min.json",
+		"oF": 0,
+		"oO": 0,
+		"oS": 1
+		},
+	"\/migrations\/amazon-url-books-column.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/migrations\/min\/amazon-url-books-column.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/migrations\/anonymous-offer-requests-column.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/migrations\/min\/anonymous-offer-requests-column.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/models\/index.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/models\/min\/index.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
 		},
 	"\/node_modules": {
 		"ft": 65536,
@@ -1874,6 +1955,16 @@
 		"plM": 3758088159,
 		"prP": 0
 		},
+	"\/static\/res\/img\/logo\/logo-orange.svg": {
+		"ft": 2097152,
+		"miP": 0,
+		"oA": 0,
+		"oAP": "\/static\/res\/img\/logo\/min\/logo-orange.min.svg",
+		"oF": 0,
+		"opt": 0,
+		"plM": 3758088159,
+		"prP": 0
+		},
 	"\/static\/res\/img\/logo\/logo.svg": {
 		"ft": 2097152,
 		"miP": 1,
@@ -1897,60 +1988,179 @@
 		"oS": 3,
 		"uL": 1
 		},
-	"\/static\/uploads\/2017\/4\/5-7G9-300x300.png": {
+	"\/static\/uploads\/2017\/5\/19-X3d-400x490.png": {
 		"ft": 32768,
-		"iS": 145743,
+		"iS": 265877,
 		"oA": 1,
-		"oAP": "\/static\/uploads\/2017\/4\/min\/5-7G9-300x300.min.png",
+		"oAP": "\/static\/uploads\/2017\/5\/min\/19-X3d-400x490.min.png",
 		"oF": 0,
 		"oIPL": 0,
 		"opt": 0,
 		"oT": 1,
 		"q": 100
 		},
-	"\/static\/uploads\/2017\/4\/5-7G9.png": {
+	"\/static\/uploads\/2017\/5\/19-X3d.png": {
 		"ft": 32768,
-		"iS": 843776,
+		"iS": 244283,
 		"oA": 1,
-		"oAP": "\/static\/uploads\/2017\/4\/min\/5-7G9.min.png",
+		"oAP": "\/static\/uploads\/2017\/5\/min\/19-X3d.min.png",
 		"oF": 0,
 		"oIPL": 0,
 		"opt": 0,
 		"oT": 1,
 		"q": 100
 		},
-	"\/static\/uploads\/2017\/4\/7-UBI-300x300.png": {
+	"\/static\/uploads\/2017\/5\/3ga\/44-Mxl-400x490.png": {
 		"ft": 32768,
-		"iS": 118024,
+		"iS": 31043,
 		"oA": 1,
-		"oAP": "\/static\/uploads\/2017\/4\/min\/7-UBI-300x300.min.png",
+		"oAP": "\/static\/uploads\/2017\/5\/3ga\/min\/44-Mxl-400x490.min.png",
 		"oF": 0,
 		"oIPL": 0,
 		"opt": 0,
 		"oT": 1,
 		"q": 100
 		},
-	"\/static\/uploads\/2017\/4\/7-UBI.png": {
+	"\/static\/uploads\/2017\/5\/3ga\/44-qNK-100x100.png": {
 		"ft": 32768,
-		"iS": 347797,
+		"iS": 5752,
 		"oA": 1,
-		"oAP": "\/static\/uploads\/2017\/4\/min\/7-UBI.min.png",
+		"oAP": "\/static\/uploads\/2017\/5\/3ga\/min\/44-qNK-100x100.min.png",
 		"oF": 0,
 		"oIPL": 0,
 		"opt": 0,
 		"oT": 1,
 		"q": 100
 		},
-	"\/static\/uploads\/2017\/4\/9-2i3.png": {
+	"\/static\/uploads\/2017\/5\/3ga\/44-WRi-200x200.png": {
 		"ft": 32768,
-		"iS": 311296,
+		"iS": 14655,
 		"oA": 1,
-		"oAP": "\/static\/uploads\/2017\/4\/min\/9-2i3.min.png",
+		"oAP": "\/static\/uploads\/2017\/5\/3ga\/min\/44-WRi-200x200.min.png",
 		"oF": 0,
 		"oIPL": 0,
 		"opt": 0,
 		"oT": 1,
 		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/3ga\/44-Zqq-50x50.png": {
+		"ft": 32768,
+		"iS": 1913,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/3ga\/min\/44-Zqq-50x50.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/3ga\/44.png": {
+		"ft": 32768,
+		"iS": 120642,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/3ga\/min\/44.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/mR7\/76-eYS-50x50.png": {
+		"ft": 32768,
+		"iS": 1627,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/mR7\/min\/76-eYS-50x50.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/mR7\/76-LcR-400x490.png": {
+		"ft": 32768,
+		"iS": 27764,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/mR7\/min\/76-LcR-400x490.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/mR7\/76-sDj-200x200.png": {
+		"ft": 32768,
+		"iS": 11996,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/mR7\/min\/76-sDj-200x200.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/mR7\/76-wAH-100x100.png": {
+		"ft": 32768,
+		"iS": 3382,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/mR7\/min\/76-wAH-100x100.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/static\/uploads\/2017\/5\/mR7\/76.png": {
+		"ft": 32768,
+		"iS": 21445,
+		"oA": 1,
+		"oAP": "\/static\/uploads\/2017\/5\/mR7\/min\/76.min.png",
+		"oF": 0,
+		"oIPL": 0,
+		"opt": 0,
+		"oT": 1,
+		"q": 100
+		},
+	"\/tools\/generate-en-locale-file.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/tools\/min\/generate-en-locale-file.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/utils\/genHashedSecret.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/utils\/min\/genHashedSecret.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/utils\/genSalt.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/utils\/min\/genSalt.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/utils\/genSecret.js": {
+		"ft": 64,
+		"mi": 1,
+		"oA": 1,
+		"oAP": "\/utils\/min\/genSecret.min.js",
+		"oF": 0,
+		"sC": 1,
+		"tS": 0
+		},
+	"\/yarn.lock": {
+		"ft": 8192,
+		"oA": 2,
+		"oAP": "\/yarn.lock",
+		"oF": 0
 		}
 	},
 "hooks": [
@@ -3897,6 +4107,7 @@
 		},
 	"languageDefaultsUserDefined": [
 		],
+	"overrideExternalServerCSS": 0,
 	"previewPathAddition": "",
 	"skippedFoldersString": "log, _logs, logs, _cache, cache, \/storage\/framework\/sessions, node_modules, src, \/src, \/node_modules",
 	"sourceFolderName": "source",

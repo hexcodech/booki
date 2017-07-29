@@ -1,0 +1,12 @@
+<% include ../../header %>
+	<p>Hi <em><%= offerer.nameDisplay %></em>,</p>
+	<p>
+		<%= requester ? requester.nameDisplay : "Ein unregistrierter Benutzer" %> würde gerne Dein Buch
+		<em><%= book.title %></em> für <em><%= offer.price %> Fr. kaufen.</em>
+		Um zu antworten, klicke <a href='<%= responseUrl %>'>hier</a>.
+	</p>
+	<% if(request.message) {%>
+		<p>Nachricht vom Käufer:</p>
+		<p><%= request.message %></p>
+	<% } %>
+<% include ../../footer %>

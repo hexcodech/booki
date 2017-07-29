@@ -1,273 +1,198 @@
-class ImageController{
+class ImageController {
+	constructor({ booki, config, models, folders, cryptoUtilities }) {
+		this.path = require("path");
+		this.mkdirp = require("mkdirp-promise");
 
-	constructor({
-		booki, config, models, errorController, folders, cryptoUtilities
-	}){
+		this.Busboy = require("busboy");
+		this.sharp = require("sharp");
+		this.sizeOf = require("image-size");
 
-		const bindAll               = require('lodash/bindAll');
+		this.CryptoUtilities = cryptoUtilities;
 
-    this.path                   = require('path');
-		this.mkdirp                 = require('mkdirp-promise');
+		this.config = config;
+		this.folders = folders;
 
-    this.Busboy                 = require('busboy');
-    this.sharp                  = require('sharp');
-    this.sizeOf                 = require('image-size');
+		this.models = models;
 
-		this.CryptoUtilities        = cryptoUtilities;
-
-		this.config                 = config;
-		this.folders                = folders;
-		this.errorController        = errorController;
-
-    this.File                   = models.File;
-		this.Image                  = models.Image;
-
-		bindAll(this, [
-			'getImage', 'postImage', 'putImage', 'deleteImage'
-		]);
-
-		this.generatePath = (id) => {
-
-			let d = new Date();
-
-			return this.path.resolve(
-				this.folders.uploads,
-				d.getFullYear() + '',
-				(d.getMonth() + 1) + '',
-				//prevent the use as public image hosting api
-				id + '-' +
-				this.CryptoUtilities.generateRandomString(3) +
-				'.png'
-			);
-		};
-
-	}
-
-	getImage(request, response, next){
-		this.Image.findAll().then((images) => {
-			if(images){
-
-				if(request.hasPermission('admin.offer.hiddenData.read')){
-					response.json(images.map((image) => {
-						return image.toJSON({hiddenData: true});
-					}));
-				}else{
-					response.json(images.map((image) => {
-						return image.toJSON();
-					}));
-				}
-				return response.end();
-			}
-
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
-
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
+		["getImage", "postImage", "putImage", "deleteImage"].forEach(key => {
+			this[key] = this[key].bind(this);
 		});
 	}
 
-	postImage(request, response, next){
-		try{
+	getImage(request, response, next) {
+		this.models.Image
+			.findAll({
+				include: [
+					{
+						model: this.models.Thumbnail,
+						as: "Thumbnails"
+					},
+					{
+						model: this.models.File,
+						as: "File"
+					}
+				]
+			})
+			.then(images => {
+				if (request.hasPermission("admin.offer.read")) {
+					response.json(
+						images.map(image => {
+							return image.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						images.map(image => {
+							return image.toJSON();
+						})
+					);
+				}
+				return response.end();
+			})
+			.catch(next);
+	}
 
+	postImage(request, response, next) {
+		try {
 			let busboy = new this.Busboy({ headers: request.headers });
-			busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+			busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+				if (!mimetype.startsWith("image/")) {
+					return next(new Error("The file isn't an image!"));
+				}
 
-				let buffers = [];
-				file.on('data', (data) => {
-					buffers.push(data);
+				let data = Buffer.from([]);
+
+				file.on("data", newData => {
+					data = Buffer.concat([data, newData]);
+
+					if (data.length > this.config.MAX_UPLOAD_FILE_SIZE) {
+						return next(new Error("The file exceeds the max upload limit!"));
+					}
 				});
-				file.on('end', () => {
 
-					let data = Buffer.concat(buffers);
-
-					if(
-		        mimetype.startsWith('image/') &&
-		        data.length <= this.config.MAX_UPLOAD_FILE_SIZE
-		      ){
-		        this.File.create({}).then((fileInstance) => {
-
-		        	let dim    = this.sizeOf(data),
-							    saveTo = this.generatePath(fileInstance.get('id'));
-
-		          fileInstance.set('path', saveTo);
-
-		          let image = this.Image.build({
-		            width    : dim.width,
-		            height   : dim.height,
-		            mimeType : 'image/png',
-		            user_id  : request.user.get('id'),
-		            file_id  : fileInstance.get('id')
-		          });
-
-							if(request.hasPermission('admin.image.hiddenData.write')){
-								image.set('id', request.body.id);
-							}
-
-		          this.mkdirp(this.path.dirname(saveTo)).then(() => {
-								return this.sharp(data).toFile(saveTo);
-							}).then(() => {
-		            return fileInstance.save();
-		          }).then(() => {
-		            return image.save();
-							}).then(() => {
-		            return image.reload(); //include 'File'
-		          }).then(() => {
-		            return image.generateThumbnails();
-		          }).then(() => {
-		            return image.reload(); //include 'Thumbnails'
-		          }).then(() => {
-		            if(request.hasPermission('admin.image.hiddenData.read')){
-		      				response.json(image.toJSON({hiddenData: true}));
-		      			}else{
-		      				response.json(image.toJSON());
-		      			}
-		            response.end();
-
-		          }).catch((err) => {
-		            return next(new this.errorController.errors.InternalServerError({
-		      				message: err.message
-		      			}));
-		          });
-		        });
-
-		      }else{
-		        return next(new this.errorController.errors.InvalidImageError());
-		      }
+				file.on("end", () => {
+					//double check
+					if (
+						mimetype.startsWith("image/") &&
+						data.length <= this.config.MAX_UPLOAD_FILE_SIZE
+					) {
+						this.models.Image
+							.store(data, request.user)
+							.then(image => {
+								if (request.hasPermission("admin.image.read")) {
+									response.json(image.toJSON({ admin: true }));
+								} else {
+									response.json(image.toJSON());
+								}
+								response.end();
+							})
+							.catch(next);
+					} else {
+						return next(
+							new Error(
+								"Either the file isn't an image or it exceeds the max upload limit!"
+							)
+						);
+					}
 				});
-	    });
+			});
 
 			request.pipe(busboy);
-
-		}catch(err){
-			return next(new this.errorController.errors.BadRequestError({
-				message: err.message
-			}));
+		} catch (err) {
+			return next(err);
 		}
 	}
 
-	putImage(request, response, next){
-
-		this.Image.findById(request.query.id).then((image) => {
-
-			if(
-				request.hasPermission('admin.image.editOthers') ||
-				image.get('user_id') === request.user.get('id')
-			){
-
-				try{
-
-					let busboy = new this.Busboy({ headers: request.headers });
-					busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
-
-						let buffers = [];
-
-						file.on('data', (data) => {
-							buffers.push(data);
-						});
-
-						file.on('end', () => {
-
-							let data = Buffer.concat(buffers);
-
-							if(
-				        mimetype.startsWith('image/') &&
-				        file.byteLength <= this.config.MAX_UPLOAD_FILE_SIZE
-				      ){
-
-								//create new file
-								this.File.create({}).then((fileInstance) => {
-
-									let dim    = this.sizeOf(file),
-										  saveTo = this.generatePath(fileInstance.get('id'));
-
-									//set file props
-									fileInstance.set('path', saveTo);
-
-									//update reference(s)
-									image.set({
-										width    : dim.width,
-										height   : dim.height,
-										mimeType : 'image/png',
-										file_id  : fileInstance.get('id')
-									});
-
-									//multipart request, not json
-									/*if(request.hasPermission('admin.image.hiddenData.write')){
-										image.set('id', request.body.id);
-									}*/
-
-									return fileInstance.save();
-
-								}).then(() => {
-									return image.save();
-								}).then(() => {
-									//remove old thumbnails
-									return image.cleanThumbnails();
-								}).then(() => {
-									return image.generateThumbnails();
-								}).then(() => {
-									return image.reload();
-								}).then(() => {
-									if(request.hasPermission('admin.image.hiddenData.read')){
-			      				response.json(image.toJSON({hiddenData: true}));
-			      			}else{
-			      				response.json(image.toJSON());
-			      			}
-			            response.end();
-
-								}).catch((err) => {
-									return next(
-										new this.errorController.errors.InternalServerError({
-											message: err.message
-										})
-									);
-								});
-				      }else{
-				        return next(new this.errorController.errors.InvalidImageError());
-				      }
-						});
-			    });
-
-					request.pipe(busboy);
-
-				}catch(err){
-					return next(new this.errorController.errors.BadRequestError());
+	putImage(request, response, next) {
+		this.models.Image
+			.findOne({ where: { id: request.params.imageId } })
+			.then(image => {
+				if (!image) {
+					return Promise.reject(new Error("This image wasn't found!"));
 				}
-			}else{
-				return next(new this.errorController.errors.ForbiddenError());
-			}
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
+
+				if (
+					request.hasPermission("admin.image.editOthers") ||
+					image.get("user_id") === request.user.get("id")
+				) {
+					try {
+						let busboy = new this.Busboy({ headers: request.headers });
+						busboy.on(
+							"file",
+							(fieldname, file, filename, encoding, mimetype) => {
+								let buffers = [];
+
+								file.on("data", data => {
+									buffers.push(data);
+								});
+
+								file.on("end", () => {
+									let data = Buffer.concat(buffers);
+
+									if (
+										mimetype.startsWith("image/") &&
+										file.byteLength <= this.config.MAX_UPLOAD_FILE_SIZE
+									) {
+										//TODO delete old file
+										this.models.Image
+											.store(data, request.user)
+											.then(image => {
+												if (request.hasPermission("admin.image.read")) {
+													response.json(image.toJSON({ admin: true }));
+												} else {
+													response.json(image.toJSON());
+												}
+												response.end();
+											})
+											.catch(next);
+									} else {
+										return next(
+											new Error(
+												"Either the file isn't an image or it exceeds the max upload limit!"
+											)
+										);
+									}
+								});
+							}
+						);
+
+						request.pipe(busboy);
+					} catch (err) {
+						return next(err);
+					}
+				} else {
+					return Promise.reject(
+						new Error("You are not allowed to update this image!")
+					);
+				}
+			})
+			.catch(next);
 	}
 
-	deleteImage(request, response, next){
-		this.Image.findById(request.query.id).then((image) => {
-			if(
-				request.hasPermission('admin.image.deleteOthers') ||
-				image.get('user_id') === request.user.get('id')
-			){
-				image.destroy().then(() => {
-					reponse.end('{success: true}');
-				}).catch((err) => {
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}));
-				});
-			}else{
-				return next(new this.errorController.errors.ForbiddenError());
-			}
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
+	deleteImage(request, response, next) {
+		this.models.Image
+			.findOne({ where: { id: request.params.imageId } })
+			.then(image => {
+				if (
+					image &&
+					(request.hasPermission("admin.image.deleteOthers") ||
+						image.get("user_id") === request.user.get("id"))
+				) {
+					return image
+						.destroy()
+						.then(() => {
+							response.json({ success: true });
+							response.end();
+						})
+						.catch(next);
+				} else {
+					return Promise.reject(
+						new Error("You are not allowed to delete this image!")
+					);
+				}
+			})
+			.catch(next);
 	}
-
 }
 
 module.exports = ImageController;

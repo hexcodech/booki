@@ -1,12 +1,12 @@
 <% include ../header %>
 	<p>Hi <em><%= offerer.nameDisplay %></em>,</p>
 	<p>
-		<%= offerer.nameDisplay %> would like to buy your book
+		<%= requester ? requester.nameDisplay : "An unregistered user" %> would like to buy your book
 		<em><%= book.title %></em> for <em><%= offer.price %> CHF</em>.
 		To respond, please click <a href='<%= responseUrl %>'>here</a>.
-		<% if(requester.placeOfResidence) {%>
-			<%= offerer.nameDisplay %>'s place of residence is
-			<em><%= requester.placeOfResidence %></em>
+		<% if(request.message) {%>
+			<p>Message:</p>
+			<p><%= request.message %></p>
 		<% } %>
 	</p>
 <% include ../footer %>

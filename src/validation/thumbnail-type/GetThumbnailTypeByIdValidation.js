@@ -1,13 +1,9 @@
-module.exports = ({config}) => {
-
-	const Joi = require('joi');
+module.exports = ({ config }) => {
+	const Joi = require("joi");
 
 	return {
-		body: {
-			params: {
-				thumbnailTypeId: Joi.number().integer().positive().required(),
-			}
+		params: {
+			thumbnailTypeId: Joi.number().integer().positive().required()
 		}
-	}
-
+	};
 };

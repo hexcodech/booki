@@ -1,11 +1,9 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
 		params: {
-			imageId: Joi.number().integer().positive().required(),
+			imageId: Joi.number().integer().positive().required()
 		}
-	}
-
+	};
 };

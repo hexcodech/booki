@@ -1,0 +1,7 @@
+Hi <%= offerer.nameDisplay %>,
+<%= requester ? requester.nameDisplay : "Ein unregistrierter Benutzer" %> würde gerne Dein Buch <%= book.title %> für <%= offer.price %> Fr. kaufen.
+Um zu antworten, klicke auf den folgenden Link: <%= responseUrl %>.
+<% if(request.message) {%>
+	Nachricht vom Käufer:
+	<%= request.message %>
+<% } %>

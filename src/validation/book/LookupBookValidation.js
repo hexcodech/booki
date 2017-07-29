@@ -1,11 +1,9 @@
 module.exports = () => {
-
-	const Joi = require('joi');
+	const Joi = require("joi");
 
 	return {
 		query: {
-			search           : Joi.string().max(50)
+			search: Joi.string().max(50)
 		}
-	}
-
+	};
 };

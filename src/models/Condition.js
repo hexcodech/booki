@@ -1,42 +1,39 @@
-const Condition = ({sequelize, models}) => {
+const Condition = ({ sequelize, models }) => {
+	const pick = require("lodash/pick");
+	const Sequelize = require("sequelize");
 
-	const pick      = require('lodash/pick');
-	const Sequelize = require('sequelize');
-
-	let Condition = sequelize.define('condition', {
-		key: {
-      type          : Sequelize.STRING
+	let Condition = sequelize.define(
+		"condition",
+		{
+			key: {
+				type: Sequelize.STRING
+			},
+			priceFactor: {
+				type: Sequelize.FLOAT
+			}
 		},
-    priceFactor:{
-      type          : Sequelize.FLOAT
-    }
-	}, {
-		classMethods: {
-    	associate: function({Offer}){
-				this.hasMany(Offer, {
-					as         : 'Offers',
-					foreignKey : 'condition_id',
-		      onDelete   : 'cascade',
-		      hooks      : true
-		    });
-			}
-  	},
-  	instanceMethods: {
-    	toJSON: function(options){
-				let condition = this.get();
-
-				let json = pick(condition, [
-					'id', 'key', 'priceFactor'
-				]);
-
-				return json;
-			}
+		{
+			charset: "utf8",
+			collate: "utf8_unicode_ci"
 		}
-	});
+	);
+
+	Condition.associate = function({ Offer }) {
+		this.hasMany(Offer, {
+			as: "Offers",
+			foreignKey: "condition_id"
+		});
+	};
+
+	Condition.prototype.toJSON = function(options = {}) {
+		let condition = this.get();
+
+		let json = pick(condition, ["id", "key", "priceFactor"]);
+
+		return json;
+	};
 
 	return Condition;
 };
-
-
 
 module.exports = Condition;

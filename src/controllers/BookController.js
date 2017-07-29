@@ -1,307 +1,375 @@
-class BookController{
+class BookController {
+	constructor({ booki, config, sequelize, generateRandomString, models }) {
+		this.pick = require("lodash/pick");
+		this.omitBy = require("lodash/omitBy");
+		this.isNil = require("lodash/isNil");
+		this.Sequelize = require("sequelize");
 
-	constructor({
-		booki,     config,    sequelize, errorController,
-		generateRandomString, models
-	}){
+		this.config = config;
 
-		const bindAll                     = require('lodash/bindAll');
-		this.pick                         = require('lodash/pick');
-		this.omitBy                       = require('lodash/omitBy');
-		this.isNil                        = require('lodash/isNil');
+		this.models = models;
 
-		this.config                       = config;
-		this.errorController              = errorController;
+		this.generateRandomString = generateRandomString;
 
-		this.Book                         = models.Book;
-		this.Image                        = models.Image;
-		this.User                         = models.User;
-		this.Person                       = models.Person;
-
-		this.generateRandomString         = generateRandomString;
-
-		bindAll(this, [
-			'getBook', 'getBookById', 'postBook',
-			'putBook', 'deleteBook', 'lookupBook'
-		]);
-
-	}
-
-	getBook(request, response, next){
-
-		this.Book.findAll().then((books) => {
-			if(books){
-
-				if(request.hasPermission('admin.book.hiddenData.read')){
-					response.json(books.map((book) => {
-						return book.toJSON({hiddenData: true});
-					}));
-				}else{
-					response.json(books.map((book) => {
-						return book.toJSON();
-					}));
-				}
-				return response.end();
-			}
-
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
-
-		}).catch((err) => {
-			console.log(err);
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
+		[
+			"getBook",
+			"getBookById",
+			"postBook",
+			"putBook",
+			"deleteBook",
+			"lookupBook",
+			"lookupExternalBook"
+		].forEach(key => {
+			this[key] = this[key].bind(this);
 		});
-
 	}
 
-	getBookById(request, response, next){
-		this.Book.findById(request.params.bookId).then((book) => {
+	getBook(request, response, next) {
+		let query = {},
+			filter = request.query.filter ? request.query.filter : {};
 
-			if(book){
+		//seqelize can't do include, limit and orderby association at the same time
 
-				if(request.hasPermission('admin.book.hiddenData.read')){
-					response.json(book.toJSON({hiddenData: true}));
-				}else{
+		if ("latestOffers" in filter && filter.latestOffers) {
+			this.models.Offer
+				.findAll({
+					limit: this.config.LATEST_OFFERS_LIMIT,
+					attributes: [
+						"book_id",
+						[
+							this.Sequelize.fn("MAX", this.Sequelize.col("createdAt")),
+							"createdAt"
+						]
+					],
+					order: [this.Sequelize.fn("MAX", this.Sequelize.col("createdAt"))],
+					group: ["book_id"]
+				})
+				.then(offers => {
+					let bookIds = offers.map(offer => {
+						return offer.get("book_id");
+					});
+
+					return this.models.Book
+						.findAll({
+							include: [{ model: this.models.Image, as: "Cover" }],
+							where: { id: { in: bookIds } }
+						})
+						.then(books => {
+							if (request.hasPermission("admin.book.read")) {
+								response.json(
+									books.map(book => {
+										return book.toJSON({ admin: true });
+									})
+								);
+							} else {
+								response.json(
+									books.map(book => {
+										return book.toJSON();
+									})
+								);
+							}
+							return response.end();
+						});
+				})
+				.catch(next);
+		} else if (!request.user || !request.hasPermission("admin.book.list")) {
+			next(new Error("You are not allowed to list all books!"));
+		} else {
+			this.models.Book
+				.findAll()
+				.then(books => {
+					if (request.hasPermission("admin.book.read")) {
+						response.json(
+							books.map(book => {
+								return book.toJSON({ admin: true });
+							})
+						);
+					} else {
+						response.json(
+							books.map(book => {
+								return book.toJSON();
+							})
+						);
+					}
+					return response.end();
+				})
+				.catch(next);
+		}
+	}
+
+	getBookById(request, response, next) {
+		this.models.Book
+			.findOne({
+				where: { id: request.params.bookId },
+				include: [
+					{
+						model: this.models.Person,
+						as: "Authors"
+					},
+					{
+						model: this.models.Image,
+						as: "Cover"
+					},
+					{
+						model: this.models.Offer,
+						as: "Offers",
+						include: [
+							{
+								model: this.models.User,
+								as: "User",
+								include: [{ model: this.models.Image, as: "ProfilePicture" }]
+							},
+							{
+								model: this.models.Condition,
+								as: "Condition"
+							}
+						]
+					}
+				]
+			})
+			.then(book => {
+				if (!book) {
+					return Promise.reject(new Error("This book wasn't found!"));
+				}
+
+				if (request.hasPermission("admin.book.read")) {
+					response.json(book.toJSON({ admin: true }));
+				} else {
 					response.json(book.toJSON());
 				}
 
 				return response.end();
-			}
-
-			return next(new this.errorController.errors.UnexpectedQueryResultError());
-
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
-
+			})
+			.catch(next);
 	}
 
-	postBook(request, response, next){
+	postBook(request, response, next) {
+		this.models.Book
+			.create(
+				this.pick(request.body.book, [
+					"isbn13",
+					"title",
+					"subtitle",
+					"language",
+					"description",
+					"publisher",
+					"publicationDate",
+					"pageCount"
+				])
+			)
+			.then(book => {
+				//check whether the cover actually exists
+				return this.models.Image
+					.findOne({ where: { id: request.body.book.coverId } })
+					.then(image => {
+						let promises = [];
 
-		this.Book.create(this.pick(request.body.book, [
-			'isbn13', 'title', 'subtitle', 'language',
-			'description', 'publisher', 'publicationDate',
-			'pageCount'
-		])).then((book) => {
-			//check whether the cover actually exists
-			this.Image.findById(request.body.book.coverId)
-			.then((image) => {
-
-				let promises = [];
-
-				if(image){
-					promises.push(book.setCoverImage(image));
-				}
-
-				//add additional fields
-				if(request.hasPermissions([
-					'admin.book.create', 'admin.book.hiddenData.write'
-				])){
-
-					book.set(this.pick(request.body.book, [
-						'id', 'verified'
-					]));
-
-					if(request.body.book.userId){
-						book.set('user_id', request.body.book.userId);
-					}else{
-						book.set('user_id', request.user.get('id'));
-					}
-
-				}else{
-					book.set('user_id', request.user.get('id'));
-				}
-
-				promises.push(book.save());
-
-				promises.push(book.setAuthorsRaw(request.body.book.authors));
-
-				Promise.all(promises).then(() => {
-
-					book.reload().then(() => {
-						if(request.hasPermission('admin.book.hiddenData.read')){
-							response.json(book.toJSON({hiddenData: true}));
-						}else{
-							response.json(book.toJSON());
+						if (image) {
+							book.set("cover_image_id", request.body.book.coverId);
 						}
-					}).catch((err) => {
-						return next(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}));
+
+						//add additional fields
+						if (
+							request.hasPermissions(["admin.book.create", "admin.book.write"])
+						) {
+							book.set(this.pick(request.body.book, ["id", "verified"]));
+
+							if (request.body.book.userId) {
+								book.set("user_id", request.body.book.userId);
+							} else {
+								book.set("user_id", request.user.get("id"));
+							}
+						} else {
+							book.set("user_id", request.user.get("id"));
+						}
+
+						promises.push(book.save());
+
+						promises.push(book.setAuthorsRaw(request.body.book.authors));
+
+						return Promise.all(promises).then(() => {
+							return book
+								.reload({
+									include: [
+										{
+											model: this.models.Person,
+											as: "Authors"
+										},
+										{
+											model: this.models.Image,
+											as: "Cover"
+										}
+									]
+								})
+								.then(() => {
+									if (request.hasPermission("admin.book.read")) {
+										response.json(book.toJSON({ admin: true }));
+									} else {
+										response.json(book.toJSON({ owner: true }));
+									}
+								});
+						});
 					});
-
-				}).catch((err) => {
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}));
-				});
-
-			}).catch((err) => {
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			});
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
+			})
+			.catch(next);
 	}
 
-	putBook(request, response, next){
-
-		this.Book.findById(request.params.bookId).then((book) => {
-
-			if(book){
-
-				if(
-					/*book.get('user').get('id') !== request.user.get('id') &&*/
-					!request.hasPermission('admin.book.editOthers')
-				){
-					return next(new this.errorController.errors.ForbiddenError());
+	putBook(request, response, next) {
+		this.models.Book
+			.findOne({ where: { id: request.params.bookId } })
+			.then(book => {
+				if (!book) {
+					return Promise.reject(new Error("This book wasn't found!"));
 				}
 
-				this.Image.findById(request.body.book.coverId)
-				.then((image) => {
+				//if the book isn't verified yet, everyone can edit it
+				if (
+					book.get("verified") &&
+					!request.hasPermission("admin.book.editOthers")
+				) {
+					return Promise.reject(
+						new Error("You're not allowed to edit this book!")
+					);
+				}
 
-					let promises = [];
+				return this.models.Image
+					.findOne({
+						where: { id: request.body.book.coverId }
+					})
+					.then(image => {
+						let promises = [];
 
-					if(image){
-						promises.push(book.setCoverImage(image));
-					}
-
-					book.set(this.omitBy(this.pick(request.body.book, [
-						'title', 'subtitle', 'language',
-						'description', 'publisher', 'publicationDate',
-						'pageCount'
-					]), this.isNil));
-
-					if(request.hasPermission('admin.book.hiddenData.write')){
-						book.set(this.omitBy(this.pick(request.body.book, [
-							'verified'
-						]), this.isNil));
-
-						if(request.body.book.userId){
-							book.set('user', request.body.book.userId);
+						if (image) {
+							book.set("cover_image_id", request.body.book.coverId);
 						}
 
-					}
+						book.set(
+							this.omitBy(
+								this.pick(request.body.book, [
+									"title",
+									"subtitle",
+									"language",
+									"description",
+									"publisher",
+									"publicationDate",
+									"pageCount"
+								]),
+								this.isNil
+							)
+						);
 
-					promises.push(book.save());
+						//set the userId to the last user who edited it
+						book.set("user_id", request.user.id);
 
-					Promise.all(promises).then(() => {
+						if (request.hasPermission("admin.book.write")) {
+							book.set(
+								this.omitBy(
+									this.pick(request.body.book, ["verified"]),
+									this.isNil
+								)
+							);
 
-						if(request.hasPermission('admin.book.hiddenData.read')){
-							response.json(book.toJSON({hiddenData: true}));
-						}else{
-							response.json(book.toJSON());
+							if (request.body.book.userId) {
+								book.set("user", request.body.book.userId);
+							}
 						}
 
+						promises.push(book.save());
+
+						return Promise.all(promises).then(() => {
+							if (request.hasPermission("admin.book.read")) {
+								response.json(book.toJSON({ admin: true }));
+							} else {
+								response.json(book.toJSON());
+							}
+
+							return response.end();
+						});
+					});
+			})
+			.catch(next);
+	}
+
+	deleteBook(request, response, next) {
+		this.models.Book
+			.findOne({
+				where: { id: request.params.bookId },
+				include: [
+					{
+						model: this.models.User,
+						as: "User"
+					},
+					{
+						model: this.models.Image,
+						as: "CoverImage"
+					}
+				]
+			})
+			.then(book => {
+				if (!book) {
+					return Promise.reject(new Error("This book wasn't found!"));
+				}
+				//only admins can delete books
+				if (!request.hasPermission("admin.book.deleteOthers")) {
+					return Promise.reject(new Error("You are not allowed to do this!"));
+				}
+
+				book
+					.destroy()
+					.then(() => {
+						response.json({ success: true });
 						return response.end();
-
-					}).catch((err) => {
-						console.log(err);
-						return next(new this.errorController.errors.DatabaseError({
-							message: err.message
-						}));
-					});
-
-				}).catch((err) => {
-					return next(new this.errorController.errors.DatabaseError({
-						message: err.message
-					}));
-				});
-
-			}else{
-				return next(new this.errorController.errors.NotFoundError());
-			}
-
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
-
+					})
+					.catch(next);
+			})
+			.catch(next);
 	}
 
-	deleteBook(request, response, next){
+	lookupBook(request, response, next) {
+		this.models.Book
+			.lookup(request.query.search)
+			.then(books => {
+				if (request.hasPermission("admin.book.read")) {
+					response.json(
+						books.map(book => {
+							return book.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						books.map(book => {
+							return book.toJSON();
+						})
+					);
+				}
 
-		this.Book.findOne({
-			where   : {id: request.params.bookId},
-			include : [{
-				model   : this.User,
-				as      : 'User'
-			}, {
-				model   : this.Image,
-				as      : 'CoverImage'
-			}]
-		}).then((book) => {
-
-			if(!book){
-				return next(new this.errorController.errors.NotFoundError());
-			}
-			//only admins can delete books
-			if(!request.hasPermission('admin.book.deleteOthers')){
-				return next(new this.errorController.errors.ForbiddenError());
-			}
-
-			book.destroy().then(() => {
-
-				response.json({success: true});
 				return response.end();
-
-			}).catch((err) => {
-				return next(new this.errorController.errors.DatabaseError({
-					message: err.message
-				}));
-			});
-
-		}).catch((err) => {
-			return next(new this.errorController.errors.DatabaseError({
-				message: err.message
-			}));
-		});
-
+			})
+			.catch(next);
 	}
 
-	lookupBook(request, response, next){
+	lookupExternalBook(request, response, next) {
+		this.models.Book
+			.lookupExternal(request.query.search, request.user)
+			.then(books => {
+				if (request.hasPermission("admin.book.read")) {
+					response.json(
+						books.map(book => {
+							return book.toJSON({ admin: true });
+						})
+					);
+				} else {
+					response.json(
+						books.map(book => {
+							return book.toJSON();
+						})
+					);
+				}
 
-		return this.Book.lookup(request.query.search)
-		.then((books) => {
-
-			if(request.hasPermission('admin.book.hiddenData.read')){
-				response.json(books.map((book) => {
-					return book.toJSON({hiddenData: true});
-				}));
-			}else{
-				response.json(books.map((book) => {
-					return book.toJSON();
-				}));
-			}
-
-			return response.end();
-
-		}).catch((error) => {
-			return next(error);
-		});
+				return response.end();
+			})
+			.catch(next);
 	}
-
-	lookupExternalBook(request, response, next){
-
-		return this.Book.lookupExternal(request.query.search)
-		.then((books) => {
-
-			response.json(books);
-			return response.end();
-
-		}).catch((error) => {
-			return next(error);
-		});
-	}
-
 }
 
 module.exports = BookController;
