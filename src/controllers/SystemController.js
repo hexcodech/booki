@@ -1,7 +1,5 @@
 class SystemController {
 	constructor({ booki, sequelize, models, folders, statsHolder }) {
-		const bindAll = require("lodash/bindAll");
-
 		this.sequelize = sequelize;
 		this.models = models;
 		this.statsHolder = statsHolder;
@@ -12,7 +10,9 @@ class SystemController {
 		this.async = require("async");
 		this.exec = require("child_process").exec;
 
-		bindAll(this, ["getStats", "cleanup"]);
+		["getStats", "cleanup"].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getStats(request, response, next) {

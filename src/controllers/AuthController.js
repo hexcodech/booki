@@ -4,10 +4,10 @@
 
 class AuthController {
 	constructor({ booki, config, i18n, models, passport, piwikTracker }) {
-		const bindAll = require("lodash/bindAll");
 		this.ejs = require("ejs");
 		this.oauth2orize = require("oauth2orize");
 		this.oauth2Server = this.oauth2orize.createServer();
+		this.EncodingUtilities = new (require("../utilities/EncodingUtilities"))();
 
 		const LocalStrategy = require("passport-local").Strategy;
 		const BearerStrategy = require("passport-http-bearer").Strategy;
@@ -24,19 +24,22 @@ class AuthController {
 
 		this.piwikTracker = piwikTracker;
 
-		bindAll(this, [
+		[
 			"loginView",
 			"mailVerificationView",
 			"auth",
 			"authFacebookCallback",
 			"authGoogleCallback",
-			"catchInternalError",
-			"catchInternalErrorView",
 			"passwordResetView",
 			"initPasswordReset",
 			"passwordReset",
-			"verifyEmail"
-		]);
+			"verifyEmail",
+			"showValidationErrors",
+			"catchInternalError",
+			"catchInternalErrorView"
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 
 		//setup passport serialization
 		this.passport.serializeUser((user, done) => {
@@ -832,6 +835,19 @@ class AuthController {
 			.catch(next);
 	}
 
+	showValidationErrors(url) {
+		return (err, request, response, next) => {
+			if (err.message === "validation error") {
+				return response.redirect(
+					url.includes("?")
+						? url + "&" + this.EncodingUtilities.serializeValidationError(err)
+						: url + "/?" + this.EncodingUtilities.serializeValidationError(err)
+				);
+			}
+			next(err);
+		};
+	}
+
 	catchInternalError(err, request, response, next) {
 		if (err) {
 			response.redirect(this.config.LOGIN_PATH);
@@ -857,7 +873,7 @@ class AuthController {
 					error: err
 				},
 				{},
-				(err, str) => {
+				(err2, str) => {
 					if (err2) {
 						response.end(
 							"Yes, there was just an error while rendering the error..."

@@ -1,7 +1,5 @@
 class ImageController {
 	constructor({ booki, config, models, folders, cryptoUtilities }) {
-		const bindAll = require("lodash/bindAll");
-
 		this.path = require("path");
 		this.mkdirp = require("mkdirp-promise");
 
@@ -16,7 +14,9 @@ class ImageController {
 
 		this.models = models;
 
-		bindAll(this, ["getImage", "postImage", "putImage", "deleteImage"]);
+		["getImage", "postImage", "putImage", "deleteImage"].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getImage(request, response, next) {

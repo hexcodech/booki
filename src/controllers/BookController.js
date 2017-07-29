@@ -1,6 +1,5 @@
 class BookController {
 	constructor({ booki, config, sequelize, generateRandomString, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
@@ -12,7 +11,7 @@ class BookController {
 
 		this.generateRandomString = generateRandomString;
 
-		bindAll(this, [
+		[
 			"getBook",
 			"getBookById",
 			"postBook",
@@ -20,7 +19,9 @@ class BookController {
 			"deleteBook",
 			"lookupBook",
 			"lookupExternalBook"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getBook(request, response, next) {

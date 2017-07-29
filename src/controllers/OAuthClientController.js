@@ -1,6 +1,5 @@
 class OAuthClientController {
 	constructor({ booki, config, getLocale, generateRandomString, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
@@ -12,13 +11,15 @@ class OAuthClientController {
 
 		this.models = models;
 
-		bindAll(this, [
+		[
 			"getOAuthClient",
 			"postOAuthClient",
 			"getOAuthClientById",
 			"putOAuthClient",
 			"deleteOAuthClient"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getOAuthClient(request, response, next) {

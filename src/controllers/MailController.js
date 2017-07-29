@@ -5,13 +5,12 @@
 
 class MailController {
 	constructor(config) {
-		const bindAll = require("lodash/bindAll");
 		const nodemailer = require("nodemailer");
 
 		//store the passed parameters
 		this.config = config;
 
-		bindAll(this, ["sendMail"]);
+		this.sendMail = this.sendMail.bind(this);
 
 		this.transporter = nodemailer.createTransport({
 			pool: true,

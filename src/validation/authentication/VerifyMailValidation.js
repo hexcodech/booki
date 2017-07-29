@@ -5,7 +5,8 @@ module.exports = function() {
 		body: {
 			email: Joi.string().email().required(),
 			emailVerificationCode: Joi.string().required(),
-			password: Joi.string().min(8).max(256)
+			password: Joi.string().min(8).max(255).allow("", null),
+			register: Joi.boolean().required()
 		}
 	};
 };

@@ -60,7 +60,14 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 			if (user && user.get) {
 				return user.get("locale");
 			} else if (request !== null) {
-				return i18n.getLocale(request);
+				let lang = request.headers["accept-language"]
+					.toLowerCase()
+					.split(",")[0]
+					.split("-");
+
+				return lang.length === 0
+					? lang[0] + "-" + lang[0].toUpperCase()
+					: lang[0] + "-" + lang[1].toUpperCase();
 			} else {
 				return config.LOCALES[0];
 			}
@@ -139,6 +146,7 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		"/v1/auth/password-reset",
 		validate(passwordResetValidation),
 		authController.passwordReset, //Tracked in analytics
+		authController.showValidationErrors("/views/password-reset"),
 		authController.catchInternalErrorView
 	);
 
@@ -152,6 +160,20 @@ const Routing = ({ booki, app, config, logger, i18n, piwikTracker }) => {
 		"/v1/auth/local/verify-email",
 		validate(verifyMailValidation),
 		authController.verifyEmail, //Tracked in analytics
+		(error, request, response, next) => {
+			if (request.body.register) {
+				authController.showValidationErrors(
+					"/views/verify-email?register=true"
+				)(error, request, response, next);
+			} else {
+				authController.showValidationErrors("/views/verify-email")(
+					error,
+					request,
+					response,
+					next
+				);
+			}
+		},
 		authController.catchInternalErrorView
 	);
 	app.get(

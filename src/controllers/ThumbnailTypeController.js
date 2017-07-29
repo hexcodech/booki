@@ -1,19 +1,20 @@
 class ThumbnailTypeController {
 	constructor({ booki, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
 
 		this.models = models;
 
-		bindAll(this, [
+		[
 			"getThumbnailType",
 			"getThumbnailTypeById",
 			"postThumbnailType",
 			"putThumbnailType",
 			"deleteThumbnailType"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getThumbnailType(request, response, next) {

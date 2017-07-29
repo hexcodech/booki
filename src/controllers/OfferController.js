@@ -1,20 +1,21 @@
 class OfferController {
 	constructor({ booki, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
 
 		this.models = models;
 
-		bindAll(this, [
+		[
 			"getOffer",
 			"getOfferById",
 			"getOfferByBookId",
 			"postOffer",
 			"putOffer",
 			"deleteOffer"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getOffer(request, response, next) {

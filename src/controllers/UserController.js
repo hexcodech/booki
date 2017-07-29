@@ -4,7 +4,6 @@
 
 class UserController {
 	constructor({ booki, config, app, i18n, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
@@ -16,14 +15,16 @@ class UserController {
 
 		this.models = models;
 
-		bindAll(this, [
+		[
 			"getCurrentUser",
 			"getUser",
 			"getUserById",
 			"postUser",
 			"putUser",
 			"deleteUser"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getCurrentUser(request, response, next) {

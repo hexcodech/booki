@@ -1,20 +1,21 @@
 class PersonController {
 	constructor({ booki, models }) {
-		const bindAll = require("lodash/bindAll");
 		this.pick = require("lodash/pick");
 		this.omitBy = require("lodash/omitBy");
 		this.isNil = require("lodash/isNil");
 
 		this.models = models;
 
-		bindAll(this, [
+		[
 			"getPerson",
 			"getPersonById",
 			"postPerson",
 			"putPerson",
 			"deletePerson",
 			"lookupPerson"
-		]);
+		].forEach(key => {
+			this[key] = this[key].bind(this);
+		});
 	}
 
 	getPerson(request, response, next) {
